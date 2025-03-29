@@ -6,6 +6,8 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import "./styles.css";
 import { NotFoundPage } from "@/components/404.tsx";
+import { client as inferenceClient } from "@/apis/inference/client.gen";
+import env from "@/config/env.ts";
 
 // Add theme detection
 function setInitialTheme() {
@@ -38,6 +40,13 @@ declare module "@tanstack/react-router" {
 		router: typeof router;
 	}
 }
+
+// Configure the inference client with cross-origin credentials support
+// This enables sending cookies with requests to different domains
+inferenceClient.setConfig({
+	baseURL: env.LTAI_INFERENCE_API_URL,
+	withCredentials: true, // Enable sending cookies in cross-origin requests
+});
 
 // Render the app
 const rootElement = document.getElementById("root")!;

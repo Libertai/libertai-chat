@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
 	ALEPH_API_URL: z.string().url().optional(),
-	LTAI_SUBSCRIPTIONS_API_URL: z.string().url(),
+	LTAI_INFERENCE_API_URL: z.string().url(),
 	LTAI_AGENTS_API_URL: z.string().url(),
 	LTAI_AUTH_API_URL: z.string().url(),
 	SOLANA_RPC: z.string().url(),
@@ -16,7 +16,7 @@ const envSchema = z.object({
 
 const env = envSchema.parse({
 	ALEPH_API_URL: import.meta.env.VITE_ALEPH_API_URL,
-	LTAI_SUBSCRIPTIONS_API_URL: import.meta.env.VITE_LTAI_SUBSCRIPTIONS_API_URL,
+	LTAI_INFERENCE_API_URL: import.meta.env.VITE_LTAI_INFERENCE_API_URL,
 	LTAI_AGENTS_API_URL: import.meta.env.VITE_LTAI_AGENTS_API_URL,
 	LTAI_AUTH_API_URL: import.meta.env.VITE_LTAI_AUTH_API_URL,
 	SOLANA_RPC: import.meta.env.VITE_SOLANA_RPC,

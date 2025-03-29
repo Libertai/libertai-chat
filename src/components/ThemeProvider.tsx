@@ -75,6 +75,7 @@ function getSystemTheme(): "light" | "dark" {
 	return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTheme = () => {
 	const context = useContext(ThemeProviderContext);
 

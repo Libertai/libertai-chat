@@ -1,33 +1,37 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAccountStore } from "@/stores/account";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, ChevronRight, Coins, CreditCard, HelpCircle } from "lucide-react";
+import { CheckCircle, ChevronRight, CreditCard, HelpCircle, Zap } from "lucide-react";
 import { useRequireAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { thirdwebClient } from "@/config/thirdweb.ts";
 import { PayEmbed, useIsAutoConnecting } from "thirdweb/react";
 import { base } from "thirdweb/chains";
 import env from "@/config/env.ts";
+import { TopUpAmountInput } from "@/components/TopUpAmountInput";
+import { useCredits } from "@/hooks/use-credits";
 
 export const Route = createFileRoute("/topup")({
 	component: TopUp,
 });
 
-interface PricingTier {
+type PricingTier = {
 	id: string;
 	name: string;
 	tokens: number;
 	price: number;
 	usdcAmount: string;
 	popular?: boolean;
-}
+};
 
 function TopUp() {
 	const isAutoConnecting = useIsAutoConnecting();
-	const ltaiBalance = useAccountStore((state) => state.formattedLTAIBalance());
+	const account = useAccountStore((state) => state.account);
+	const { formattedCredits } = useCredits();
 	const navigate = useNavigate();
-	const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null);
+	const [customAmount, setCustomAmount] = useState<number | null>(null);
 	const [paymentStage, setPaymentStage] = useState<"select" | "payment" | "success">("select");
+	const { refreshCredits } = useCredits();
 
 	// Pricing tiers
 	const pricingTiers: PricingTier[] = [
@@ -70,17 +74,18 @@ function TopUp() {
 		return null;
 	}
 
-	const handleSelectTier = (tier: PricingTier) => {
-		setSelectedTier(tier);
+	const handleSelectCustomAmount = (amount: number) => {
+		setCustomAmount(amount);
 		setPaymentStage("payment");
 	};
 
 	const handlePaymentSuccess = () => {
 		setPaymentStage("success");
+		refreshCredits();
 	};
 
 	const handleGoBackToSelection = () => {
-		setSelectedTier(null);
+		setCustomAmount(null);
 		setPaymentStage("select");
 	};
 
@@ -88,64 +93,48 @@ function TopUp() {
 		navigate({ to: "/dashboard" });
 	};
 
+	// Get the current payment details (either from selected tier or custom amount)
+	const paymentDetails = (() => {
+		if (customAmount) {
+			// Rough calculation: 1$ = 20,000 tokens (same ratio as $5 for 100,000 tokens)
+			return {
+				price: customAmount,
+				usdcAmount: customAmount.toString(),
+			};
+		}
+
+		return null;
+	})();
+
 	return (
 		<div className="container mx-auto px-4 py-8">
-			<div className="flex flex-col space-y-8 max-w-4xl mx-auto">
+			<div className="flex flex-col space-y-8 max-w-5xl mx-auto">
 				<div>
-					<h1 className="text-3xl font-bold">Top Up LTAI Balance</h1>
-					<p className="text-muted-foreground mt-1">Purchase LTAI tokens to power your API requests</p>
+					<h1 className="text-3xl font-bold">Top Up balance</h1>
+					<p className="text-muted-foreground mt-1">Purchase credits to power your API requests</p>
 				</div>
 
 				{paymentStage === "select" && (
 					<>
 						<div className="bg-card/50 backdrop-blur-sm p-6 rounded-xl border border-border mb-8">
-							<div className="flex items-center gap-3 mb-4">
-								<Coins className="h-5 w-5 text-primary" />
-								<h2 className="text-xl font-semibold">Your Current Balance</h2>
+							<div className="flex flex-col md:flex-row gap-6">
+								<div className="flex-1">
+									<div className="flex items-center gap-3 mb-4">
+										<Zap className="h-5 w-5 text-primary" />
+										<h2 className="text-xl font-semibold">Credits balance</h2>
+									</div>
+									<p className="text-3xl font-bold text-primary">${formattedCredits}</p>
+									<p className="text-sm text-muted-foreground mt-2">
+										API credits are used for API requests and are available immediately after purchase.
+										<br />
+										You can buy credits with $LTAI or main ERC-20 tokens on multiple chains.
+									</p>
+								</div>
 							</div>
-							<p className="text-3xl font-bold text-primary">{ltaiBalance} LTAI</p>
-							<p className="text-sm text-muted-foreground mt-2">
-								LTAI tokens are used to pay for API requests. Each token can be used for approximately 1,000 input or
-								output tokens.
-							</p>
 						</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-							{pricingTiers.map((tier) => (
-								<div
-									key={tier.id}
-									className={`relative bg-card/50 backdrop-blur-sm p-6 rounded-xl border ${
-										tier.popular ? "border-primary" : "border-border"
-									} hover:border-primary transition-colors`}
-								>
-									{tier.popular && (
-										<div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground text-xs py-1 px-3 rounded-full">
-											Popular
-										</div>
-									)}
-									<h3 className="text-lg font-semibold mb-2">{tier.name}</h3>
-									<p className="text-3xl font-bold mb-4">${tier.price}</p>
-									<p className="text-sm text-muted-foreground mb-4">{tier.tokens.toLocaleString()} tokens</p>
-									<ul className="space-y-2 mb-6">
-										<li className="flex items-center text-sm">
-											<CheckCircle className="h-4 w-4 text-emerald-400 mr-2" />
-											<span>Approximately {Math.round(tier.tokens / 1000).toLocaleString()} API calls</span>
-										</li>
-										<li className="flex items-center text-sm">
-											<CheckCircle className="h-4 w-4 text-emerald-400 mr-2" />
-											<span>Access to all models</span>
-										</li>
-										<li className="flex items-center text-sm">
-											<CheckCircle className="h-4 w-4 text-emerald-400 mr-2" />
-											<span>No expiration</span>
-										</li>
-									</ul>
-									<Button onClick={() => handleSelectTier(tier)} className="w-full">
-										Select
-									</Button>
-								</div>
-							))}
-						</div>
+						{/* Custom amount input component */}
+						<TopUpAmountInput pricingTiers={pricingTiers} onSelectAmount={handleSelectCustomAmount} />
 
 						<div className="bg-card/50 backdrop-blur-sm p-6 rounded-xl border border-border">
 							<div className="flex items-center gap-3 mb-4">
@@ -196,7 +185,7 @@ function TopUp() {
 					</>
 				)}
 
-				{paymentStage === "payment" && selectedTier && (
+				{paymentStage === "payment" && paymentDetails && (
 					<div className="bg-card/50 backdrop-blur-sm p-6 rounded-xl border border-border">
 						<div className="flex justify-between items-center mb-8">
 							<div className="flex items-center gap-3">
@@ -213,23 +202,19 @@ function TopUp() {
 								<h3 className="text-lg font-medium mb-4">Order Summary</h3>
 								<div className="bg-card/70 p-4 rounded-lg border border-border mb-4">
 									<div className="flex justify-between mb-2">
-										<span className="text-muted-foreground">{selectedTier.name} Plan</span>
-										<span>${selectedTier.price}.00</span>
-									</div>
-									<div className="flex justify-between mb-2 text-sm text-muted-foreground">
-										<span>LTAI Tokens</span>
-										<span>{selectedTier.tokens.toLocaleString()}</span>
+										<span className="text-muted-foreground">Credits top-up</span>
+										<span>${paymentDetails.price.toFixed(2)}</span>
 									</div>
 									<div className="border-t border-border my-2"></div>
 									<div className="flex justify-between font-medium">
 										<span>Total</span>
-										<span>${selectedTier.price}.00</span>
+										<span>${paymentDetails.price.toFixed(2)}</span>
 									</div>
 								</div>
 
 								<div className="bg-primary/10 p-4 rounded-lg border border-primary/30">
 									<p className="text-sm text-primary-foreground">
-										Your LTAI tokens will be deposited directly to your connected wallet after payment. Tokens do not
+										Your credits will be deposited directly to your connected wallet after payment. Credits do not
 										expire and can be used anytime.
 									</p>
 								</div>
@@ -245,10 +230,13 @@ function TopUp() {
 											mode: "direct_payment",
 											buyWithFiat: false,
 											onPurchaseSuccess: handlePaymentSuccess,
+											purchaseData: {
+												userAddress: account!.address,
+											},
 											paymentInfo: {
 												chain: base,
 												sellerAddress: env.PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS,
-												amount: selectedTier.usdcAmount,
+												amount: paymentDetails.usdcAmount,
 												token: {
 													name: "USDC",
 													symbol: "USDC",
@@ -260,16 +248,16 @@ function TopUp() {
 									/>
 
 									{/* Add a mock button to simulate successful payment for demo purposes */}
-									<Button onClick={handlePaymentSuccess} className="w-full mt-4">
-										Simulate Successful Payment
-									</Button>
+									{/*<Button onClick={handlePaymentSuccess} className="w-full mt-4">*/}
+									{/*	Simulate Successful Payment*/}
+									{/*</Button>*/}
 								</div>
 							</div>
 						</div>
 					</div>
 				)}
 
-				{paymentStage === "success" && selectedTier && (
+				{paymentStage === "success" && paymentDetails && (
 					<div className="bg-card/50 backdrop-blur-sm p-6 rounded-xl border border-border text-center">
 						<div className="flex flex-col items-center gap-4 mb-8">
 							<div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center">
@@ -277,22 +265,14 @@ function TopUp() {
 							</div>
 							<h2 className="text-2xl font-semibold">Payment Successful!</h2>
 							<p className="text-muted-foreground">
-								You have successfully purchased {selectedTier.tokens.toLocaleString()} LTAI tokens.
+								You have successfully purchased ${paymentDetails.price} of credits.
 							</p>
 						</div>
 
 						<div className="bg-card/70 p-6 rounded-lg border border-border mb-8 max-w-md mx-auto">
 							<div className="flex justify-between mb-3">
-								<span className="text-muted-foreground">Plan:</span>
-								<span className="font-medium">{selectedTier.name}</span>
-							</div>
-							<div className="flex justify-between mb-3">
 								<span className="text-muted-foreground">Amount Paid:</span>
-								<span className="font-medium">${selectedTier.price}.00 USDC</span>
-							</div>
-							<div className="flex justify-between mb-3">
-								<span className="text-muted-foreground">Tokens Purchased:</span>
-								<span className="font-medium">{selectedTier.tokens.toLocaleString()} LTAI</span>
+								<span className="font-medium">${paymentDetails.price.toFixed(2)} USDC</span>
 							</div>
 							<div className="flex justify-between">
 								<span className="text-muted-foreground">Transaction Hash:</span>

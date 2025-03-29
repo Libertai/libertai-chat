@@ -1,8 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useAccountStore } from "@/stores/account";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, BarChart4, Coins, History, Key, LineChart, Zap } from "lucide-react";
 import { useRequireAuth } from "@/hooks/use-auth";
+import { useApiKeys } from "@/hooks/use-api-keys.ts";
+import { useCredits } from "@/hooks/use-credits";
+import { useDashboardStats } from "@/hooks/use-dashboard-stats";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export const Route = createFileRoute("/dashboard")({
 	component: Dashboard,
@@ -10,16 +13,10 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
 	const { isAuthenticated } = useRequireAuth();
-	const ltaiBalance = useAccountStore((state) => state.formattedLTAIBalance());
+	const { formattedCredits } = useCredits();
 	const navigate = useNavigate();
-
-	// In a real app, these would be fetched from an API
-	const mockStats = {
-		apiCalls: 2853,
-		activeKeys: 2,
-		tokensUsed: 154893,
-		monthlyUsage: [258, 342, 430, 389, 675, 759],
-	};
+	const { apiKeys } = useApiKeys();
+	const { apiCalls, tokensUsed, chartData, isLoading } = useDashboardStats();
 
 	// Return null if not authenticated (redirect is handled by the hook)
 	if (!isAuthenticated) {
@@ -38,9 +35,9 @@ function Dashboard() {
 					<div className="bg-card/50 backdrop-blur-sm p-6 rounded-xl border border-border">
 						<div className="flex items-center gap-3 mb-2">
 							<Coins className="h-5 w-5 text-primary" />
-							<h2 className="text-lg font-medium">LTAI Balance</h2>
+							<h2 className="text-lg font-medium">Balance</h2>
 						</div>
-						<p className="text-3xl font-bold">{ltaiBalance} LTAI</p>
+						<p className="text-3xl font-bold">${formattedCredits}</p>
 						<Button size="sm" className="mt-4" onClick={() => navigate({ to: "/topup" })}>
 							Top Up
 						</Button>
@@ -51,7 +48,7 @@ function Dashboard() {
 							<Zap className="h-5 w-5 text-primary" />
 							<h2 className="text-lg font-medium">API Calls</h2>
 						</div>
-						<p className="text-3xl font-bold">{mockStats.apiCalls}</p>
+						<p className="text-3xl font-bold">{apiCalls}</p>
 						<p className="text-xs text-muted-foreground mt-4">This month</p>
 					</div>
 
@@ -60,7 +57,7 @@ function Dashboard() {
 							<Key className="h-5 w-5 text-primary" />
 							<h2 className="text-lg font-medium">Active Keys</h2>
 						</div>
-						<p className="text-3xl font-bold">{mockStats.activeKeys}</p>
+						<p className="text-3xl font-bold">{apiKeys.filter((key) => key.is_active).length}</p>
 						<Button size="sm" variant="outline" className="mt-4" onClick={() => navigate({ to: "/api-keys" })}>
 							Manage
 						</Button>
@@ -71,7 +68,7 @@ function Dashboard() {
 							<LineChart className="h-5 w-5 text-primary" />
 							<h2 className="text-lg font-medium">Tokens Used</h2>
 						</div>
-						<p className="text-3xl font-bold">{mockStats.tokensUsed}</p>
+						<p className="text-3xl font-bold">{tokensUsed}</p>
 						<p className="text-xs text-muted-foreground mt-4">This month</p>
 					</div>
 				</div>
@@ -83,18 +80,56 @@ function Dashboard() {
 							<BarChart4 className="h-5 w-5 text-primary" />
 						</div>
 
-						<div className="h-64 flex items-end justify-between gap-2">
-							{mockStats.monthlyUsage.map((value, index) => (
-								<div key={index} className="flex flex-col items-center gap-2 flex-1">
-									<div
-										className="w-full bg-gradient-to-t from-primary to-[#8a5cf5] rounded-t-sm"
-										style={{ height: `${(value / Math.max(...mockStats.monthlyUsage)) * 100}%` }}
-									></div>
-									<span className="text-xs text-muted-foreground">
-										{["Jan", "Feb", "Mar", "Apr", "May", "Jun"][index]}
-									</span>
+						<div className="h-64">
+							{isLoading ? (
+								<div className="flex items-center justify-center h-full">
+									<p className="text-muted-foreground">Loading chart data...</p>
 								</div>
-							))}
+							) : (
+								<ResponsiveContainer width="100%" height="100%">
+									<AreaChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
+										<defs>
+											<linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+												<stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8} />
+												<stop offset="95%" stopColor="var(--primary)" stopOpacity={0.2} />
+											</linearGradient>
+										</defs>
+										<CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+										<XAxis
+											dataKey="month"
+											tick={{ fontSize: 12 }}
+											tickLine={false}
+											axisLine={{ stroke: "var(--border)" }}
+										/>
+										<YAxis
+											tick={{ fontSize: 12 }}
+											tickLine={false}
+											axisLine={{ stroke: "var(--border)" }}
+											domain={[0, "dataMax + 5"]}
+											tickFormatter={(value) => `$${value}`}
+										/>
+										<Tooltip
+											contentStyle={{
+												backgroundColor: "var(--card)",
+												border: "1px solid var(--border)",
+												borderRadius: "0.5rem",
+												fontSize: "0.875rem",
+												boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+											}}
+											formatter={(value) => [`$${value}`, "Credits used"]}
+											labelStyle={{ marginBottom: "5px", fontWeight: "bold" }}
+										/>
+										<Area
+											type="monotone"
+											dataKey="cost"
+											name="Credits used"
+											stroke="var(--primary)"
+											fillOpacity={1}
+											fill="url(#colorCost)"
+										/>
+									</AreaChart>
+								</ResponsiveContainer>
+							)}
 						</div>
 					</div>
 

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { AlarmClock, Copy, Eye, EyeOff, Key, MoreHorizontal, Plus, Settings, Trash } from "lucide-react";
+import { Copy, Eye, EyeOff, Key, MoreHorizontal, Plus, Settings, Trash, X } from "lucide-react";
 import { useRequireAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import {
@@ -10,89 +10,96 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ApiKey, ApiKeyCreate } from "@/apis/inference";
+import { useApiKeys } from "@/hooks/use-api-keys";
+import { toast } from "sonner";
+import { ApiKeyForm } from "@/components/ApiKeyForm";
+import dayjs from "dayjs";
 
 export const Route = createFileRoute("/api-keys")({
 	component: ApiKeys,
 });
 
-interface ApiKey {
-	id: string;
-	name: string;
-	prefix: string;
-	created: string;
-	lastUsed: string | null;
-	status: "active" | "expired" | "revoked";
-}
-
 function ApiKeys() {
 	const [showNewKeyModal, setShowNewKeyModal] = useState(false);
-	const [newKeyName, setNewKeyName] = useState("");
+	const [showEditModal, setShowEditModal] = useState(false);
 	const [newGeneratedKey, setNewGeneratedKey] = useState<string | null>(null);
 	const [showKey, setShowKey] = useState(false);
 
-	// Mock API Keys data - in a real app, these would be fetched from an API
-	const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-		{
-			id: "key_1",
-			name: "Production API Key",
-			prefix: "lt_prod_K1",
-			created: "2025-01-15",
-			lastUsed: "2025-03-24",
-			status: "active",
-		},
-		{
-			id: "key_2",
-			name: "Development API Key",
-			prefix: "lt_dev_K2",
-			created: "2025-02-20",
-			lastUsed: "2025-03-15",
-			status: "active",
-		},
-	]);
+	// Current key being edited
+	const [currentKey, setCurrentKey] = useState<ApiKey | null>(null);
 
 	// Use auth hook to require authentication
 	const { isAuthenticated } = useRequireAuth();
+
+	// Use API keys query hook
+	const { apiKeys, isLoading, createApiKey, updateApiKey, deleteApiKey } = useApiKeys();
 
 	// Return null if not authenticated (redirect is handled by the hook)
 	if (!isAuthenticated) {
 		return null;
 	}
 
-	const handleCreateKey = () => {
-		if (!newKeyName.trim()) return;
+	const handleCreateKey = async (formData: { name: string; monthlyLimit: number | null }) => {
+		try {
+			// Create API key with backend
+			const keyData: ApiKeyCreate = {
+				name: formData.name,
+				monthly_limit: formData.monthlyLimit,
+			};
 
-		// Generate a mock API key
-		const generatedKey = `lt_${Math.random().toString(36).substring(2, 8)}_${Math.random().toString(36).substring(2, 15)}`;
+			const newKey = await createApiKey(keyData);
 
-		setNewGeneratedKey(generatedKey);
-
-		// In a real app, this would call an API to create the key
-		const newKey: ApiKey = {
-			id: `key_${apiKeys.length + 1}`,
-			name: newKeyName,
-			prefix: `lt_${newKeyName.toLowerCase().substring(0, 4)}_${apiKeys.length + 1}`,
-			created: new Date().toISOString().split("T")[0],
-			lastUsed: null,
-			status: "active",
-		};
-
-		setApiKeys([...apiKeys, newKey]);
+			if (newKey) {
+				// Show the generated key to the user (only visible once)
+				setNewGeneratedKey(newKey.full_key);
+			}
+		} catch (error) {
+			console.error("Error creating API key:", error);
+		}
 	};
 
 	const handleCopyKey = () => {
 		if (newGeneratedKey) {
 			navigator.clipboard.writeText(newGeneratedKey);
+			toast.success("API key copied to clipboard");
 		}
 	};
 
 	const handleDoneWithKey = () => {
 		setNewGeneratedKey(null);
-		setNewKeyName("");
 		setShowNewKeyModal(false);
 	};
 
-	const handleRevokeKey = (keyId: string) => {
-		setApiKeys(apiKeys.map((key) => (key.id === keyId ? { ...key, status: "revoked" as const } : key)));
+	const handleDeleteKey = async (keyId: string) => {
+		try {
+			await deleteApiKey(keyId);
+		} catch (error) {
+			console.error("Error deleting API key:", error);
+		}
+	};
+
+	const handleOpenEditModal = (key: ApiKey) => {
+		setCurrentKey(key);
+		setShowEditModal(true);
+	};
+
+	const handleUpdateKey = async (formData: { name: string; monthlyLimit: number | null; isActive?: boolean }) => {
+		if (!currentKey) return;
+
+		try {
+			await updateApiKey({
+				keyId: currentKey.id,
+				isActive: formData.isActive ?? currentKey.is_active,
+				name: formData.name,
+				monthlyLimit: formData.monthlyLimit,
+			});
+
+			setShowEditModal(false);
+			setCurrentKey(null);
+		} catch (error) {
+			console.error("Error updating API key:", error);
+		}
 	};
 
 	return (
@@ -118,71 +125,74 @@ function ApiKeys() {
 									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Name</th>
 									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Prefix</th>
 									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Created</th>
-									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Last Used</th>
+									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Limit</th>
 									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Status</th>
 									<th className="px-6 py-4 text-right text-sm font-medium text-muted-foreground">Actions</th>
 								</tr>
 							</thead>
 							<tbody>
-								{apiKeys.map((key) => (
-									<tr key={key.id} className="border-b border-border/50 hover:bg-card/70">
-										<td className="px-6 py-4 text-sm font-medium">{key.name}</td>
-										<td className="px-6 py-4 text-sm font-mono">{key.prefix}•••</td>
-										<td className="px-6 py-4 text-sm text-muted-foreground">{key.created}</td>
-										<td className="px-6 py-4 text-sm text-muted-foreground">{key.lastUsed ?? "Never"}</td>
-										<td className="px-6 py-4 text-sm">
-											<span
-												className={`px-2 py-1 rounded-full text-xs font-medium
-                          ${
-														key.status === "active"
-															? "dark:bg-emerald-900/30 bg-emerald-900/5 text-emerald-400"
-															: key.status === "expired"
-																? "bg-amber-900/30 text-amber-400"
-																: "bg-red-900/30 text-red-400"
-													}
-                        `}
-											>
-												{key.status.charAt(0).toUpperCase() + key.status.slice(1)}
-											</span>
-										</td>
-										<td className="px-6 py-4 text-right">
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button variant="ghost" size="icon" className="h-8 w-8">
-														<MoreHorizontal className="h-4 w-4" />
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align="end" className="w-44">
-													<DropdownMenuItem
-														onClick={() => {}}
-														className="cursor-pointer"
-														disabled={key.status !== "active"}
-													>
-														<Settings className="h-4 w-4 mr-2" />
-														<span>Edit</span>
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() => {}}
-														className="cursor-pointer"
-														disabled={key.status !== "active"}
-													>
-														<AlarmClock className="h-4 w-4 mr-2" />
-														<span>Set Expiry</span>
-													</DropdownMenuItem>
-													<DropdownMenuSeparator />
-													<DropdownMenuItem
-														onClick={() => handleRevokeKey(key.id)}
-														className="cursor-pointer text-destructive"
-														disabled={key.status !== "active"}
-													>
-														<Trash className="h-4 w-4 mr-2" />
-														<span>Revoke</span>
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
+								{apiKeys.length === 0 && !isLoading ? (
+									<tr className="border-b border-border/50">
+										<td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+											No API keys found. Create one to get started.
 										</td>
 									</tr>
-								))}
+								) : isLoading ? (
+									<tr className="border-b border-border/50">
+										<td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+											Loading API keys...
+										</td>
+									</tr>
+								) : (
+									apiKeys.map((key) => (
+										<tr key={key.id} className="border-b border-border/50 hover:bg-card/70">
+											<td className="px-6 py-4 text-sm font-medium">{key.name}</td>
+											<td className="px-6 py-4 text-sm font-mono">{key.key}</td>
+											<td className="px-6 py-4 text-sm text-muted-foreground">
+												{dayjs(key.created_at).format("YYYY-MM-DD")}
+											</td>
+											<td className="px-6 py-4 text-sm text-muted-foreground">
+												{key.monthly_limit ? `$${key.monthly_limit}` : "None"}
+											</td>
+											<td className="px-6 py-4 text-sm">
+												<span
+													className={`px-2 py-1 rounded-full text-xs font-medium
+                          ${
+														key.is_active
+															? "dark:bg-emerald-900/30 bg-emerald-900/5 text-emerald-400"
+															: "bg-red-900/30 text-red-400"
+													}
+                        `}
+												>
+													{key.is_active ? "Active" : "Disabled"}
+												</span>
+											</td>
+											<td className="px-6 py-4 text-right">
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<Button variant="ghost" size="icon" className="h-8 w-8">
+															<MoreHorizontal className="h-4 w-4" />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="end" className="w-44">
+														<DropdownMenuItem onClick={() => handleOpenEditModal(key)} className="cursor-pointer">
+															<Settings className="h-4 w-4 mr-2" />
+															<span>Edit</span>
+														</DropdownMenuItem>
+														<DropdownMenuSeparator />
+														<DropdownMenuItem
+															onClick={() => handleDeleteKey(key.id)}
+															className="cursor-pointer text-destructive"
+														>
+															<Trash className="h-4 w-4 mr-2" />
+															<span>Delete</span>
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											</td>
+										</tr>
+									))
+								)}
 							</tbody>
 						</table>
 					</div>
@@ -229,33 +239,12 @@ function ApiKeys() {
 									<h2 className="text-xl font-semibold">Create New API Key</h2>
 								</div>
 
-								<div className="space-y-4">
-									<div className="space-y-2">
-										<label htmlFor="key-name" className="block text-sm font-medium text-muted-foreground">
-											Key Name
-										</label>
-										<input
-											id="key-name"
-											type="text"
-											value={newKeyName}
-											onChange={(e) => setNewKeyName(e.target.value)}
-											placeholder="e.g. Production API Key"
-											className="w-full p-2 bg-secondary border border-border rounded-md"
-										/>
-										<p className="text-xs text-muted-foreground">
-											Give your API key a memorable name to easily identify its purpose
-										</p>
-									</div>
-								</div>
-
-								<div className="flex justify-end gap-3 mt-6">
-									<Button variant="outline" onClick={() => setShowNewKeyModal(false)}>
-										Cancel
-									</Button>
-									<Button onClick={handleCreateKey} disabled={!newKeyName.trim()}>
-										Create Key
-									</Button>
-								</div>
+								<ApiKeyForm
+									mode="create"
+									onSubmit={handleCreateKey}
+									onCancel={() => setShowNewKeyModal(false)}
+									isLoading={isLoading}
+								/>
 							</>
 						) : (
 							<>
@@ -289,6 +278,31 @@ function ApiKeys() {
 								</div>
 							</>
 						)}
+					</div>
+				</div>
+			)}
+
+			{/* Edit API Key Modal */}
+			{showEditModal && currentKey && (
+				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+					<div className="bg-card rounded-xl border border-border p-6 max-w-md w-full">
+						<div className="flex justify-between items-center mb-6">
+							<div className="flex items-center gap-3">
+								<Settings className="h-5 w-5 text-primary" />
+								<h2 className="text-xl font-semibold">Edit API Key</h2>
+							</div>
+							<Button variant="ghost" size="icon" onClick={() => setShowEditModal(false)}>
+								<X className="h-4 w-4" />
+							</Button>
+						</div>
+
+						<ApiKeyForm
+							mode="edit"
+							onSubmit={handleUpdateKey}
+							onCancel={() => setShowEditModal(false)}
+							initialData={currentKey}
+							isLoading={isLoading}
+						/>
 					</div>
 				</div>
 			)}

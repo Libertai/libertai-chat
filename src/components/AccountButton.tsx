@@ -40,11 +40,18 @@ export default function AccountButton() {
 				<DropdownMenuTrigger asChild>
 					<Button variant="outline" className="flex items-center gap-2 px-3 h-9 border-border">
 						<span className="flex items-center gap-2">
-							<span className="hidden md:flex items-center text-muted-foreground text-xs">
-								<Coins className="h-3 w-3 mr-1 text-primary" />
-								{ltaiBalance} LTAI
-							</span>
-							<span className="h-4 w-px bg-border hidden md:block"></span>
+							{ltaiBalance !== "0" ? (
+								<>
+									<span className="hidden md:flex items-center text-muted-foreground text-xs">
+										<Coins className="h-3 w-3 mr-1 text-primary" />
+										{ltaiBalance} LTAI
+									</span>
+									<span className="h-4 w-px bg-border hidden md:block"></span>
+								</>
+							) : (
+								<></>
+							)}
+
 							<span className="text-sm">{formatAddress(account.address)}</span>
 						</span>
 					</Button>

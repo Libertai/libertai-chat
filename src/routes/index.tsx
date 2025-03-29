@@ -3,6 +3,7 @@ import { useAccountStore } from "@/stores/account";
 import { ArrowRight, Coins, Key, LayoutDashboard, LineChart, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AccountButton from "@/components/AccountButton";
+import { useCredits } from "@/hooks/use-credits";
 
 export const Route = createFileRoute("/")({
 	component: Index,
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
 	const account = useAccountStore((state) => state.account);
-	const ltaiBalance = useAccountStore((state) => state.formattedLTAIBalance());
+	const { formattedCredits } = useCredits();
 	const navigate = useNavigate();
 
 	return (
@@ -62,8 +63,8 @@ function Index() {
 									<Coins className="h-5 w-5 text-primary" />
 								</div>
 								<div className="space-y-2">
-									<p className="text-muted-foreground">Current LTAI Balance</p>
-									<p className="text-3xl font-bold text-primary">{ltaiBalance} LTAI</p>
+									<p className="text-muted-foreground">Current balance</p>
+									<p className="text-3xl font-bold text-primary">${formattedCredits}</p>
 									<Button className="w-full mt-4" onClick={() => navigate({ to: "/topup" })}>
 										Top Up Balance
 									</Button>
