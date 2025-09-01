@@ -50,7 +50,7 @@ export default function ConnectButton() {
 		await connect({
 			client: thirdwebClient,
 			chain: base,
-			appMetadata: { name: "LibertAI", url: "https://console.libertai.io" },
+			appMetadata: { name: "LibertAI", url: "https://chat.libertai.io" },
 			wallets: [
 				createWallet("io.metamask"),
 				createWallet("io.rabby"),
@@ -65,7 +65,7 @@ export default function ConnectButton() {
 		await connect({
 			client: thirdwebClient,
 			chain: base,
-			appMetadata: { name: "LibertAI", url: "https://console.libertai.io" },
+			appMetadata: { name: "LibertAI", url: "https://chat.libertai.io" },
 			wallets: [inAppWallet()],
 		});
 	}
