@@ -64,7 +64,7 @@ function TopUp() {
 	};
 
 	const handleGoToDashboard = () => {
-		navigate({ to: "/dashboard" });
+		navigate({ to: "/" });
 	};
 
 	return (

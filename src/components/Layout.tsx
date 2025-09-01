@@ -89,7 +89,7 @@ export function Layout({
 	}, [router]);
 
 	return (
-		<SidebarProvider defaultOpen={true}>
+		<SidebarProvider defaultOpen={false}>
 			<div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row w-full">
 				{/* Mobile Header */}
 				<header className="fixed z-20 top-0 left-0 right-0 h-16 border-b border-border px-4 flex items-center justify-between md:hidden bg-background">
@@ -101,7 +101,7 @@ export function Layout({
 				</header>
 
 				{/* Desktop Sidebar */}
-				<Sidebar variant="inset">
+				<Sidebar collapsible="offcanvas">
 					<SidebarHeader className="font-bold text-xl h-16 flex items-center justify-between">
 						<Link to={"/"}>
 							<div>LibertAI</div>
@@ -131,7 +131,8 @@ export function Layout({
 
 				<SidebarInset className="w-full">
 					{/* Desktop Header */}
-					<header className="h-16 border-b border-border px-4 hidden md:flex items-center justify-end">
+					<header className="h-16 border-b border-border px-4 hidden md:flex items-center justify-between">
+						<SidebarTrigger />
 						<div className="flex items-center gap-4">
 							<ThemeToggle />
 							<ConnectButton />

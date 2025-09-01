@@ -7,7 +7,10 @@ const envSchema = z.object({
 	LTAI_SOLANA_ADDRESS: z.string().optional().default("mntpN8z1d29f3MWhMD7VqZFpeYmbD88MgwS3Bkz8y7u"),
 	THIRDWEB_CLIENT_ID: z.string(),
 	USDC_BASE_ADDRESS: z.string().startsWith("0x").optional().default("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
-	PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS: z.string().startsWith("0x"),
+	PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS: z
+		.string()
+		.startsWith("0x")
+		.default("0x48E5A3e497D0C092D5B0Ba22B5A86ADA94227DFa"),
 });
 
 const env = envSchema.parse({

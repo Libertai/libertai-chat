@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: "Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache-dependency-path: 'package-lock.json'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run ESLint
+        run: npm run lint
+
+  build:
+    name: "Build"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache-dependency-path: 'package-lock.json'
+      - name: Install dependencies
+        run: npm ci
+      - name: Create .env file
+        run: |
+          echo "VITE_THIRDWEB_CLIENT_ID=${{ secrets.THIRDWEB_CLIENT_ID }}" >> .env
+          echo "VITE_LTAI_INFERENCE_API_URL=${{ secrets.LTAI_INFERENCE_API_URL }}" >> .env
+          echo "VITE_SOLANA_RPC=${{ secrets.SOLANA_RPC }}" >> .env
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy preview on Aleph
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: aleph-im/web3-hosting-action@v1.1.2
+        with:
+          path: 'dist'
