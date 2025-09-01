@@ -1,10 +1,12 @@
 import { ReactNode, useEffect, useState } from "react";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link, useRouter } from "@tanstack/react-router";
-import AccountButton from "./AccountButton";
+import ConnectButton from "@/components/ConnectButton";
+import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import {
 	Sidebar,
 	SidebarContent,
+	SidebarFooter,
 	SidebarHeader,
 	SidebarInset,
 	SidebarMenu,
@@ -13,7 +15,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 	useSidebar,
-} from "./ui/sidebar";
+} from "@/components/ui/sidebar";
 
 // Component that wraps menu items to auto-close sidebar on mobile
 function SidebarMenuItemWithAutoClose({
@@ -94,7 +96,7 @@ export function Layout({
 					<SidebarTrigger />
 					<div className="flex items-center gap-2">
 						<ThemeToggle />
-						<AccountButton />
+						<ConnectButton />
 					</div>
 				</header>
 
@@ -121,6 +123,10 @@ export function Layout({
 							))}
 						</SidebarMenu>
 					</SidebarContent>
+
+					<SidebarFooter>
+						<ConnectedAccountFooter />
+					</SidebarFooter>
 				</Sidebar>
 
 				<SidebarInset className="w-full">
@@ -128,7 +134,7 @@ export function Layout({
 					<header className="h-16 border-b border-border px-4 hidden md:flex items-center justify-end">
 						<div className="flex items-center gap-4">
 							<ThemeToggle />
-							<AccountButton />
+							<ConnectButton />
 						</div>
 					</header>
 
