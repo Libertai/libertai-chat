@@ -1,13 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUp, Brain, Heart, MessageCircle, Plus, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
 
 export const Route = createFileRoute("/")({
 	component: Index,
 });
 
 function Index() {
+	const [inputValue, setInputValue] = useState("");
+	const [isFocused, setIsFocused] = useState(false);
+	const [isMultiLine, setIsMultiLine] = useState(false);
+	const hasContent = inputValue.trim().length > 0;
+	const shouldShowCentered = isFocused || hasContent;
+
 	const cards = [
 		{
 			icon: <Zap className="h-6 w-6" />,
@@ -33,9 +40,9 @@ function Index() {
 	];
 
 	return (
-		<div className="h-full flex flex-col bg-background text-foreground overflow-hidden">
+		<div className="h-full flex flex-col bg-background text-foreground overflow-hidden relative">
 			{/* Main content */}
-			<div className="flex-1 flex flex-col md:items-center justify-center p-4 md:p-6 space-y-8 md:space-y-12 overflow-auto">
+			<div className="flex-1 flex flex-col md:items-center justify-center p-4 md:p-6 space-y-6 md:space-y-8 overflow-auto">
 				{/* Hero text */}
 				<h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium text-foreground leading-tight text-center max-sm:text-left">
 					<span className="hidden md:inline">Try the world's most </span>
@@ -48,8 +55,14 @@ function Index() {
 					</span>
 				</h1>
 
-				{/* Cards grid */}
-				<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 w-full max-w-6xl">
+				{/* Cards grid - hide when focused or typing */}
+				<div
+					className={`grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 w-full max-w-6xl transition-all duration-500 ease-in-out ${
+						shouldShowCentered
+							? "opacity-0 transform translate-y-8 pointer-events-none"
+							: "opacity-100 transform translate-y-0"
+					}`}
+				>
 					{cards.map((card) => (
 						<div
 							key={card.title}
@@ -72,29 +85,66 @@ function Index() {
 				</div>
 			</div>
 
-			{/* Bottom section with input and disclaimer */}
-			<div className="flex-shrink-0 p-4 md:p-6 space-y-3 md:space-y-4">
-				{/* Chat input */}
-				<div className="max-w-2xl mx-auto relative">
-					<div className="relative flex items-center">
-						<Button variant="ghost" size="icon" className="absolute left-3 z-10 h-8 w-8 bg-muted bg-card rounded-full">
-							<Plus className="h-4 w-4 text-muted-foreground" />
-						</Button>
-						<Input
-							placeholder="Start a private conversation..."
-							className="pl-14 pr-12 h-12 border-border text-foreground placeholder:text-muted-foreground rounded-full"
-							id="chat-input"
-						/>
-						<Button variant="ghost" size="icon" className="absolute right-3 z-10 h-8 w-8 bg-muted rounded-full">
-							<ArrowUp className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-						</Button>
+			{/* Single animated input container */}
+			<div
+				className={`absolute left-0 right-0 transition-all duration-500 ease-in-out ${
+					shouldShowCentered ? "top-[40%] md:top-[45%]" : "top-[calc(100%-120px)]"
+				}`}
+			>
+				<div className="p-4 md:p-6 space-y-3 md:space-y-4">
+					{/* Chat input */}
+					<div className="max-w-2xl mx-auto relative">
+						<div className="relative flex items-start">
+							<Button
+								variant="ghost"
+								size="icon"
+								className="absolute left-3 top-2 z-10 h-8 w-8 bg-muted bg-card rounded-full"
+							>
+								<Plus className="h-4 w-4 text-muted-foreground" />
+							</Button>
+							<Textarea
+								placeholder="Start a private conversation..."
+								className={`pl-14 pr-12 resize-none min-h-[48px] max-h-[240px] py-[14px] overflow-hidden ${
+									isMultiLine ? "rounded-2xl" : "rounded-full"
+								}`}
+								id="chat-input"
+								value={inputValue}
+								onChange={(e) => setInputValue(e.target.value)}
+								onFocus={() => setIsFocused(true)}
+								onBlur={() => setIsFocused(false)}
+								rows={1}
+								onInput={(e) => {
+									const target = e.target as HTMLTextAreaElement;
+									target.style.height = "48px";
+									const newHeight = Math.min(target.scrollHeight, 240);
+									target.style.height = newHeight + "px";
+
+									setIsMultiLine(newHeight > 48);
+									target.style.overflowY = newHeight >= 240 ? "auto" : "hidden";
+								}}
+							/>
+							<Button
+								variant="ghost"
+								size="icon"
+								className={`absolute right-3 top-2 z-10 h-8 w-8 rounded-full transition-all duration-200 ${
+									hasContent
+										? "bg-primary hover:bg-primary/90 text-white"
+										: "bg-muted text-muted-foreground hover:text-foreground cursor-not-allowed opacity-50"
+								}`}
+								disabled={!hasContent}
+							>
+								<ArrowUp className="h-4 w-4" />
+							</Button>
+						</div>
+					</div>
+
+					{/* Disclaimer */}
+					<div>
+						<p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto">
+							Like humans, AI may make mistakes. Verify information for critical decisions.
+						</p>
 					</div>
 				</div>
-
-				{/* Disclaimer */}
-				<p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto">
-					Like humans, AI may make mistakes. Verify information for critical decisions.
-				</p>
 			</div>
 		</div>
 	);
