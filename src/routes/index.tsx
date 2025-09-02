@@ -1,19 +1,57 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ArrowUp, Brain, Heart, MessageCircle, Plus, Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Brain, Heart, MessageCircle, Zap } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChatInput } from "@/components/ChatInput";
 
 export const Route = createFileRoute("/")({
 	component: Index,
 });
 
 function Index() {
+	const navigate = useNavigate();
+	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const [inputValue, setInputValue] = useState("");
 	const [isFocused, setIsFocused] = useState(false);
-	const [isMultiLine, setIsMultiLine] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const hasContent = inputValue.trim().length > 0;
 	const shouldShowCentered = isFocused || hasContent;
+
+	// Keep input focused during transition
+	useEffect(() => {
+		if (isSubmitting && inputRef.current) {
+			inputRef.current.focus();
+		}
+	}, [isSubmitting]);
+
+	const handleSubmit = () => {
+		if (!hasContent || isSubmitting) return;
+
+		setIsSubmitting(true);
+
+		// Generate UUID for new chat
+		const chatId = crypto.randomUUID();
+
+		// Store the initial message in localStorage
+		const initialMessage = inputValue.trim();
+		localStorage.setItem(
+			`chat-${chatId}`,
+			JSON.stringify({
+				id: chatId,
+				messages: [],
+				initialMessage,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+			}),
+		);
+
+		// Small delay to show the animation before navigating
+		setTimeout(() => {
+			navigate({
+				to: "/chat/$chatId",
+				params: { chatId },
+			});
+		}, 200);
+	};
 
 	const cards = [
 		{
@@ -40,7 +78,9 @@ function Index() {
 	];
 
 	return (
-		<div className="h-full flex flex-col bg-background text-foreground overflow-hidden relative">
+		<div
+			className={`h-full flex flex-col bg-background text-foreground overflow-hidden relative transition-all duration-500 ${isSubmitting ? "animate-out slide-out-to-left-8 fade-out" : ""}`}
+		>
 			{/* Main content */}
 			<div className="flex-1 flex flex-col md:items-center justify-center p-4 md:p-6 space-y-6 md:space-y-8 overflow-auto">
 				{/* Hero text */}
@@ -93,49 +133,24 @@ function Index() {
 			>
 				<div className="p-4 md:p-6 space-y-3 md:space-y-4">
 					{/* Chat input */}
-					<div className="max-w-2xl mx-auto relative">
-						<div className="relative flex items-start">
-							<Button
-								variant="ghost"
-								size="icon"
-								className="absolute left-3 top-2 z-10 h-8 w-8 bg-muted bg-card rounded-full"
-							>
-								<Plus className="h-4 w-4 text-muted-foreground" />
-							</Button>
-							<Textarea
-								placeholder="Start a private conversation..."
-								className={`pl-14 pr-12 resize-none min-h-[48px] max-h-[240px] py-[14px] overflow-hidden ${
-									isMultiLine ? "rounded-2xl" : "rounded-full"
-								}`}
-								id="chat-input"
-								value={inputValue}
-								onChange={(e) => setInputValue(e.target.value)}
-								onFocus={() => setIsFocused(true)}
-								onBlur={() => setIsFocused(false)}
-								rows={1}
-								onInput={(e) => {
-									const target = e.target as HTMLTextAreaElement;
-									target.style.height = "48px";
-									const newHeight = Math.min(target.scrollHeight, 240);
-									target.style.height = newHeight + "px";
-
-									setIsMultiLine(newHeight > 48);
-									target.style.overflowY = newHeight >= 240 ? "auto" : "hidden";
-								}}
-							/>
-							<Button
-								variant="ghost"
-								size="icon"
-								className={`absolute right-3 top-2 z-10 h-8 w-8 rounded-full transition-all duration-200 ${
-									hasContent
-										? "bg-primary hover:bg-primary/90 text-white"
-										: "bg-muted text-muted-foreground hover:text-foreground cursor-not-allowed opacity-50"
-								}`}
-								disabled={!hasContent}
-							>
-								<ArrowUp className="h-4 w-4" />
-							</Button>
-						</div>
+					<div className="max-w-2xl mx-auto">
+						<ChatInput
+							value={inputValue}
+							onChange={setInputValue}
+							onSubmit={handleSubmit}
+							onFocus={() => setIsFocused(true)}
+							onBlur={(e) => {
+								// Don't blur during submission to maintain focus
+								if (!isSubmitting) {
+									setIsFocused(false);
+								} else {
+									e.target.focus();
+								}
+							}}
+							placeholder="Start a private conversation..."
+							isSubmitting={isSubmitting}
+							inputRef={inputRef}
+						/>
 					</div>
 
 					{/* Disclaimer */}

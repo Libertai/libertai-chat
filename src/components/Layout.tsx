@@ -2,6 +2,8 @@ import { ReactNode, useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link, useRouter } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import {
 	Sidebar,
@@ -72,6 +74,9 @@ export function Layout({
 	const router = useRouter();
 	const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
 
+	// Check if we're on a chat page
+	const isOnChatPage = currentPath.startsWith("/chat/");
+
 	// Update the current path whenever the route changes
 	useEffect(() => {
 		// Initial state
@@ -95,6 +100,13 @@ export function Layout({
 				<header className="fixed z-20 top-0 left-0 right-0 h-16 border-b border-border px-4 flex items-center justify-between md:hidden bg-background">
 					<SidebarTrigger />
 					<div className="flex items-center gap-2">
+						{isOnChatPage && (
+							<Link to="/">
+								<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+									<Edit className="h-4 w-4" />
+								</Button>
+							</Link>
+						)}
 						<ThemeToggle />
 						<ConnectButton />
 					</div>
@@ -134,6 +146,13 @@ export function Layout({
 					<header className="h-16 border-b border-border px-4 hidden md:flex items-center justify-between">
 						<SidebarTrigger />
 						<div className="flex items-center gap-4">
+							{isOnChatPage && (
+								<Link to="/">
+									<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+										<Edit className="h-4 w-4" />
+									</Button>
+								</Link>
+							)}
 							<ThemeToggle />
 							<ConnectButton />
 						</div>
