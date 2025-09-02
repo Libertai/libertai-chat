@@ -8,9 +8,10 @@ import {
 	AlertCircle,
 	Calendar as CalendarIcon,
 	Download,
-	FilterIcon, LucideBrushCleaning,
+	FilterIcon,
+	LucideBrushCleaning,
 	Receipt,
-	X
+	X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { useState, useMemo } from "react";
@@ -20,7 +21,7 @@ import {
 	DropdownMenuCheckboxItem,
 	DropdownMenuTrigger,
 	DropdownMenuLabel,
-	DropdownMenuSeparator
+	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -41,7 +42,7 @@ function formatDate(date: Date): string {
 }
 
 function formatDateForCSV(date: Date): string {
-	const pad = (n: number) => String(n).padStart(2, '0');
+	const pad = (n: number) => String(n).padStart(2, "0");
 
 	const year = date.getFullYear();
 	const month = pad(date.getMonth() + 1);
@@ -53,11 +54,11 @@ function formatDateForCSV(date: Date): string {
 }
 
 const FilterModal = ({
-											 filters,
-											 onFilterChange,
-											 onClearFilters,
-											 onClose
-										 }: {
+	filters,
+	onFilterChange,
+	onClearFilters,
+	onClose,
+}: {
 	filters: FilterState;
 	onFilterChange: (filters: FilterState) => void;
 	onClearFilters: () => void;
@@ -67,7 +68,7 @@ const FilterModal = ({
 		{ value: "active", label: "Active" },
 		{ value: "used", label: "Used" },
 		{ value: "expired", label: "Expired" },
-		{ value: "pending", label: "Pending" }
+		{ value: "pending", label: "Pending" },
 	];
 
 	const typeOptions: { value: CreditTransactionProvider; label: string }[] = [
@@ -75,20 +76,16 @@ const FilterModal = ({
 		{ value: "ltai_solana", label: "LibertAI (Solana)" },
 		{ value: "sol_solana", label: "Solana (SOL)" },
 		{ value: "thirdweb", label: "Thirdweb" },
-		{ value: "voucher", label: "Voucher" }
+		{ value: "voucher", label: "Voucher" },
 	];
 
 	const handleStatusChange = (status: string, checked: boolean) => {
-		const newStatuses = checked
-			? [...filters.statuses, status]
-			: filters.statuses.filter(s => s !== status);
+		const newStatuses = checked ? [...filters.statuses, status] : filters.statuses.filter((s) => s !== status);
 		onFilterChange({ ...filters, statuses: newStatuses });
 	};
 
 	const handleTypeChange = (type: CreditTransactionProvider, checked: boolean) => {
-		const newTypes = checked
-			? [...filters.types, type]
-			: filters.types.filter(t => t !== type);
+		const newTypes = checked ? [...filters.types, type] : filters.types.filter((t) => t !== type);
 		onFilterChange({ ...filters, types: newTypes });
 	};
 
@@ -99,12 +96,12 @@ const FilterModal = ({
 		if (timeRange === "7d") {
 			dateRange = {
 				from: dayjs(now).subtract(7, "day").toDate(),
-				to: now
+				to: now,
 			};
 		} else if (timeRange === "30d") {
 			dateRange = {
 				from: dayjs(now).subtract(30, "day").toDate(),
-				to: now
+				to: now,
 			};
 		}
 
@@ -116,12 +113,13 @@ const FilterModal = ({
 			onFilterChange({
 				...filters,
 				timeRange: "custom",
-				dateRange: { from: range.from, to: range.to || range.from }
+				dateRange: { from: range.from, to: range.to || range.from },
 			});
 		}
 	};
 
-	const hasActiveFilters = filters.statuses.length > 0 || filters.types.length > 0 || (filters.dateRange.from || filters.dateRange.to);
+	const hasActiveFilters =
+		filters.statuses.length > 0 || filters.types.length > 0 || filters.dateRange.from || filters.dateRange.to;
 
 	return (
 		<div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border p-6 space-y-6 w-[400px]">
@@ -134,12 +132,7 @@ const FilterModal = ({
 							Clear All
 						</Button>
 					)}
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={onClose}
-						className="text-black hover:text-red-500 p-1"
-					>
+					<Button variant="ghost" size="sm" onClick={onClose} className="text-black hover:text-red-500 p-1">
 						<X className="h-4 w-4 dark:text-white" />
 					</Button>
 				</div>
@@ -174,7 +167,7 @@ const FilterModal = ({
 								{filters.timeRange === "custom" && filters.dateRange.from
 									? filters.dateRange.from === filters.dateRange.to
 										? formatDate(filters.dateRange.from)
-										: `${formatDate(filters.dateRange.from)} - ${filters.dateRange.to ? formatDate(filters.dateRange.to) : ''}`
+										: `${formatDate(filters.dateRange.from)} - ${filters.dateRange.to ? formatDate(filters.dateRange.to) : ""}`
 									: "Custom Range"}
 							</Button>
 						</PopoverTrigger>
@@ -184,7 +177,7 @@ const FilterModal = ({
 								defaultMonth={new Date()}
 								selected={{
 									from: filters.dateRange.from,
-									to: filters.dateRange.to
+									to: filters.dateRange.to,
 								}}
 								onSelect={handleDateRangeChange}
 								autoFocus
@@ -204,7 +197,7 @@ const FilterModal = ({
 							{filters.statuses.length === 0
 								? "All Statuses"
 								: filters.statuses.length === 1
-									? statusOptions.find(s => s.value === filters.statuses[0])?.label
+									? statusOptions.find((s) => s.value === filters.statuses[0])?.label
 									: `${filters.statuses.length} selected`}
 						</Button>
 					</DropdownMenuTrigger>
@@ -233,7 +226,7 @@ const FilterModal = ({
 							{filters.types.length === 0
 								? "All Types"
 								: filters.types.length === 1
-									? typeOptions.find(t => t.value === filters.types[0])?.label
+									? typeOptions.find((t) => t.value === filters.types[0])?.label
 									: `${filters.types.length} selected`}
 						</Button>
 					</DropdownMenuTrigger>
@@ -262,7 +255,7 @@ function Transactions() {
 		statuses: [],
 		types: [],
 		dateRange: {},
-		timeRange: "None"
+		timeRange: "None",
 	});
 
 	// Use auth hook to require authentication
@@ -316,7 +309,7 @@ function Transactions() {
 			if (filters.dateRange.from && transactionDate.isBefore(dayjs(filters.dateRange.from))) {
 				return false;
 			}
-			if (filters.dateRange.to && transactionDate.isAfter(dayjs(filters.dateRange.to).endOf('day'))) {
+			if (filters.dateRange.to && transactionDate.isAfter(dayjs(filters.dateRange.to).endOf("day"))) {
 				return false;
 			}
 
@@ -347,13 +340,12 @@ function Transactions() {
 		return null;
 	}
 
-
 	const handleClearFilters = () => {
 		setFilters({
 			statuses: [],
 			types: [],
 			dateRange: {},
-			timeRange: "None"
+			timeRange: "None",
 		});
 	};
 
@@ -361,17 +353,25 @@ function Transactions() {
 		const headers = ["Date", "Type", "Amount", "Remaining", "Expires", "Status"];
 		const csvRows = [
 			headers.join(","),
-			...filteredTransactions.map((tx) => [
-				dayjs(tx.created_at).format("YYYY-MM-DD HH:mm"),
-				formatProvider(tx.provider),
-				tx.amount.toLocaleString(undefined, { maximumFractionDigits: 4 }),
-				tx.amount_left.toLocaleString(undefined, { maximumFractionDigits: 4 }),
-				tx.expired_at ? dayjs(tx.expired_at).format("YYYY-MM-DD") : "Never",
-				getTransactionStatus(tx).label
-			].join(",")),
+			...filteredTransactions.map((tx) =>
+				[
+					dayjs(tx.created_at).format("YYYY-MM-DD HH:mm"),
+					formatProvider(tx.provider),
+					tx.amount.toLocaleString(undefined, { maximumFractionDigits: 4 }),
+					tx.amount_left.toLocaleString(undefined, { maximumFractionDigits: 4 }),
+					tx.expired_at ? dayjs(tx.expired_at).format("YYYY-MM-DD") : "Never",
+					getTransactionStatus(tx).label,
+				].join(","),
+			),
 		];
-		const startDate = filters.dateRange.from ? formatDateForCSV(filters.dateRange.from) : dayjs(filteredTransactions[filteredTransactions.length === 1 ? 0 : filteredTransactions.length - 1].created_at).format("YYYY-MM-DD_HH:mm");
-		const endDate = filters.dateRange.to ? formatDateForCSV(filters.dateRange.to) : dayjs(filteredTransactions[0].created_at).format("YYYY-MM-DD_HH:mm");
+		const startDate = filters.dateRange.from
+			? formatDateForCSV(filters.dateRange.from)
+			: dayjs(
+					filteredTransactions[filteredTransactions.length === 1 ? 0 : filteredTransactions.length - 1].created_at,
+				).format("YYYY-MM-DD_HH:mm");
+		const endDate = filters.dateRange.to
+			? formatDateForCSV(filters.dateRange.to)
+			: dayjs(filteredTransactions[0].created_at).format("YYYY-MM-DD_HH:mm");
 		const csvContent = csvRows.join("\n");
 		const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 		const url = URL.createObjectURL(blob);
@@ -423,9 +423,14 @@ function Transactions() {
 				</div>
 
 				{/* Filter Summary */}
-				{(filters.statuses.length > 0 || filters.types.length > 0 || filters.dateRange.from || filters.dateRange.to) && (
+				{(filters.statuses.length > 0 ||
+					filters.types.length > 0 ||
+					filters.dateRange.from ||
+					filters.dateRange.to) && (
 					<div className="flex items-center gap-2 text-sm text-muted-foreground">
-						<span>Showing {filteredTransactions.length} of {transactions.length} transactions</span>
+						<span>
+							Showing {filteredTransactions.length} of {transactions.length} transactions
+						</span>
 						{filters.statuses.length > 0 && (
 							<span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
 								Status: {filters.statuses.join(", ")}
@@ -462,84 +467,84 @@ function Transactions() {
 					<div className="overflow-x-auto">
 						<table className="w-full">
 							<thead>
-							<tr className="border-b border-border">
-								<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Date</th>
-								<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Type</th>
-								<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Amount</th>
-								<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Remaining</th>
-								<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Expires</th>
-								<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Status</th>
-							</tr>
+								<tr className="border-b border-border">
+									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Date</th>
+									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Type</th>
+									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Amount</th>
+									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Remaining</th>
+									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Expires</th>
+									<th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Status</th>
+								</tr>
 							</thead>
 							<tbody>
-							{filteredTransactions.length === 0 && transactions.length > 0 && !isLoading ? (
-								<tr className="border-b border-border/50">
-									<td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-										No transactions match the current filters.
-									</td>
-								</tr>
-							) : transactions.length === 0 && !isLoading ? (
-								<tr className="border-b border-border/50">
-									<td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
-										No transactions found.
-									</td>
-								</tr>
-							) : isLoading ? (
-								<>
+								{filteredTransactions.length === 0 && transactions.length > 0 && !isLoading ? (
 									<tr className="border-b border-border/50">
-										<td colSpan={7} className="px-6 py-2">
-											<Skeleton className="h-10 w-full my-1" />
+										<td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+											No transactions match the current filters.
 										</td>
 									</tr>
+								) : transactions.length === 0 && !isLoading ? (
 									<tr className="border-b border-border/50">
-										<td colSpan={7} className="px-6 py-2">
-											<Skeleton className="h-10 w-full my-1" />
+										<td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+											No transactions found.
 										</td>
 									</tr>
+								) : isLoading ? (
+									<>
+										<tr className="border-b border-border/50">
+											<td colSpan={7} className="px-6 py-2">
+												<Skeleton className="h-10 w-full my-1" />
+											</td>
+										</tr>
+										<tr className="border-b border-border/50">
+											<td colSpan={7} className="px-6 py-2">
+												<Skeleton className="h-10 w-full my-1" />
+											</td>
+										</tr>
+										<tr className="border-b border-border/50">
+											<td colSpan={7} className="px-6 py-2">
+												<Skeleton className="h-10 w-full my-1" />
+											</td>
+										</tr>
+									</>
+								) : isError ? (
 									<tr className="border-b border-border/50">
-										<td colSpan={7} className="px-6 py-2">
-											<Skeleton className="h-10 w-full my-1" />
+										<td colSpan={7} className="px-6 py-8 text-center text-destructive">
+											Error loading transaction history. Please try again.
 										</td>
 									</tr>
-								</>
-							) : isError ? (
-								<tr className="border-b border-border/50">
-									<td colSpan={7} className="px-6 py-8 text-center text-destructive">
-										Error loading transaction history. Please try again.
-									</td>
-								</tr>
-							) : (
-								filteredTransactions.map((transaction) => {
-									const status = getTransactionStatus(transaction);
-									return (
-										<tr key={transaction.id} className="border-b border-border/50 hover:bg-card/70">
-											<td className="px-6 py-4 text-sm font-medium">
-												{dayjs(transaction.created_at).format("YYYY-MM-DD HH:mm")}
-											</td>
-											<td className="px-6 py-4 text-sm">{formatProvider(transaction.provider)}</td>
-											<td className="px-6 py-4 text-sm">
-												${transaction.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-											</td>
-											<td className="px-6 py-4 text-sm">
-												${transaction.amount_left.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-											</td>
-											<td className="px-6 py-4 text-sm text-muted-foreground">
-												{transaction.expired_at ? dayjs(transaction.expired_at).format("YYYY-MM-DD") : "Never"}
-											</td>
-											<td className="px-6 py-4 text-sm">
+								) : (
+									filteredTransactions.map((transaction) => {
+										const status = getTransactionStatus(transaction);
+										return (
+											<tr key={transaction.id} className="border-b border-border/50 hover:bg-card/70">
+												<td className="px-6 py-4 text-sm font-medium">
+													{dayjs(transaction.created_at).format("YYYY-MM-DD HH:mm")}
+												</td>
+												<td className="px-6 py-4 text-sm">{formatProvider(transaction.provider)}</td>
+												<td className="px-6 py-4 text-sm">
+													${transaction.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+												</td>
+												<td className="px-6 py-4 text-sm">
+													${transaction.amount_left.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+												</td>
+												<td className="px-6 py-4 text-sm text-muted-foreground">
+													{transaction.expired_at ? dayjs(transaction.expired_at).format("YYYY-MM-DD") : "Never"}
+												</td>
+												<td className="px-6 py-4 text-sm">
 													<span className={`px-2 py-1 rounded-full text-xs font-medium ${status.className}`}>
 														{status.label}
 													</span>
-												{transaction.status !== "completed" && (
-													<span className="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+													{transaction.status !== "completed" && (
+														<span className="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
 															Pending
 														</span>
-												)}
-											</td>
-										</tr>
-									);
-								})
-							)}
+													)}
+												</td>
+											</tr>
+										);
+									})
+								)}
 							</tbody>
 						</table>
 					</div>

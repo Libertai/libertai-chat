@@ -83,7 +83,7 @@ function Chat() {
 		if (!isInitialized) {
 			loadChat();
 		}
-	}, [chatId, isInitialized]);
+	}, [chatId, isInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Save chat data to localStorage whenever messages change
 	useEffect(() => {
@@ -164,7 +164,6 @@ function Chat() {
 			setIsLoading(false);
 		}
 	};
-
 
 	return (
 		<div className="h-full flex flex-col bg-background text-foreground animate-in slide-in-from-right-8 fade-in duration-500">

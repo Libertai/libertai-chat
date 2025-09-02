@@ -43,14 +43,14 @@ export function useENS(address: string | undefined, chainId?: number): ENSData {
 
 				let ensAvatar: string | null = null;
 				let displayName: string | null = null;
-				
+
 				if (ensName) {
 					// Resolve avatar if ENS name exists
 					ensAvatar = await resolveAvatar({
 						client: thirdwebClient,
 						name: ensName,
 					}).catch(() => null);
-					
+
 					// Resolve name text record
 					displayName = await resolveText({
 						client: thirdwebClient,
