@@ -18,6 +18,7 @@ import {
 	SidebarTrigger,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { LibertaiLogo } from "@/components/LibertaiLogo.tsx";
 
 // Component that wraps menu items to auto-close sidebar on mobile
 function SidebarMenuItemWithAutoClose({
@@ -99,6 +100,9 @@ export function Layout({
 				{/* Mobile Header */}
 				<header className="fixed z-20 top-0 left-0 right-0 h-16 border-b border-border px-4 flex items-center justify-between md:hidden bg-background">
 					<SidebarTrigger />
+					<Link to="/" className="absolute left-1/2 transform -translate-x-1/2">
+						<LibertaiLogo className="h-6 w-auto text-foreground" />
+					</Link>
 					<div className="flex items-center gap-2">
 						{isOnChatPage && (
 							<Link to="/">
@@ -116,7 +120,7 @@ export function Layout({
 				<Sidebar collapsible="offcanvas">
 					<SidebarHeader className="font-bold text-xl h-16 flex items-center justify-between">
 						<Link to={"/"}>
-							<div>LibertAI</div>
+							<LibertaiLogo className="h-6 w-auto text-foreground" />
 						</Link>
 					</SidebarHeader>
 

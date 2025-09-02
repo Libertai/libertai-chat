@@ -38,6 +38,12 @@ export function ChatInput({
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
 			onSubmit();
+			// Reset textarea height after submission
+			if (textareaRef.current) {
+				textareaRef.current.style.height = "48px";
+				setIsMultiLine(false);
+				textareaRef.current.style.overflowY = "hidden";
+			}
 		}
 	};
 
@@ -57,6 +63,7 @@ export function ChatInput({
 				<Plus className="h-4 w-4 text-muted-foreground" />
 			</Button>
 			<Textarea
+				id="chat-input"
 				ref={textareaRef}
 				placeholder={placeholder}
 				className={`pl-14 pr-12 resize-none min-h-[48px] max-h-[240px] py-[14px] overflow-hidden ${
@@ -80,7 +87,15 @@ export function ChatInput({
 						: "bg-muted text-muted-foreground hover:text-foreground cursor-not-allowed opacity-50"
 				}`}
 				disabled={!hasContent || disabled || isSubmitting}
-				onClick={onSubmit}
+				onClick={() => {
+					onSubmit();
+					// Reset textarea height after submission
+					if (textareaRef.current) {
+						textareaRef.current.style.height = "48px";
+						setIsMultiLine(false);
+						textareaRef.current.style.overflowY = "hidden";
+					}
+				}}
 			>
 				<ArrowUp className="h-4 w-4" />
 			</Button>
