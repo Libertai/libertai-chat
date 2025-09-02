@@ -9,7 +9,7 @@
     /* Light theme colors */
     --background: #F0EFED;
     --foreground: #0E0F18;
-    --card: oklch(1 0 0);
+    --card: #E1E1E1;
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
@@ -35,8 +35,8 @@
 
     /* Other colors */
     --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.5 0.18 264); /* Match primary */
+    --input: #E1E1E1;
+    --ring: #644DF9; /* Match primary */
 
     /* Chart colors */
     --chart-1: oklch(0.5 0.18 264); /* Primary blue */
@@ -60,13 +60,13 @@
     /* Dark theme colors */
     --background: #0E0F18; /* Dark background */
     --foreground: #FFF;
-    --card: oklch(0.18 0 0); /* Slightly lighter than background */
+    --card: #1F2030; /* Slightly lighter than background */
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.18 0 0);
     --popover-foreground: oklch(0.985 0 0);
 
     /* Primary - Liberty Purple */
-    --primary: oklch(0.6 0.22 280); /* Purple */
+    --primary: #644DF9; /* Purple */
     --primary-foreground: oklch(1 0 0);
 
     /* Secondary */
@@ -86,8 +86,8 @@
 
     /* Other colors */
     --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.6 0.22 280); /* Match primary */
+    --input: #1F2030;
+    --ring: #644DF9; /* Match primary */
 
     /* Chart colors */
     --chart-1: oklch(0.6 0.22 280); /* Primary purple */
