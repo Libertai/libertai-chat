@@ -35,7 +35,7 @@ function Chat() {
 	const initialMessageProcessed = useRef(false);
 
 	const openai = new OpenAI({
-		baseURL: "http://localhost:8001/v1",
+		baseURL: import.meta.env.VITE_LIBERTAI_API_URL || "https://api.libertai.com/v1",
 		apiKey: import.meta.env.VITE_LIBERTAI_API_KEY,
 		dangerouslyAllowBrowser: true,
 	});

@@ -11,67 +11,12 @@ import {
 	SidebarFooter,
 	SidebarHeader,
 	SidebarInset,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
 	SidebarProvider,
 	SidebarTrigger,
-	useSidebar,
 } from "@/components/ui/sidebar";
 import { LibertaiLogo } from "@/components/LibertaiLogo.tsx";
 
-// Component that wraps menu items to auto-close sidebar on mobile
-function SidebarMenuItemWithAutoClose({
-	to,
-	tooltip,
-	isActive,
-	icon,
-	label,
-	badge,
-}: Readonly<{
-	to: string;
-	tooltip: string;
-	isActive: boolean;
-	icon: ReactNode;
-	label: string;
-	badge?: ReactNode;
-}>) {
-	const { isMobile, setOpenMobile } = useSidebar();
-
-	const handleClick = () => {
-		if (isMobile) {
-			setOpenMobile(false);
-		}
-	};
-
-	return (
-		<SidebarMenuItem>
-			<Link to={to} onClick={handleClick} disabled={isActive}>
-				<SidebarMenuButton tooltip={tooltip} isActive={isActive}>
-					{icon}
-					<span>
-						{label} {badge ? <span className="ml-2">{badge}</span> : null}
-					</span>
-				</SidebarMenuButton>
-			</Link>
-		</SidebarMenuItem>
-	);
-}
-
-type SidebarItem = {
-	to: string;
-	icon: ReactNode;
-	label: string;
-	badge?: ReactNode;
-};
-
-export function Layout({
-	children,
-	sidebarItems,
-}: Readonly<{
-	children: ReactNode;
-	sidebarItems: SidebarItem[];
-}>) {
+export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 	const router = useRouter();
 	const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
 
@@ -124,21 +69,7 @@ export function Layout({
 						</Link>
 					</SidebarHeader>
 
-					<SidebarContent>
-						<SidebarMenu>
-							{sidebarItems.map((item) => (
-								<SidebarMenuItemWithAutoClose
-									to={item.to}
-									tooltip={item.label}
-									isActive={currentPath === item.to}
-									icon={item.icon}
-									label={item.label}
-									badge={item.badge}
-									key={item.to}
-								/>
-							))}
-						</SidebarMenu>
-					</SidebarContent>
+					<SidebarContent></SidebarContent>
 
 					<SidebarFooter>
 						<ConnectedAccountFooter />
@@ -163,7 +94,7 @@ export function Layout({
 					</header>
 
 					{/* Main content */}
-					<main className="flex-1 overflow-auto w-full">{children}</main>
+					<main className="flex-1 overflow-auto w-full mt-16 md:mt-0">{children}</main>
 				</SidebarInset>
 			</div>
 		</SidebarProvider>

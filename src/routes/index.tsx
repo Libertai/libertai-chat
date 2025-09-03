@@ -82,7 +82,7 @@ function Index() {
 			className={`h-full flex flex-col bg-background text-foreground overflow-hidden relative transition-all duration-500 ${isSubmitting ? "animate-out slide-out-to-left-8 fade-out" : ""}`}
 		>
 			{/* Main content */}
-			<div className="flex-1 flex flex-col md:items-center justify-center p-4 md:p-6 space-y-6 md:space-y-8 overflow-auto">
+			<div className="md:flex-1 md:flex md:flex-col md:items-center justify-center p-4 md:p-6 space-y-6 md:space-y-8 overflow-auto">
 				{/* Hero text */}
 				<h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium text-foreground leading-tight text-center max-sm:text-left">
 					<span className="hidden md:inline">Try the world's most </span>
