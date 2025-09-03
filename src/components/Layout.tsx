@@ -96,7 +96,7 @@ export function Layout({
 
 	return (
 		<SidebarProvider defaultOpen={false}>
-			<div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row w-full">
+			<div className="min-h-[100svh] bg-background text-foreground flex flex-col md:flex-row w-full">
 				{/* Mobile Header */}
 				<header className="fixed z-20 top-0 left-0 right-0 h-16 border-b border-border px-4 flex items-center justify-between md:hidden bg-background">
 					<SidebarTrigger />
@@ -162,8 +162,8 @@ export function Layout({
 						</div>
 					</header>
 
-					{/* Main content with padding on mobile for the fixed header */}
-					<main className="flex-1 overflow-auto md:pt-0 pt-16 w-full">{children}</main>
+					{/* Main content */}
+					<main className="flex-1 overflow-auto w-full">{children}</main>
 				</SidebarInset>
 			</div>
 		</SidebarProvider>

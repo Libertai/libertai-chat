@@ -97,9 +97,9 @@ function Index() {
 
 				{/* Cards grid - hide when focused or typing */}
 				<div
-					className={`grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 w-full max-w-6xl transition-all duration-500 ease-in-out ${
+					className={`grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 w-full max-w-6xl md:transition-all md:duration-500 md:ease-in-out ${
 						shouldShowCentered
-							? "opacity-0 transform translate-y-8 pointer-events-none"
+							? "md:opacity-0 md:transform md:translate-y-8 md:pointer-events-none"
 							: "opacity-100 transform translate-y-0"
 					}`}
 				>
@@ -127,8 +127,8 @@ function Index() {
 
 			{/* Single animated input container */}
 			<div
-				className={`absolute left-0 right-0 transition-all duration-500 ease-in-out ${
-					shouldShowCentered ? "top-[40%] md:top-[45%]" : "top-[calc(100%-120px)]"
+				className={`absolute left-0 right-0 md:transition-all md:duration-500 md:ease-in-out ${
+					shouldShowCentered ? "top-[calc(100%-120px)] md:top-[45%]" : "top-[calc(100%-120px)]"
 				}`}
 			>
 				<div className="p-4 md:p-6 space-y-3 md:space-y-4">
