@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ChatInput } from "@/components/ChatInput";
+import OpenAI from "openai";
 
 export const Route = createFileRoute("/chat/$chatId")({
 	component: Chat,
@@ -28,17 +29,27 @@ function Chat() {
 	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
+	const [isStreaming, setIsStreaming] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const initialMessageProcessed = useRef(false);
+
+	const openai = new OpenAI({
+		baseURL: "http://localhost:8001/v1",
+		apiKey: import.meta.env.VITE_LIBERTAI_API_KEY,
+		dangerouslyAllowBrowser: true,
+	});
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	};
 
+	// Only auto-scroll on initial load
 	useEffect(() => {
-		scrollToBottom();
-	}, [messages]);
+		if (isInitialized) {
+			scrollToBottom();
+		}
+	}, [isInitialized]);
 
 	// Focus input when page loads
 	useEffect(() => {
@@ -114,54 +125,73 @@ function Chat() {
 		setMessages((prev) => [...prev, userMessage]);
 		setInput("");
 		setIsLoading(true);
+		setIsStreaming(false);
+
+		// Create assistant message placeholder for streaming
+		const assistantMessageId = (Date.now() + 1).toString();
+		const assistantMessage: Message = {
+			id: assistantMessageId,
+			role: "assistant",
+			content: "",
+			timestamp: new Date(),
+		};
+		setMessages((prev) => [...prev, assistantMessage]);
 
 		try {
-			const response = await fetch("https://api.libertai.io/v1/chat/completions", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${import.meta.env.VITE_LIBERTAI_API_KEY}`,
-				},
-				body: JSON.stringify({
-					model: "gemma-3-27b",
-					messages: [
-						...messages.map((m) => ({
-							role: m.role,
-							content: m.content,
-						})),
-						{
-							role: "user",
-							content: messageContent.trim(),
-						},
-					],
-					stream: false,
-				}),
+			const stream = await openai.chat.completions.create({
+				model: "hermes-3-8b-tee",
+				messages: [
+					...messages.map((m) => ({
+						role: m.role,
+						content: m.content,
+					})),
+					{
+						role: "user",
+						content: messageContent.trim(),
+					},
+				],
+				stream: true,
 			});
 
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
+			let accumulatedContent = "";
+
+			for await (const chunk of stream) {
+				const content = chunk.choices[0]?.delta?.content;
+				if (content) {
+					accumulatedContent += content;
+
+					if (!isStreaming) {
+						setIsStreaming(true);
+						setIsLoading(false);
+					}
+
+					setMessages((prev) =>
+						prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, content: accumulatedContent } : msg)),
+					);
+				}
 			}
 
-			const data = await response.json();
-			const assistantMessage: Message = {
-				id: (Date.now() + 1).toString(),
-				role: "assistant",
-				content: data.choices[0]?.message?.content || "Sorry, I could not process your request.",
-				timestamp: new Date(),
-			};
-
-			setMessages((prev) => [...prev, assistantMessage]);
+			// Final check to ensure we have content
+			if (!accumulatedContent) {
+				setMessages((prev) =>
+					prev.map((msg) =>
+						msg.id === assistantMessageId ? { ...msg, content: "Sorry, I could not process your request." } : msg,
+					),
+				);
+			}
 		} catch (error) {
 			console.error("Error sending message:", error);
-			const errorMessage: Message = {
-				id: (Date.now() + 1).toString(),
-				role: "assistant",
-				content: "Sorry, there was an error processing your request. Please try again.",
-				timestamp: new Date(),
-			};
-			setMessages((prev) => [...prev, errorMessage]);
+			setMessages((prev) =>
+				prev.map((msg) =>
+					msg.id === assistantMessageId
+						? { ...msg, content: "Sorry, there was an error processing your request. Please try again." }
+						: msg,
+				),
+			);
 		} finally {
+			// Ensure loading and streaming states are properly set at the end
 			setIsLoading(false);
+			setIsStreaming(false);
 		}
 	};
 
@@ -210,7 +240,7 @@ function Chat() {
 					</div>
 				))}
 
-				{isLoading && (
+				{isLoading && !isStreaming && (
 					<div className="flex justify-start">
 						<div className="bg-muted text-muted-foreground rounded-2xl px-4 py-2">
 							<div className="flex items-center space-x-2">
@@ -219,7 +249,6 @@ function Chat() {
 									<div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
 									<div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
 								</div>
-								<span className="text-xs">AI is thinking...</span>
 							</div>
 						</div>
 					</div>

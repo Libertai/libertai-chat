@@ -1,0 +1,6 @@
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - bigint-buffer
+  - bufferutil
+  - esbuild
+  - utf-8-validate
