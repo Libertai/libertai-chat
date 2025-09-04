@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useChatStore } from "@/stores/chat";
 import { type Chat, type Message } from "@/types/chats";
 import { MoreHorizontal, Trash2 } from "lucide-react";
@@ -8,6 +8,8 @@ import { useState } from "react";
 
 export function ChatList() {
 	const { getAllChats, deleteChat } = useChatStore();
+	const navigate = useNavigate();
+	const currentPath = location.pathname;
 	const chats = getAllChats();
 	const [activeChat, setActiveChat] = useState<string | null>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -20,6 +22,14 @@ export function ChatList() {
 	const truncateText = (text: string, maxLength: number = 50) => {
 		if (text.length <= maxLength) return text;
 		return text.substring(0, maxLength).trim() + "...";
+	};
+
+	const handleDeleteChat = (chatId: string) => {
+		// If we're currently on the specific chat page being deleted, redirect to home
+		if (currentPath === `/chat/${chatId}`) {
+			navigate({ to: "/" });
+		}
+		deleteChat(chatId);
 	};
 
 	return (
@@ -71,7 +81,7 @@ export function ChatList() {
 												className="text-destructive focus:text-destructive"
 												onClick={(e) => {
 													e.preventDefault();
-													deleteChat(chat.id);
+													handleDeleteChat(chat.id);
 												}}
 											>
 												<Trash2 className="h-3 w-3 mr-2" />

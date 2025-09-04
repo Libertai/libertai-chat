@@ -17,9 +17,23 @@ import {
 } from "@/components/ui/sidebar";
 import { LibertaiLogo } from "@/components/LibertaiLogo.tsx";
 
+// Helper function to read sidebar state from cookie
+function getSidebarStateFromCookie(): boolean {
+	const cookies = document.cookie.split(";");
+	for (const cookie of cookies) {
+		const [name, value] = cookie.trim().split("=");
+		if (name === "sidebar_state") {
+			return value === "true";
+		}
+	}
+	return false; // Default to closed if no cookie found
+}
+
 export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 	const router = useRouter();
 	const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
+
+	const defaultOpen = getSidebarStateFromCookie();
 
 	// Check if we're on a chat page
 	const isOnChatPage = currentPath.startsWith("/chat/");
@@ -41,7 +55,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 	}, [router]);
 
 	return (
-		<SidebarProvider defaultOpen={false}>
+		<SidebarProvider defaultOpen={defaultOpen}>
 			<div className="min-h-[100svh] bg-background text-foreground flex flex-col md:flex-row w-full">
 				{/* Mobile Header */}
 				<header className="fixed z-20 top-0 left-0 right-0 h-16 border-b border-border px-4 flex items-center justify-between md:hidden bg-background">

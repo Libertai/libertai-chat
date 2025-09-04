@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ChatInput } from "@/components/ChatInput";
+import { ConversationNotFound } from "@/components/ConversationNotFound";
 import { useChatStore } from "@/stores/chat";
 import OpenAI from "openai";
 
@@ -136,6 +137,11 @@ function Chat() {
 		addMessage(chatId, "user", messageContent.trim());
 		setInput("");
 	};
+
+	// Show 404 if chat doesn't exist
+	if (!chat) {
+		return <ConversationNotFound />;
+	}
 
 	return (
 		<div className="h-full flex flex-col bg-background text-foreground animate-in slide-in-from-right-8 fade-in duration-500">
