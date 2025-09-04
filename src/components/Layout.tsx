@@ -64,8 +64,8 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 				{/* Desktop Sidebar */}
 				<Sidebar collapsible="offcanvas">
-					<SidebarHeader className="font-bold text-xl h-16 flex items-center justify-between">
-						<Link to={"/"}>
+					<SidebarHeader className="font-bold text-xl h-16 flex items-center justify-center">
+						<Link to="/">
 							<LibertaiLogo className="h-6 w-auto text-foreground" />
 						</Link>
 					</SidebarHeader>
