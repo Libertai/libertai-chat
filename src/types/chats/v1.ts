@@ -10,7 +10,6 @@ export const MessageV1Schema = z.object({
 export const ChatV1Schema = z.object({
 	id: z.uuid(),
 	messages: z.array(MessageV1Schema),
-	initialMessage: z.string().optional(),
 	createdAt: z.string(),
 	updatedAt: z.string(),
 });
