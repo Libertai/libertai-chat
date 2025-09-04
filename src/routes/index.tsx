@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Brain, Heart, MessageCircle, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatInput } from "@/components/ChatInput";
+import { useChatStore } from "@/stores/chat";
 
 export const Route = createFileRoute("/")({
 	component: Index,
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
 	const navigate = useNavigate();
+	const { createChat } = useChatStore();
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const [inputValue, setInputValue] = useState("");
 	const [isFocused, setIsFocused] = useState(false);
@@ -30,19 +32,10 @@ function Index() {
 
 		// Generate UUID for new chat
 		const chatId = crypto.randomUUID();
+		const firstMessage = inputValue.trim();
 
-		// Store the initial message in localStorage
-		const initialMessage = inputValue.trim();
-		localStorage.setItem(
-			`chat-${chatId}`,
-			JSON.stringify({
-				id: chatId,
-				messages: [],
-				initialMessage,
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			}),
-		);
+		// Create chat with the first message
+		createChat(chatId, firstMessage);
 
 		// Small delay to show the animation before navigating
 		setTimeout(() => {

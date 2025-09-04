@@ -2,40 +2,28 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ChatInput } from "@/components/ChatInput";
+import { useChatStore } from "@/stores/chat";
 import OpenAI from "openai";
 
 export const Route = createFileRoute("/chat/$chatId")({
 	component: Chat,
 });
 
-interface Message {
-	id: string;
-	role: "user" | "assistant";
-	content: string;
-	timestamp: Date;
-}
-
-interface ChatData {
-	id: string;
-	messages: Message[];
-	initialMessage?: string;
-	createdAt: string;
-	updatedAt: string;
-}
-
 function Chat() {
 	const { chatId } = Route.useParams();
-	const [messages, setMessages] = useState<Message[]>([]);
+	const { getChat, addMessage, updateMessage } = useChatStore();
 	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [isStreaming, setIsStreaming] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
-	const initialMessageProcessed = useRef(false);
+
+	const chat = getChat(chatId);
+	const messages = chat?.messages || [];
 
 	const openai = new OpenAI({
-		baseURL: import.meta.env.VITE_LIBERTAI_API_URL || "https://api.libertai.com/v1",
+		baseURL: import.meta.env.VITE_LIBERTAI_API_URL || "https://api.libertai.io/v1",
 		apiKey: import.meta.env.VITE_LIBERTAI_API_KEY,
 		dangerouslyAllowBrowser: true,
 	});
@@ -67,89 +55,43 @@ function Chat() {
 		}
 	}, [isLoading]);
 
-	// Load chat data from localStorage
+	// Initialize chat
 	useEffect(() => {
-		const loadChat = () => {
-			const storedChat = localStorage.getItem(`chat-${chatId}`);
-			if (storedChat) {
-				const chatData: ChatData = JSON.parse(storedChat);
-				setMessages(
-					chatData.messages.map((m) => ({
-						...m,
-						timestamp: new Date(m.timestamp),
-					})),
-				);
+		setIsInitialized(true);
+	}, []);
 
-				// If there are no messages but there's an initial message, process it
-				if (chatData.initialMessage && chatData.messages.length === 0 && !initialMessageProcessed.current) {
-					initialMessageProcessed.current = true;
-					setTimeout(() => {
-						handleSendMessage(chatData.initialMessage!);
-					}, 100);
-				}
+	// Check if last message is from user and generate AI response
+	useEffect(() => {
+		if (messages.length > 0 && !isLoading && !isStreaming && isInitialized) {
+			const lastMessage = messages[messages.length - 1];
+			// Only generate response if last message is from user and there's no pending assistant message
+			if (lastMessage.role === "user") {
+				generateAIResponse().then();
 			}
-			setIsInitialized(true);
-		};
-
-		if (!isInitialized) {
-			loadChat();
 		}
-	}, [chatId, isInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [messages.length, isLoading, isStreaming, isInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// Save chat data to localStorage whenever messages change
-	useEffect(() => {
-		if (messages.length > 0) {
-			const chatData: ChatData = {
-				id: chatId,
-				messages: messages.map((m) => ({
-					...m,
-					timestamp: m.timestamp,
-				})),
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
-			};
-			localStorage.setItem(`chat-${chatId}`, JSON.stringify(chatData));
-		}
-	}, [messages, chatId]);
+	const generateAIResponse = async () => {
+		if (isLoading || isStreaming) return;
 
-	const handleSendMessage = async (messageContent: string = input) => {
-		if (!messageContent.trim() || isLoading) return;
+		// Double-check that the last message is from user (prevents duplicate calls)
+		if (messages.length === 0) return;
+		const lastMessage = messages[messages.length - 1];
+		if (lastMessage.role !== "user") return;
 
-		const userMessage: Message = {
-			id: Date.now().toString(),
-			role: "user",
-			content: messageContent.trim(),
-			timestamp: new Date(),
-		};
-
-		setMessages((prev) => [...prev, userMessage]);
-		setInput("");
 		setIsLoading(true);
 		setIsStreaming(false);
 
-		// Create assistant message placeholder for streaming
-		const assistantMessageId = (Date.now() + 1).toString();
-		const assistantMessage: Message = {
-			id: assistantMessageId,
-			role: "assistant",
-			content: "",
-			timestamp: new Date(),
-		};
-		setMessages((prev) => [...prev, assistantMessage]);
+		// Add assistant message placeholder for streaming
+		const assistantMessage = addMessage(chatId, "assistant", "");
 
 		try {
 			const stream = await openai.chat.completions.create({
 				model: "hermes-3-8b-tee",
-				messages: [
-					...messages.map((m) => ({
-						role: m.role,
-						content: m.content,
-					})),
-					{
-						role: "user",
-						content: messageContent.trim(),
-					},
-				],
+				messages: messages.map((m) => ({
+					role: m.role,
+					content: m.content,
+				})),
 				stream: true,
 			});
 
@@ -165,34 +107,34 @@ function Chat() {
 						setIsLoading(false);
 					}
 
-					setMessages((prev) =>
-						prev.map((msg) => (msg.id === assistantMessageId ? { ...msg, content: accumulatedContent } : msg)),
-					);
+					updateMessage(chatId, assistantMessage.id, accumulatedContent);
 				}
 			}
 
 			// Final check to ensure we have content
 			if (!accumulatedContent) {
-				setMessages((prev) =>
-					prev.map((msg) =>
-						msg.id === assistantMessageId ? { ...msg, content: "Sorry, I could not process your request." } : msg,
-					),
-				);
+				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
 			}
 		} catch (error) {
 			console.error("Error sending message:", error);
-			setMessages((prev) =>
-				prev.map((msg) =>
-					msg.id === assistantMessageId
-						? { ...msg, content: "Sorry, there was an error processing your request. Please try again." }
-						: msg,
-				),
+			updateMessage(
+				chatId,
+				assistantMessage.id,
+				"Sorry, there was an error processing your request. Please try again.",
 			);
 		} finally {
 			// Ensure loading and streaming states are properly set at the end
 			setIsLoading(false);
 			setIsStreaming(false);
 		}
+	};
+
+	const handleSendMessage = async (messageContent: string = input) => {
+		if (!messageContent.trim() || isLoading) return;
+
+		// Add user message to store
+		addMessage(chatId, "user", messageContent.trim());
+		setInput("");
 	};
 
 	return (
