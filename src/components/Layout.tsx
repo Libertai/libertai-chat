@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
+import { ChatSearch } from "@/components/ChatSearch";
 import {
 	Sidebar,
 	SidebarContent,
@@ -85,6 +86,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 					</SidebarHeader>
 
 					<SidebarContent>
+						<ChatSearch />
 						<ChatList />
 					</SidebarContent>
 
