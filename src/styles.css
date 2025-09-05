@@ -10,6 +10,7 @@
     --background: #F0EFED;
     --foreground: #0E0F18;
     --card: #E1E1E1;
+    --hover: #FFF;
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
@@ -35,7 +36,7 @@
 
     /* Other colors */
     --border: oklch(0.922 0 0);
-    --input: #E1E1E1;
+    --input: #FFF;
     --ring: #644DF9; /* Match primary */
 
     /* Chart colors */
@@ -61,6 +62,7 @@
     --background: #0E0F18; /* Dark background */
     --foreground: #FFF;
     --card: #1F2030; /* Slightly lighter than background */
+    --hover: #313549;
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.18 0 0);
     --popover-foreground: oklch(0.985 0 0);
@@ -116,6 +118,7 @@
     --color-foreground: var(--foreground);
     --color-card: var(--card);
     --color-card-foreground: var(--card-foreground);
+    --color-hover: var(--hover);
     --color-popover: var(--popover);
     --color-popover-foreground: var(--popover-foreground);
     --color-primary: var(--primary);

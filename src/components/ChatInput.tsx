@@ -12,7 +12,6 @@ interface ChatInputProps {
 	placeholder?: string;
 	disabled?: boolean;
 	isSubmitting?: boolean;
-	className?: string;
 	inputRef?: RefObject<HTMLTextAreaElement | null>;
 }
 
@@ -25,7 +24,6 @@ export function ChatInput({
 	placeholder = "Type your message...",
 	disabled = false,
 	isSubmitting = false,
-	className = "",
 	inputRef,
 }: Readonly<ChatInputProps>) {
 	const [isMultiLine, setIsMultiLine] = useState(false);
@@ -58,9 +56,13 @@ export function ChatInput({
 	};
 
 	return (
-		<div className={`relative flex items-start ${className}`}>
-			<Button variant="ghost" size="icon" className="absolute left-3 top-2 z-10 h-8 w-8 bg-muted bg-card rounded-full">
-				<Plus className="h-4 w-4 text-muted-foreground" />
+		<div className="relative flex items-start">
+			<Button
+				variant="ghost"
+				size="icon"
+				className="absolute left-3 top-2 z-10 h-8 w-8 rounded-full border border-card dark:border-hover text-foreground"
+			>
+				<Plus className="h-4 w-4" />
 			</Button>
 			<Textarea
 				id="chat-input"
@@ -81,11 +83,7 @@ export function ChatInput({
 			<Button
 				variant="ghost"
 				size="icon"
-				className={`absolute right-3 top-2 z-10 h-8 w-8 rounded-full transition-all duration-200 ${
-					hasContent && !disabled
-						? "bg-primary hover:bg-primary/90 text-white"
-						: "bg-muted text-muted-foreground hover:text-foreground cursor-not-allowed opacity-50"
-				}`}
+				className="absolute right-3 top-2 z-10 h-8 w-8 rounded-full transition-all duration-200 text-white bg-primary hover:bg-primary/80 dark:hover:bg-primary/80"
 				disabled={!hasContent || disabled || isSubmitting}
 				onClick={() => {
 					onSubmit();

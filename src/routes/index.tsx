@@ -77,7 +77,7 @@ function Index() {
 			{/* Main content */}
 			<div className="md:flex-1 md:flex md:flex-col md:items-center justify-center p-4 md:p-6 space-y-6 md:space-y-8 overflow-auto">
 				{/* Hero text */}
-				<h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium text-foreground leading-tight text-center max-sm:text-left">
+				<h1 className="text-3xl lg:text-4xl xl:text-5xl text-foreground leading-tight text-center max-sm:text-left">
 					<span className="hidden md:inline">Try the world's most </span>
 					<span className="md:hidden">The world's most </span>
 					<span className="text-primary italic font-bold">Private</span>
@@ -99,7 +99,7 @@ function Index() {
 					{cards.map((card) => (
 						<div
 							key={card.title}
-							className="bg-card hover:bg-white dark:hover:bg-[#313549] rounded-xl p-4 md:p-6 transition-colors cursor-pointer relative border border-border"
+							className="bg-card hover:bg-hover rounded-xl p-4 md:p-6 transition-colors cursor-pointer relative border border-border"
 						>
 							{card.badge && (
 								<div className="absolute top-3 right-3 md:top-4 md:right-4">
@@ -107,7 +107,7 @@ function Index() {
 								</div>
 							)}
 							<div className="flex flex-col space-y-3 md:space-y-4">
-								<div className="bg-muted rounded-full p-2 md:p-3 w-fit">{card.icon}</div>
+								<div className="bg-hover rounded-full p-2 md:p-3 w-fit">{card.icon}</div>
 								<div className="space-y-1">
 									<h3 className="text-base md:text-lg font-medium text-foreground">{card.title}</h3>
 									<p className="text-xs md:text-sm text-muted-foreground">{card.subtitle}</p>
