@@ -146,76 +146,88 @@ function Chat() {
 	return (
 		<div className="h-full flex flex-col bg-background text-foreground animate-in slide-in-from-right-8 fade-in duration-500">
 			{/* Messages area */}
-			<div className="flex-1 overflow-y-auto p-4 space-y-4">
-				{messages.map((message) => (
-					<div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-						<div
-							className={`max-w-[80%] rounded-2xl px-4 py-2 text-foreground ${
-								message.role === "user" ? "bg-white dark:bg-card" : "bg-transparent"
-							}`}
-						>
-							{message.role === "assistant" ? (
-								<div className="markdown-content">
-									<ReactMarkdown
-										components={{
-											h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
-											h2: ({ children }) => <h2 className="text-base font-bold mb-2">{children}</h2>,
-											h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
-											p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-											strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-											em: ({ children }) => <em className="italic">{children}</em>,
-											code: ({ children }) => (
-												<code className="bg-background/50 rounded px-1 py-0.5 text-xs font-mono">{children}</code>
-											),
-											pre: ({ children }) => (
-												<pre className="bg-background/50 rounded p-2 overflow-x-auto text-xs font-mono">{children}</pre>
-											),
-											ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-											ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-											li: ({ children }) => <li className="text-sm">{children}</li>,
-											blockquote: ({ children }) => (
-												<blockquote className="border-l-2 border-primary/50 pl-3 italic">{children}</blockquote>
-											),
-										}}
-									>
-										{message.content}
-									</ReactMarkdown>
-								</div>
-							) : (
-								<p>{message.content}</p>
-							)}
+			<div className="flex-1 overflow-y-auto p-4">
+				<div className="max-w-4xl mx-auto space-y-8 md:space-y-11">
+					{messages.map((message) => (
+						<div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+							<div
+								className={`px-4 py-2 text-foreground ${
+									message.role === "user" ? "bg-white dark:bg-card rounded-2xl rounded-br-none" : "bg-transparent"
+								}`}
+							>
+								{message.role === "assistant" ? (
+									<div className="markdown-content">
+										<ReactMarkdown
+											components={{
+												h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+												h2: ({ children }) => <h2 className="text-base font-bold mb-2">{children}</h2>,
+												h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
+												p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+												strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+												em: ({ children }) => <em className="italic">{children}</em>,
+												code: ({ children }) => (
+													<code className="bg-background/50 rounded px-1 py-0.5 text-xs font-mono">{children}</code>
+												),
+												pre: ({ children }) => (
+													<pre className="bg-background/50 rounded p-2 overflow-x-auto text-xs font-mono">
+														{children}
+													</pre>
+												),
+												ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+												ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+												li: ({ children }) => <li className="text-sm">{children}</li>,
+												blockquote: ({ children }) => (
+													<blockquote className="border-l-2 border-primary/50 pl-3 italic">{children}</blockquote>
+												),
+											}}
+										>
+											{message.content}
+										</ReactMarkdown>
+									</div>
+								) : (
+									<p>{message.content}</p>
+								)}
+							</div>
 						</div>
-					</div>
-				))}
+					))}
 
-				{isLoading && !isStreaming && (
-					<div className="flex justify-start">
-						<div className="bg-muted text-muted-foreground rounded-2xl px-4 py-2">
-							<div className="flex items-center space-x-2">
-								<div className="flex space-x-1">
-									<div className="w-2 h-2 bg-current rounded-full animate-bounce" />
-									<div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-									<div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+					{isLoading && !isStreaming && (
+						<div className="flex justify-start">
+							<div className="bg-muted text-muted-foreground rounded-2xl px-4 py-2">
+								<div className="flex items-center space-x-2">
+									<div className="flex space-x-1">
+										<div className="w-2 h-2 bg-current rounded-full animate-bounce" />
+										<div
+											className="w-2 h-2 bg-current rounded-full animate-bounce"
+											style={{ animationDelay: "0.1s" }}
+										/>
+										<div
+											className="w-2 h-2 bg-current rounded-full animate-bounce"
+											style={{ animationDelay: "0.2s" }}
+										/>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-				)}
+					)}
+				</div>
 
 				<div ref={messagesEndRef} />
 			</div>
 
 			{/* Input area */}
-			<div className="border-t border-border p-4">
-				<div className="max-w-2xl mx-auto">
-					<ChatInput
-						value={input}
-						onChange={setInput}
-						onSubmit={() => handleSendMessage()}
-						placeholder="Type your message..."
-						disabled={isLoading}
-						inputRef={inputRef}
-					/>
+			<div className="p-4">
+				<div className="max-w-4xl mx-auto">
+					<div className="max-w-2xl mx-auto">
+						<ChatInput
+							value={input}
+							onChange={setInput}
+							onSubmit={() => handleSendMessage()}
+							placeholder="Type your message..."
+							disabled={isLoading}
+							inputRef={inputRef}
+						/>
+					</div>
 				</div>
 			</div>
 		</div>

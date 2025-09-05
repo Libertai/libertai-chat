@@ -77,7 +77,7 @@ function Index() {
 			{/* Main content */}
 			<div className="md:flex-1 md:flex md:flex-col md:items-center justify-center p-4 md:p-6 space-y-6 md:space-y-8 overflow-auto">
 				{/* Hero text */}
-				<h1 className="text-3xl lg:text-4xl xl:text-5xl text-foreground leading-tight text-center max-sm:text-left">
+				<h1 className="text-3xl lg:text-4xl text-foreground leading-tight text-center max-sm:text-left">
 					<span className="hidden md:inline">Try the world's most </span>
 					<span className="md:hidden">The world's most </span>
 					<span className="text-primary italic font-bold">Private</span>
@@ -90,7 +90,7 @@ function Index() {
 
 				{/* Cards grid - hide when focused or typing */}
 				<div
-					className={`grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 w-full max-w-6xl md:transition-all md:duration-500 md:ease-in-out ${
+					className={`grid grid-cols-2 lg:grid-cols-4 gap-2.5 w-fit mx-auto md:transition-all md:duration-500 md:ease-in-out ${
 						shouldShowCentered
 							? "md:opacity-0 md:transform md:translate-y-8 md:pointer-events-none"
 							: "opacity-100 transform translate-y-0"
@@ -99,14 +99,14 @@ function Index() {
 					{cards.map((card) => (
 						<div
 							key={card.title}
-							className="bg-card hover:bg-hover rounded-xl p-4 md:p-6 transition-colors cursor-pointer relative border border-border"
+							className="bg-card hover:bg-hover rounded-xl p-4 transition-colors cursor-pointer relative border border-border aspect-square max-w-50"
 						>
 							{card.badge && (
 								<div className="absolute top-3 right-3 md:top-4 md:right-4">
 									<span className="bg-primary text-white text-xs px-2 py-1 rounded-full">{card.badge}</span>
 								</div>
 							)}
-							<div className="flex flex-col space-y-3 md:space-y-4">
+							<div className="flex flex-col justify-between h-full">
 								<div className="bg-hover rounded-full p-2 md:p-3 w-fit">{card.icon}</div>
 								<div className="space-y-1">
 									<h3 className="text-base md:text-lg font-medium text-foreground">{card.title}</h3>
