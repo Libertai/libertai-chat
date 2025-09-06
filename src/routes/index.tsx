@@ -108,7 +108,7 @@ function Index() {
 							<div
 								key={card.id}
 								onClick={() => setSelectedAssistant(card.id)}
-								className={`rounded-xl p-4 transition-colors cursor-pointer relative border border-border aspect-square max-w-50 ${
+								className={`rounded-xl p-4 transition-colors cursor-pointer relative border border-border w-40 h-40 md:w-50 md:h-50 ${
 									isSelected ? "bg-hover" : "bg-card"
 								}`}
 							>
