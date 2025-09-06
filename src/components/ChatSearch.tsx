@@ -23,7 +23,7 @@ export function ChatSearch() {
 	const allChats = getAllChats();
 
 	// Detect if user is on Mac
-	const isMac = typeof navigator !== "undefined" ? navigator.platform.toUpperCase().indexOf('MAC') >= 0 : false;
+	const isMac = typeof navigator !== "undefined" ? navigator.platform.toUpperCase().indexOf("MAC") >= 0 : false;
 
 	// Helper function to get the first user message from a chat
 	const getFirstMessage = (chat: Chat) => {
@@ -51,13 +51,16 @@ export function ChatSearch() {
 
 				// Create highlighted snippet for display
 				const beforeMatch = snippet.substring(0, matchIndex - start + (start > 0 ? 3 : 0));
-				const match = snippet.substring(matchIndex - start + (start > 0 ? 3 : 0), matchIndex - start + query.length + (start > 0 ? 3 : 0));
+				const match = snippet.substring(
+					matchIndex - start + (start > 0 ? 3 : 0),
+					matchIndex - start + query.length + (start > 0 ? 3 : 0),
+				);
 				const afterMatch = snippet.substring(matchIndex - start + query.length + (start > 0 ? 3 : 0));
 
-				return { 
-					matches: true, 
+				return {
+					matches: true,
 					snippet,
-					highlightedSnippet: { beforeMatch, match, afterMatch }
+					highlightedSnippet: { beforeMatch, match, afterMatch },
 				};
 			}
 		}
@@ -104,38 +107,32 @@ export function ChatSearch() {
 
 	return (
 		<>
-			<div className="p-2">
-				<div className="group/search">
-					<Button
-						variant="ghost"
-						className="w-full justify-between"
-						onClick={() => setSearchOpen(true)}
-						disabled={allChats.length === 0}
-					>
-						<div className="flex items-center">
-							<Search className="mr-2 h-4 w-4" />
-							Search chats
-						</div>
-						<CommandShortcut className="opacity-0 group-hover/search:opacity-100 transition-opacity">
-							{isMac ? "⌘K" : "Ctrl+K"}
-						</CommandShortcut>
-					</Button>
-				</div>
+			<div className="group/search">
+				<Button
+					variant="ghost"
+					className="w-full justify-between"
+					onClick={() => setSearchOpen(true)}
+					disabled={allChats.length === 0}
+				>
+					<div className="flex items-center">
+						<Search className="mr-2 h-4 w-4" />
+						Search chats
+					</div>
+					<CommandShortcut className="opacity-0 group-hover/search:opacity-100 transition-opacity">
+						{isMac ? "⌘K" : "Ctrl+K"}
+					</CommandShortcut>
+				</Button>
 			</div>
 
 			{/* Search Command Dialog */}
-			<CommandDialog 
-				open={searchOpen} 
+			<CommandDialog
+				open={searchOpen}
 				onOpenChange={handleOpenChange}
 				title="Search Chats"
 				description="Search through your chat conversations"
 			>
 				<Command shouldFilter={false} label="Search chats">
-					<CommandInput 
-						placeholder="Search chats..." 
-						value={searchQuery} 
-						onValueChange={setSearchQuery}
-					/>
+					<CommandInput placeholder="Search chats..." value={searchQuery} onValueChange={setSearchQuery} />
 					<CommandList>
 						<CommandEmpty>No chats found.</CommandEmpty>
 						{filteredChats.length > 0 && (
@@ -151,7 +148,9 @@ export function ChatSearch() {
 												{matchInfo.highlightedSnippet && (
 													<span className="text-xs text-muted-foreground truncate w-full">
 														{matchInfo.highlightedSnippet.beforeMatch}
-														<strong className="font-semibold text-foreground">{matchInfo.highlightedSnippet.match}</strong>
+														<strong className="font-semibold text-foreground">
+															{matchInfo.highlightedSnippet.match}
+														</strong>
 														{matchInfo.highlightedSnippet.afterMatch}
 													</span>
 												)}
