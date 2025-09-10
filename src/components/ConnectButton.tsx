@@ -88,7 +88,7 @@ export default function ConnectButton() {
 	return (
 		<div className="relative">
 			{/* Hidden components for auto-connection */}
-			<div className="absolute opacity-0 pointer-events-none -z-10">
+			<div className="absolute invisible opacity-0 pointer-events-none -z-10">
 				<ConnectThirdwebButton client={thirdwebClient} chain={base} />
 				<SolanaWalletMultiButton />
 			</div>
