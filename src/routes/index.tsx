@@ -1,5 +1,4 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Brain, Heart, MessageCircle, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatStore } from "@/stores/chat";
@@ -12,7 +11,7 @@ export const Route = createFileRoute("/")({
 function Index() {
 	const navigate = useNavigate();
 	const { createChat } = useChatStore();
-	const { selectedAssistant, setSelectedAssistant } = useAssistantStore();
+	const { assistants, selectedAssistant, setSelectedAssistant } = useAssistantStore();
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const [inputValue, setInputValue] = useState("");
 	const [isFocused, setIsFocused] = useState(false);
@@ -37,7 +36,7 @@ function Index() {
 		const firstMessage = inputValue.trim();
 
 		// Create chat with the first message
-		createChat(chatId, firstMessage);
+		createChat(chatId, firstMessage, selectedAssistant);
 
 		// Small delay to show the animation before navigating
 		setTimeout(() => {
@@ -47,34 +46,6 @@ function Index() {
 			});
 		}, 200);
 	};
-
-	const cards = [
-		{
-			id: "light",
-			icon: <Zap className="h-6 w-6" />,
-			title: "Light",
-			subtitle: "Quick and nimble advisor",
-		},
-		{
-			id: "harmony",
-			icon: <Heart className="h-6 w-6" />,
-			title: "Harmony",
-			subtitle: "Wellness Companion",
-		},
-		{
-			id: "chatty",
-			icon: <MessageCircle className="h-6 w-6" />,
-			title: "Chatty",
-			subtitle: "Conversational partner",
-		},
-		{
-			id: "mega-mind",
-			icon: <Brain className="h-6 w-6" />,
-			title: "Mega Mind",
-			subtitle: "Big brains, deep thinker",
-			badge: "Pro",
-		},
-	];
 
 	return (
 		<div
@@ -102,7 +73,7 @@ function Index() {
 							: "opacity-100 transform translate-y-0"
 					}`}
 				>
-					{cards.map((card) => {
+					{assistants.map((card) => {
 						const isSelected = selectedAssistant === card.id;
 						return (
 							<div

@@ -2,13 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { runMigrations } from "@/types/chats/migrations";
 import { Chat, Message } from "@/types/chats";
+import { useAssistantStore } from "./assistant";
 
 interface ChatStore {
 	chats: Record<string, Chat>;
 
 	getChat: (chatId: string) => Chat | undefined;
 	getAllChats: () => Chat[];
-	createChat: (chatId: string, firstMessage: string) => void;
+	createChat: (chatId: string, firstMessage: string, assistantId: string) => void;
 	addMessage: (chatId: string, role: "user" | "assistant", content: string) => Message;
 	updateMessage: (chatId: string, messageId: string, content: string) => void;
 	deleteChat: (chatId: string) => void;
@@ -30,7 +31,7 @@ export const useChatStore = create<ChatStore>()(
 				return chats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 			},
 
-			createChat: (chatId: string, firstMessage: string) => {
+			createChat: (chatId: string, firstMessage: string, assistantId: string) => {
 				const now = new Date().toISOString();
 				const userMessage: Message = {
 					id: crypto.randomUUID(),
@@ -45,6 +46,7 @@ export const useChatStore = create<ChatStore>()(
 						[chatId]: {
 							id: chatId,
 							messages: [userMessage],
+							assistantId,
 							createdAt: now,
 							updatedAt: now,
 						},
@@ -65,12 +67,14 @@ export const useChatStore = create<ChatStore>()(
 					if (!chat) {
 						// Create chat if it doesn't exist
 						const now = new Date().toISOString();
+						const defaultAssistant = useAssistantStore.getState().getAssistantOrDefault();
 						return {
 							chats: {
 								...state.chats,
 								[chatId]: {
 									id: chatId,
 									messages: [message],
+									assistantId: defaultAssistant.id,
 									createdAt: now,
 									updatedAt: now,
 								},

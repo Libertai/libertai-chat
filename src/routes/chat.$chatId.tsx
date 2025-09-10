@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { ChatInput } from "@/components/ChatInput";
 import { ConversationNotFound } from "@/components/ConversationNotFound";
 import { useChatStore } from "@/stores/chat";
+import { useAssistantStore } from "@/stores/assistant";
 import OpenAI from "openai";
 
 export const Route = createFileRoute("/chat/$chatId")({
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/chat/$chatId")({
 function Chat() {
 	const { chatId } = Route.useParams();
 	const { getChat, addMessage, updateMessage } = useChatStore();
+	const { getAssistantOrDefault } = useAssistantStore();
 	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
@@ -87,12 +89,20 @@ function Chat() {
 		const assistantMessage = addMessage(chatId, "assistant", "");
 
 		try {
+			const assistant = getAssistantOrDefault(chat?.assistantId);
+
 			const stream = await openai.chat.completions.create({
-				model: "hermes-3-8b-tee",
-				messages: messages.map((m) => ({
-					role: m.role,
-					content: m.content,
-				})),
+				model: assistant.model,
+				messages: [
+					{
+						role: "system",
+						content: assistant.systemPrompt,
+					},
+					...messages.map((m) => ({
+						role: m.role,
+						content: m.content,
+					})),
+				],
 				stream: true,
 			});
 
