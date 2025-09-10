@@ -111,7 +111,7 @@ function Index() {
 			>
 				<div className="p-4 md:p-6 space-y-3 md:space-y-4">
 					{/* Chat input */}
-					<div className="max-w-2xl mx-auto">
+					<div className="max-w-3xl mx-auto">
 						<ChatInput
 							value={inputValue}
 							onChange={setInputValue}
@@ -133,7 +133,7 @@ function Index() {
 
 					{/* Disclaimer */}
 					<div>
-						<p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto">
+						<p className="text-xs text-muted-foreground text-center max-w-3xl mx-auto">
 							Like humans, AI may make mistakes. Verify information for critical decisions.
 						</p>
 					</div>
