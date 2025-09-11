@@ -6,13 +6,14 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Coins, Copy, Loader2, LogOut } from "lucide-react";
+import { Coins, Copy, Loader2, LogOut, Settings } from "lucide-react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import { useAccountStore } from "@/stores/account";
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
-import { toast } from "sonner";
 import { useENS } from "@/hooks/useENS";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { formatAddress, copyAddressToClipboard } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
 
 export function ConnectedAccountFooter() {
 	const thirdwebAccount = useActiveAccount();
@@ -29,21 +30,6 @@ export function ConnectedAccountFooter() {
 	// Only show loading if there's actually a connected wallet AND we're authenticating
 	const shouldShowEvmLoading = isAuthenticating && thirdwebAccount && evmWallet;
 	const shouldShowSolanaLoading = isAuthenticating && solanaWallet.wallet;
-
-	// Format address to shorten it (e.g., 0x1234...5678)
-	const formatAddress = (address: string | undefined) => {
-		if (!address) return "";
-		return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-	};
-
-	const handleCopyAddress = async () => {
-		if (account === null) {
-			toast.error("No address to copy");
-			return;
-		}
-		await navigator.clipboard.writeText(account.address);
-		toast.success("Address copied to clipboard");
-	};
 
 	// Only render when connected
 	if (!account?.address) {
@@ -76,7 +62,7 @@ export function ConnectedAccountFooter() {
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={handleCopyAddress}
+							onClick={() => copyAddressToClipboard(account.address)}
 							className="h-6 w-6 p-0 hover:bg-muted flex-shrink-0"
 						>
 							<Copy className="h-3 w-3" />
@@ -101,6 +87,12 @@ export function ConnectedAccountFooter() {
 					</p>
 				</div>
 				<DropdownMenuSeparator />
+				<DropdownMenuItem asChild className="cursor-pointer gap-2">
+					<Link to="/settings">
+						<Settings className="h-4 w-4" />
+						Settings
+					</Link>
+				</DropdownMenuItem>
 				<DropdownMenuItem
 					onClick={async () => {
 						if (thirdwebAccount !== undefined && evmWallet !== undefined) {

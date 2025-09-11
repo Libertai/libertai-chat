@@ -1,5 +1,4 @@
 import { ReactNode, useEffect, useState } from "react";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link, useRouter } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,6 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 								</Button>
 							</Link>
 						)}
-						<ThemeToggle />
 						<ConnectButton />
 					</div>
 				</header>
@@ -107,7 +105,6 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 									</Button>
 								</Link>
 							)}
-							<ThemeToggle />
 							<ConnectButton />
 						</div>
 					</header>

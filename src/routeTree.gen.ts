@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TopUpRouteImport } from './routes/top-up'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 
@@ -22,6 +23,11 @@ const TransactionsRoute = TransactionsRouteImport.update({
 const TopUpRoute = TopUpRouteImport.update({
   id: '/top-up',
   path: '/top-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,12 +43,14 @@ const ChatChatIdRoute = ChatChatIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
   '/chat/$chatId': typeof ChatChatIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -50,20 +58,28 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
   '/chat/$chatId': typeof ChatChatIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/top-up' | '/transactions' | '/chat/$chatId'
+  fullPaths: '/' | '/settings' | '/top-up' | '/transactions' | '/chat/$chatId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/top-up' | '/transactions' | '/chat/$chatId'
-  id: '__root__' | '/' | '/top-up' | '/transactions' | '/chat/$chatId'
+  to: '/' | '/settings' | '/top-up' | '/transactions' | '/chat/$chatId'
+  id:
+    | '__root__'
+    | '/'
+    | '/settings'
+    | '/top-up'
+    | '/transactions'
+    | '/chat/$chatId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettingsRoute: typeof SettingsRoute
   TopUpRoute: typeof TopUpRoute
   TransactionsRoute: typeof TransactionsRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
@@ -85,6 +101,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TopUpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +127,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettingsRoute: SettingsRoute,
   TopUpRoute: TopUpRoute,
   TransactionsRoute: TransactionsRoute,
   ChatChatIdRoute: ChatChatIdRoute,
