@@ -12,6 +12,7 @@ interface ChatStore {
 	createChat: (chatId: string, firstMessage: string, assistantId: string) => void;
 	addMessage: (chatId: string, role: "user" | "assistant", content: string) => Message;
 	updateMessage: (chatId: string, messageId: string, content: string) => void;
+	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
 }
 
@@ -108,6 +109,24 @@ export const useChatStore = create<ChatStore>()(
 							[chatId]: {
 								...chat,
 								messages: chat.messages.map((msg) => (msg.id === messageId ? { ...msg, content } : msg)),
+								updatedAt: new Date().toISOString(),
+							},
+						},
+					};
+				});
+			},
+
+			deleteMessage: (chatId: string, messageId: string) => {
+				set((state) => {
+					const chat = state.chats[chatId];
+					if (!chat) return state;
+
+					return {
+						chats: {
+							...state.chats,
+							[chatId]: {
+								...chat,
+								messages: chat.messages.filter((msg) => msg.id !== messageId),
 								updatedAt: new Date().toISOString(),
 							},
 						},
