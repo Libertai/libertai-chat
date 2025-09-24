@@ -132,11 +132,9 @@ function Index() {
 					</div>
 
 					{/* Disclaimer */}
-					<div>
-						<p className="text-xs text-muted-foreground text-center max-w-3xl mx-auto">
-							Like humans, AI may make mistakes. Verify information for critical decisions.
-						</p>
-					</div>
+					<p className="max-sm:text-tiny max-sm:whitespace-nowrap md:text-xs text-muted-foreground text-center md:max-w-3xl mx-auto">
+						Like humans, AI may make mistakes. Verify information for critical decisions.
+					</p>
 				</div>
 			</div>
 		</div>

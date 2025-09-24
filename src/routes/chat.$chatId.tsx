@@ -254,7 +254,7 @@ function Chat() {
 
 					{isLoading && !isStreaming && (
 						<div className="flex justify-start">
-							<div className="bg-muted text-muted-foreground rounded-2xl px-4 py-2">
+							<div className="bg-white dark:bg-card text-muted-foreground rounded-2xl px-4 py-2">
 								<div className="flex items-center space-x-2">
 									<div className="flex space-x-1">
 										<div className="w-2 h-2 bg-current rounded-full animate-bounce" />
