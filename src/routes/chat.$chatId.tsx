@@ -232,7 +232,7 @@ function Chat() {
 											variant="ghost"
 											size="sm"
 											onClick={() => handleCopyMessage(message.content)}
-											className="h-8 px-2 text-muted-foreground hover:text-foreground"
+											className="h-8 px-2 text-muted-foreground hover:text-foreground hover:bg-white hover:dark:bg-card"
 										>
 											<Copy className="w-4 h-4" />
 										</Button>
@@ -241,7 +241,7 @@ function Chat() {
 												variant="ghost"
 												size="sm"
 												onClick={handleRegenerateMessage}
-												className="h-8 px-2 text-muted-foreground hover:text-foreground"
+												className="h-8 px-2 text-muted-foreground hover:text-foreground hover:bg-white hover:dark:bg-card"
 											>
 												<RotateCcw className="w-4 h-4" />
 											</Button>
