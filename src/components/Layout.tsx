@@ -14,6 +14,7 @@ import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import { LibertaiLogo } from "@/components/LibertaiLogo.tsx";
 
@@ -27,6 +28,19 @@ function getSidebarStateFromCookie(): boolean {
 		}
 	}
 	return false; // Default to closed if no cookie found
+}
+
+// Component for sidebar logo that can close sidebar on mobile
+function SidebarLogoLink() {
+	const { isMobile, setOpenMobile } = useSidebar();
+
+	return (
+		<Link to="/" onClick={() => {
+			if (isMobile) setOpenMobile(false);
+		}}>
+			<LibertaiLogo className="h-6 w-auto text-foreground" />
+		</Link>
+	);
 }
 
 export function Layout({ children }: Readonly<{ children: ReactNode }>) {
@@ -58,7 +72,10 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 		<SidebarProvider defaultOpen={defaultOpen}>
 			<div className="min-h-[100svh] bg-background text-foreground flex flex-col md:flex-row w-full">
 				{/* Mobile Header */}
-				<header className="fixed z-20 top-0 left-0 right-0 h-16 border-b border-border px-4 flex items-center justify-between md:hidden bg-background">
+				<header
+					className="fixed z-20 top-0 left-0 right-0 border-b border-border px-4 flex items-center justify-between md:hidden bg-background"
+					style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(4rem + env(safe-area-inset-top))" }}
+				>
 					<SidebarTrigger />
 					<Link to="/" className="absolute left-1/2 transform -translate-x-1/2">
 						<LibertaiLogo className="h-4 w-auto text-foreground" />
@@ -76,11 +93,9 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 				</header>
 
 				{/* Desktop Sidebar */}
-				<Sidebar collapsible="offcanvas">
-					<SidebarHeader className="font-bold text-xl h-16 flex items-center justify-center">
-						<Link to="/">
-							<LibertaiLogo className="h-6 w-auto text-foreground" />
-						</Link>
+				<Sidebar collapsible="offcanvas" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+					<SidebarHeader className="font-bold text-xl flex items-center justify-center" style={{ height: "calc(4rem + env(safe-area-inset-top))" }}>
+						<SidebarLogoLink />
 					</SidebarHeader>
 
 					<SidebarContent>
@@ -95,7 +110,10 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 				<SidebarInset className="w-full">
 					{/* Desktop Header */}
-					<header className="h-16 border-b border-border px-4 hidden md:flex items-center justify-between">
+					<header
+						className="border-b border-border px-4 hidden md:flex items-center justify-between"
+						style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(4rem + env(safe-area-inset-top))" }}
+					>
 						<SidebarTrigger />
 						<div className="flex items-center gap-4">
 							{isOnChatPage && (
@@ -110,7 +128,15 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 					</header>
 
 					{/* Main content */}
-					<main className="flex-1 overflow-auto w-full mt-16 md:mt-0">{children}</main>
+					<main
+						className="flex-1 overflow-auto w-full"
+						style={{
+							marginTop: "calc(4rem + env(safe-area-inset-top))",
+							paddingBottom: "env(safe-area-inset-bottom)",
+						}}
+					>
+						{children}
+					</main>
 				</SidebarInset>
 			</div>
 		</SidebarProvider>

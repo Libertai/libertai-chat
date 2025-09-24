@@ -29,3 +29,6 @@ dist-ssr
 !.env.example
 
 .claude
+
+# Generated content from capacitor-assets
+icons/

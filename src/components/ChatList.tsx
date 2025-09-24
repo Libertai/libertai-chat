@@ -5,6 +5,7 @@ import { MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { useState } from "react";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export function ChatList() {
 	const { getAllChats, deleteChat } = useChatStore();
@@ -13,6 +14,7 @@ export function ChatList() {
 	const chats = getAllChats();
 	const [activeChat, setActiveChat] = useState<string | null>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const { isMobile, setOpenMobile } = useSidebar();
 
 	const getFirstMessage = (chat: Chat) => {
 		const firstMessage = chat.messages.find((msg: Message) => msg.role === "user");
@@ -52,7 +54,14 @@ export function ChatList() {
 									if (!isDropdownOpen) setActiveChat(null);
 								}}
 							>
-								<Link to="/chat/$chatId" params={{ chatId: chat.id }} className="block p-2 transition-colors">
+								<Link
+									to="/chat/$chatId"
+									params={{ chatId: chat.id }}
+									className="block p-2 transition-colors"
+									onClick={() => {
+										if (isMobile) setOpenMobile(false);
+									}}
+								>
 									<p className="text-sm text-foreground leading-snug">{truncateText(firstMessageText)}</p>
 								</Link>
 
