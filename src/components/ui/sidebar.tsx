@@ -169,6 +169,8 @@ function Sidebar({
 					style={
 						{
 							"--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+							paddingTop: "env(safe-area-inset-top)",
+							paddingBottom: "env(safe-area-inset-bottom)",
 						} as React.CSSProperties
 					}
 					side={side}
