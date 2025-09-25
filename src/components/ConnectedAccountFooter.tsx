@@ -14,6 +14,7 @@ import { useENS } from "@/hooks/useENS";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { formatAddress, copyAddressToClipboard } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export function ConnectedAccountFooter() {
 	const thirdwebAccount = useActiveAccount();
@@ -23,6 +24,7 @@ export function ConnectedAccountFooter() {
 	const account = useAccountStore((state) => state.account);
 	const formattedLtaiBalance = useAccountStore((state) => state.formattedLTAIBalance());
 	const isAuthenticating = useAccountStore((state) => state.isAuthenticating);
+	const { isMobile, setOpenMobile } = useSidebar();
 
 	// ENS resolution for Ethereum addresses
 	const { name: ensName, displayName: ensDisplayName, avatar: ensAvatar } = useENS(account?.address);
@@ -88,13 +90,16 @@ export function ConnectedAccountFooter() {
 				</div>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem asChild className="cursor-pointer gap-2">
-					<Link to="/settings">
+					<Link to="/settings" onClick={() => {
+						if (isMobile) setOpenMobile(false);
+					}}>
 						<Settings className="h-4 w-4" />
 						Settings
 					</Link>
 				</DropdownMenuItem>
 				<DropdownMenuItem
 					onClick={async () => {
+						if (isMobile) setOpenMobile(false);
 						if (thirdwebAccount !== undefined && evmWallet !== undefined) {
 							disconnect(evmWallet);
 						} else if (solanaWallet.wallet !== null) {

@@ -93,8 +93,8 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 				</header>
 
 				{/* Desktop Sidebar */}
-				<Sidebar collapsible="offcanvas" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-					<SidebarHeader className="font-bold text-xl flex items-center justify-center" style={{ height: "calc(4rem + env(safe-area-inset-top))" }}>
+				<Sidebar collapsible="offcanvas">
+					<SidebarHeader className="font-bold text-xl flex items-center justify-center h-16">
 						<SidebarLogoLink />
 					</SidebarHeader>
 
