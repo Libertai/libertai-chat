@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:mobile": "pnpm build && npx cap sync",
+    "build:mobile": "pnpm build && npx cap sync && npx capacitor-assets generate",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
