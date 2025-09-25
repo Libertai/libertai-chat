@@ -8,6 +8,7 @@ import { ConversationNotFound } from "@/components/ConversationNotFound";
 import { Button } from "@/components/ui/button";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
+import { isMobileDevice } from "@/lib/utils";
 import OpenAI from "openai";
 
 export const Route = createFileRoute("/chat/$chatId")({
@@ -45,18 +46,20 @@ function Chat() {
 		}
 	}, [isInitialized]);
 
-	// Focus input when page loads
+	// Focus input when page loads (desktop only)
 	useEffect(() => {
-		const timer = setTimeout(() => {
-			inputRef.current?.focus();
-		}, 600); // Wait for page transition to complete
+		if (!isMobileDevice()) {
+			const timer = setTimeout(() => {
+				inputRef.current?.focus();
+			}, 600); // Wait for page transition to complete
 
-		return () => clearTimeout(timer);
+			return () => clearTimeout(timer);
+		}
 	}, []);
 
-	// Keep focus on input after sending messages
+	// Keep focus on input after sending messages (desktop only)
 	useEffect(() => {
-		if (!isLoading && inputRef.current) {
+		if (!isLoading && !isMobileDevice() && inputRef.current) {
 			inputRef.current.focus();
 		}
 	}, [isLoading]);

@@ -19,3 +19,10 @@ export async function copyAddressToClipboard(address: string | null) {
 	await navigator.clipboard.writeText(address);
 	toast.success("Address copied to clipboard");
 }
+
+export function isMobileDevice(): boolean {
+	return (
+		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+		navigator.maxTouchPoints > 2
+	);
+}
