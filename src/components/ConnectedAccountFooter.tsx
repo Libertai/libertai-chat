@@ -90,9 +90,12 @@ export function ConnectedAccountFooter() {
 				</div>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem asChild className="cursor-pointer gap-2">
-					<Link to="/settings" onClick={() => {
-						if (isMobile) setOpenMobile(false);
-					}}>
+					<Link
+						to="/settings"
+						onClick={() => {
+							if (isMobile) setOpenMobile(false);
+						}}
+					>
 						<Settings className="h-4 w-4" />
 						Settings
 					</Link>

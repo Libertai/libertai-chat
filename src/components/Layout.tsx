@@ -35,9 +35,12 @@ function SidebarLogoLink() {
 	const { isMobile, setOpenMobile } = useSidebar();
 
 	return (
-		<Link to="/" onClick={() => {
-			if (isMobile) setOpenMobile(false);
-		}}>
+		<Link
+			to="/"
+			onClick={() => {
+				if (isMobile) setOpenMobile(false);
+			}}
+		>
 			<LibertaiLogo className="h-6 w-auto text-foreground" />
 		</Link>
 	);
