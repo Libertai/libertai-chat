@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
 function Index() {
 	const navigate = useNavigate();
 	const { createChat } = useChatStore();
-	const { assistants, selectedAssistant, setSelectedAssistant } = useAssistantStore();
+	const { assistants, selectedAssistant, setSelectedAssistant, getAssistantOrDefault } = useAssistantStore();
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 	const [inputValue, setInputValue] = useState("");
 	const [isFocused, setIsFocused] = useState(false);
@@ -106,7 +106,7 @@ function Index() {
 			{/* Single animated input container */}
 			<div
 				className={`absolute left-0 right-0 md:transition-all md:duration-500 md:ease-in-out ${
-					shouldShowCentered ? "top-[calc(100%-120px)] md:top-[45%]" : "top-[calc(100%-120px)]"
+					shouldShowCentered ? "top-[calc(100%-180px)] md:top-[45%]" : "top-[calc(100%-180px)]"
 				}`}
 			>
 				<div className="p-4 md:p-6 space-y-3 md:space-y-4">
@@ -128,6 +128,7 @@ function Index() {
 							placeholder="Start a private conversation..."
 							isSubmitting={isSubmitting}
 							inputRef={inputRef}
+							assistantName={getAssistantOrDefault(selectedAssistant).title}
 						/>
 					</div>
 

@@ -290,6 +290,7 @@ function Chat() {
 							placeholder="Type your message..."
 							disabled={isLoading}
 							inputRef={inputRef}
+							assistantName={getAssistantOrDefault(chat?.assistantId).title}
 						/>
 					</div>
 				</div>
