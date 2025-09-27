@@ -197,7 +197,7 @@ function Chat() {
 									}`}
 								>
 									{message.role === "assistant" ? (
-										<div className="markdown-content">
+										<div className="markdown-content message-content">
 											<ReactMarkdown
 												components={{
 													h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
@@ -226,7 +226,7 @@ function Chat() {
 											</ReactMarkdown>
 										</div>
 									) : (
-										<p>{message.content}</p>
+										<p className="message-content">{message.content}</p>
 									)}
 								</div>
 								{message.role === "assistant" && message.content && (

@@ -173,3 +173,11 @@
         @apply bg-background text-foreground font-satoshi;
     }
 }
+
+/* Message word breaking utility class */
+.message-content {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+}
