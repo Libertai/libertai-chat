@@ -1,4 +1,4 @@
-import { FocusEvent, FormEvent, KeyboardEvent, RefObject, useRef } from "react";
+import { FocusEvent, FormEvent, KeyboardEvent, RefObject, useEffect, useRef } from "react";
 import { ArrowUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +48,14 @@ export function ChatInput({
 
 		target.style.overflowY = newHeight >= 240 ? "auto" : "hidden";
 	};
+
+	// Reset textarea height when value becomes empty
+	useEffect(() => {
+		if (textareaRef.current && value === "") {
+			textareaRef.current.style.height = "";
+			textareaRef.current.style.overflowY = "hidden";
+		}
+	}, [textareaRef, value]);
 
 	return (
 		<div className="relative">
