@@ -1,5 +1,5 @@
 import { FocusEvent, FormEvent, KeyboardEvent, RefObject, useEffect, useRef } from "react";
-import { ArrowUp, Plus } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -75,13 +75,13 @@ export function ChatInput({
 			/>
 			<div className="absolute bottom-4 left-0 right-0 flex items-center justify-between px-3">
 				<div className="flex items-center space-x-3">
-					<Button
-						variant="ghost"
-						size="icon"
-						className="h-8 w-8 rounded-full border border-card dark:border-hover text-foreground"
-					>
-						<Plus className="h-4 w-4" />
-					</Button>
+					{/*<Button*/}
+					{/*	variant="ghost"*/}
+					{/*	size="icon"*/}
+					{/*	className="h-8 w-8 rounded-full border border-card dark:border-hover text-foreground"*/}
+					{/*>*/}
+					{/*	<Plus className="h-4 w-4" />*/}
+					{/*</Button>*/}
 					<span className="text-sm text-foreground font-medium border border-card dark:border-hover rounded-full px-3 py-1">
 						{assistantName}
 					</span>

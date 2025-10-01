@@ -78,10 +78,10 @@ function Index() {
 						return (
 							<div
 								key={card.id}
-								onClick={() => setSelectedAssistant(card.id)}
-								className={`rounded-xl p-4 transition-colors cursor-pointer relative border border-border w-40 h-40 md:w-50 md:h-50 ${
+								onClick={() => !card.disabled && setSelectedAssistant(card.id)}
+								className={`rounded-xl p-4 transition-colors relative border border-border w-40 h-40 md:w-50 md:h-50 ${
 									isSelected ? "bg-hover" : "bg-card"
-								}`}
+								} ${card.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
 							>
 								{card.badge && (
 									<div className="absolute top-3 right-3 md:top-4 md:right-4">
