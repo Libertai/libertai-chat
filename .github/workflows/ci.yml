@@ -47,7 +47,7 @@ jobs:
           echo "VITE_THIRDWEB_CLIENT_ID=${{ secrets.THIRDWEB_CLIENT_ID }}" >> .env
           echo "VITE_LTAI_INFERENCE_API_URL=${{ secrets.LTAI_INFERENCE_API_URL }}" >> .env
           echo "VITE_SOLANA_RPC=${{ secrets.SOLANA_RPC }}" >> .env
-          echo "VITE_LIBERTAI_API_KEY=${{ secrets.LIBERTAI_API_KEY }}" >> .env
+          echo "VITE_LTAI_CONNECTED_API_URL=${{ secrets.LTAI_CONNECTED_API_URL }}" >> .env
       - name: Build project
         run: pnpm run build
 
