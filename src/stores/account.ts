@@ -6,6 +6,7 @@ import {
 	checkAuthStatusAuthStatusGet,
 	getAuthMessageAuthMessagePost,
 	loginWithWalletAuthLoginPost,
+	getChatApiKeyApiKeysChatGet,
 } from "@/apis/inference/sdk.gen";
 import { toast } from "sonner";
 import { ethers } from "ethers";
@@ -32,6 +33,7 @@ type AccountStoreState = {
 	ltaiBalance: number;
 	solBalance: number;
 	apiCredits: number;
+	chatApiKey: string | null;
 	formattedLTAIBalance: () => string;
 	formattedSOLBalance: () => string;
 	formattedAPICredits: () => string;
@@ -49,6 +51,7 @@ type AccountStoreState = {
 	getLTAIBalance: () => Promise<number>;
 	getSOLBalance: () => Promise<number>;
 	getAPICredits: () => Promise<number>;
+	getChatApiKey: () => Promise<string | null>;
 	onDisconnect: () => void;
 	authenticate: (
 		baseAccount: ThirdwebAccount | undefined,
@@ -64,6 +67,7 @@ export const useAccountStore = create<AccountStoreState>((set, get) => ({
 	ltaiBalance: 0,
 	solBalance: 0,
 	apiCredits: 0,
+	chatApiKey: null,
 	formattedLTAIBalance: () => get().ltaiBalance.toFixed(0),
 	formattedSOLBalance: () => get().solBalance.toFixed(0),
 	formattedAPICredits: () => get().apiCredits.toFixed(0),
@@ -158,6 +162,10 @@ export const useAccountStore = create<AccountStoreState>((set, get) => ({
 					const solBalance = await state.getSOLBalance();
 					set({ solBalance: solBalance });
 				}
+
+				// Fetch chat API key
+				const chatApiKey = await state.getChatApiKey();
+				set({ chatApiKey });
 			}
 		} catch (error) {
 			console.error("Account change error:", error);
@@ -292,6 +300,15 @@ export const useAccountStore = create<AccountStoreState>((set, get) => ({
 		// For now we'll return a placeholder value until we implement the proper endpoint
 		return 0;
 	},
+	getChatApiKey: async (): Promise<string | null> => {
+		try {
+			const response = await getChatApiKeyApiKeysChatGet();
+			return response.data?.key || null;
+		} catch (error) {
+			console.error("Error fetching chat API key:", error);
+			return null;
+		}
+	},
 	checkAuthStatus: async (accountAddress: string): Promise<boolean> => {
 		try {
 			const response = await checkAuthStatusAuthStatusGet();
@@ -395,6 +412,10 @@ export const useAccountStore = create<AccountStoreState>((set, get) => ({
 				const apiCredits = await state.getAPICredits();
 				set({ apiCredits });
 
+				// Fetch chat API key
+				const chatApiKey = await state.getChatApiKey();
+				set({ chatApiKey });
+
 				return true;
 			} else {
 				console.error("No access token received");
@@ -423,6 +444,7 @@ export const useAccountStore = create<AccountStoreState>((set, get) => ({
 			ltaiBalance: 0,
 			solBalance: 0,
 			apiCredits: 0,
+			chatApiKey: null,
 			lastTransactionHash: null,
 			isInitialLoad: true,
 			account: null,

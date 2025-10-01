@@ -91,6 +91,7 @@ export type ApiKey = {
 	 * Monthly Limit
 	 */
 	monthly_limit?: number | null;
+	type: ApiKeyType;
 };
 
 /**
@@ -126,6 +127,11 @@ export type ApiKeyListResponse = {
 	 */
 	keys: Array<ApiKey>;
 };
+
+/**
+ * ApiKeyType
+ */
+export type ApiKeyType = "api" | "chat";
 
 /**
  * ApiKeyUpdate
@@ -233,6 +239,27 @@ export type Call = {
 	 * Model Name
 	 */
 	model_name: string;
+};
+
+/**
+ * ChatApiKeyResponse
+ */
+export type ChatApiKeyResponse = {
+	/**
+	 * Key
+	 */
+	key: string;
+};
+
+/**
+ * ChatRequest
+ */
+export type ChatRequest = {
+	/**
+	 * Model
+	 */
+	model: string;
+	[key: string]: unknown | string;
 };
 
 /**
@@ -446,6 +473,7 @@ export type FullApiKey = {
 	 * Monthly Limit
 	 */
 	monthly_limit?: number | null;
+	type: ApiKeyType;
 	/**
 	 * Full Key
 	 */
@@ -1410,6 +1438,33 @@ export type CreateApiKeyApiKeysPostResponses = {
 
 export type CreateApiKeyApiKeysPostResponse = CreateApiKeyApiKeysPostResponses[keyof CreateApiKeyApiKeysPostResponses];
 
+export type GetChatApiKeyApiKeysChatGetData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: "/api-keys/chat";
+};
+
+export type GetChatApiKeyApiKeysChatGetErrors = {
+	/**
+	 * Validation Error
+	 */
+	422: HttpValidationError;
+};
+
+export type GetChatApiKeyApiKeysChatGetError =
+	GetChatApiKeyApiKeysChatGetErrors[keyof GetChatApiKeyApiKeysChatGetErrors];
+
+export type GetChatApiKeyApiKeysChatGetResponses = {
+	/**
+	 * Successful Response
+	 */
+	200: ChatApiKeyResponse;
+};
+
+export type GetChatApiKeyApiKeysChatGetResponse =
+	GetChatApiKeyApiKeysChatGetResponses[keyof GetChatApiKeyApiKeysChatGetResponses];
+
 export type DeleteApiKeyApiKeysKeyIdDeleteData = {
 	body?: never;
 	path: {
@@ -1948,6 +2003,29 @@ export type GetTokensStatsStatsGlobalTokensGetResponses = {
 
 export type GetTokensStatsStatsGlobalTokensGetResponse =
 	GetTokensStatsStatsGlobalTokensGetResponses[keyof GetTokensStatsStatsGlobalTokensGetResponses];
+
+export type ProxyChatRequestChatPostData = {
+	body: ChatRequest;
+	path?: never;
+	query?: never;
+	url: "/chat";
+};
+
+export type ProxyChatRequestChatPostErrors = {
+	/**
+	 * Validation Error
+	 */
+	422: HttpValidationError;
+};
+
+export type ProxyChatRequestChatPostError = ProxyChatRequestChatPostErrors[keyof ProxyChatRequestChatPostErrors];
+
+export type ProxyChatRequestChatPostResponses = {
+	/**
+	 * Successful Response
+	 */
+	200: unknown;
+};
 
 export type ClientOptions = {
 	baseURL: "http://localhost:8000" | (string & {});

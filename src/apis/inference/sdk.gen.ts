@@ -41,6 +41,9 @@ import type {
 	CreateApiKeyApiKeysPostData,
 	CreateApiKeyApiKeysPostResponses,
 	CreateApiKeyApiKeysPostErrors,
+	GetChatApiKeyApiKeysChatGetData,
+	GetChatApiKeyApiKeysChatGetResponses,
+	GetChatApiKeyApiKeysChatGetErrors,
 	DeleteApiKeyApiKeysKeyIdDeleteData,
 	DeleteApiKeyApiKeysKeyIdDeleteResponses,
 	DeleteApiKeyApiKeysKeyIdDeleteErrors,
@@ -92,6 +95,9 @@ import type {
 	GetTokensStatsStatsGlobalTokensGetData,
 	GetTokensStatsStatsGlobalTokensGetResponses,
 	GetTokensStatsStatsGlobalTokensGetErrors,
+	ProxyChatRequestChatPostData,
+	ProxyChatRequestChatPostResponses,
+	ProxyChatRequestChatPostErrors,
 } from "./types.gen";
 import { client as _heyApiClient } from "./client.gen";
 
@@ -389,6 +395,27 @@ export const createApiKeyApiKeysPost = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get Chat Api Key
+ * Get the chat API key for the authenticated user.
+ *
+ * If the user doesn't have a chat API key, one will be automatically created.
+ * Returns only the full API key string.
+ */
+export const getChatApiKeyApiKeysChatGet = <ThrowOnError extends boolean = false>(
+	options?: Options<GetChatApiKeyApiKeysChatGetData, ThrowOnError>,
+) => {
+	return (options?.client ?? _heyApiClient).get<
+		GetChatApiKeyApiKeysChatGetResponses,
+		GetChatApiKeyApiKeysChatGetErrors,
+		ThrowOnError
+	>({
+		responseType: "json",
+		url: "/api-keys/chat",
+		...options,
+	});
+};
+
+/**
  * Delete Api Key
  * Delete an API key.
  */
@@ -434,6 +461,9 @@ export const updateApiKeyApiKeysKeyIdPut = <ThrowOnError extends boolean = false
  *
  * This endpoint is protected by admin authorization and requires
  * the X-Admin-Token header to match the ADMIN_SECRET environment variable.
+ *
+ * For chat-type API keys, logs usage to chat_requests without deducting credits.
+ * For api-type API keys, logs usage to inference_calls and deducts credits.
  */
 export const registerInferenceCallApiKeysAdminUsagePost = <ThrowOnError extends boolean = false>(
 	options: Options<RegisterInferenceCallApiKeysAdminUsagePostData, ThrowOnError>,
@@ -739,5 +769,32 @@ export const getTokensStatsStatsGlobalTokensGet = <ThrowOnError extends boolean 
 		responseType: "json",
 		url: "/stats/global/tokens",
 		...options,
+	});
+};
+
+/**
+ * Proxy Chat Request
+ * Proxy requests to LibertAI chat completions API.
+ *
+ * Always replaces the Authorization header with LIBERTAI_CHAT_DEFAULT_API_KEY from environment.
+ * Forwards all request parameters, query params, and body to api.libertai.io/v1/chat/completions.
+ *
+ * Handles both streaming and non-streaming responses.
+ */
+export const proxyChatRequestChatPost = <ThrowOnError extends boolean = false>(
+	options: Options<ProxyChatRequestChatPostData, ThrowOnError>,
+) => {
+	return (options.client ?? _heyApiClient).post<
+		ProxyChatRequestChatPostResponses,
+		ProxyChatRequestChatPostErrors,
+		ThrowOnError
+	>({
+		responseType: "json",
+		url: "/chat",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
 	});
 };

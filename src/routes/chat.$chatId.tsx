@@ -8,7 +8,9 @@ import { ConversationNotFound } from "@/components/ConversationNotFound";
 import { Button } from "@/components/ui/button";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
+import { useAccountStore } from "@/stores/account";
 import { isMobileDevice } from "@/lib/utils";
+import env from "@/config/env";
 import OpenAI from "openai";
 
 export const Route = createFileRoute("/chat/$chatId")({
@@ -19,6 +21,7 @@ function Chat() {
 	const { chatId } = Route.useParams();
 	const { getChat, addMessage, updateMessage, deleteMessage } = useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
+	const { isAuthenticated, chatApiKey } = useAccountStore();
 	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
@@ -29,9 +32,10 @@ function Chat() {
 	const chat = getChat(chatId);
 	const messages = chat?.messages || [];
 
+	// Use connected URL with API key when authenticated, otherwise use free URL without API key
 	const openai = new OpenAI({
-		baseURL: import.meta.env.VITE_LIBERTAI_API_URL || "https://api.libertai.io/v1",
-		apiKey: import.meta.env.VITE_LIBERTAI_API_KEY,
+		baseURL: isAuthenticated ? env.LTAI_CONNECTED_API_URL : env.LTAI_INFERENCE_API_URL,
+		apiKey: isAuthenticated ? chatApiKey || "" : "",
 		dangerouslyAllowBrowser: true,
 	});
 
