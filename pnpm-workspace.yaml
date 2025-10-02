@@ -3,5 +3,6 @@ onlyBuiltDependencies:
   - bigint-buffer
   - bufferutil
   - esbuild
+  - keccak
   - sharp
   - utf-8-validate
