@@ -8,6 +8,7 @@ import "./styles.css";
 import { NotFoundPage } from "@/components/404.tsx";
 import { client as inferenceClient } from "@/apis/inference/client.gen";
 import env from "@/config/env.ts";
+import { useChatStore } from "@/stores/chat";
 
 // Add theme detection
 function setInitialTheme() {
@@ -48,6 +49,9 @@ inferenceClient.setConfig({
 	baseURL: env.LTAI_INFERENCE_API_URL,
 	withCredentials: true, // Enable sending cookies in cross-origin requests
 });
+
+// Migrate legacy chats if needed
+useChatStore.getState().migrateLegacyChatsIfNeeded();
 
 // Render the app
 const rootElement = document.getElementById("root")!;

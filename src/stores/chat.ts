@@ -3,9 +3,11 @@ import { persist } from "zustand/middleware";
 import { runMigrations } from "@/types/chats/migrations";
 import { Chat, Message } from "@/types/chats";
 import { useAssistantStore } from "./assistant";
+import { migrateLegacyChats } from "@/utils/legacy-chat-migration";
 
 interface ChatStore {
 	chats: Record<string, Chat>;
+	legacyMigrated: boolean;
 
 	getChat: (chatId: string) => Chat | undefined;
 	getAllChats: () => Chat[];
@@ -14,6 +16,7 @@ interface ChatStore {
 	updateMessage: (chatId: string, messageId: string, content: string) => void;
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
+	migrateLegacyChatsIfNeeded: () => void;
 }
 
 const CHAT_VERSION = 1;
@@ -22,6 +25,7 @@ export const useChatStore = create<ChatStore>()(
 	persist(
 		(set, get) => ({
 			chats: {},
+			legacyMigrated: false,
 
 			getChat: (chatId: string) => {
 				return get().chats[chatId];
@@ -139,6 +143,25 @@ export const useChatStore = create<ChatStore>()(
 					const { [chatId]: _deleted, ...remaining } = state.chats;
 					return { chats: remaining };
 				});
+			},
+
+			migrateLegacyChatsIfNeeded: () => {
+				const state = get();
+				if (state.legacyMigrated) {
+					return;
+				}
+
+				const defaultAssistant = useAssistantStore.getState().getAssistantOrDefault();
+				const legacyChats = migrateLegacyChats(defaultAssistant.id);
+
+				if (legacyChats) {
+					set({
+						chats: { ...legacyChats, ...state.chats },
+						legacyMigrated: true,
+					});
+				} else {
+					set({ legacyMigrated: true });
+				}
 			},
 		}),
 		{
