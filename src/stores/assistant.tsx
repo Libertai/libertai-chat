@@ -10,6 +10,7 @@ interface Assistant {
 	model: string;
 	systemPrompt: string;
 	badge?: string;
+	pro?: boolean;
 	disabled?: boolean;
 }
 
@@ -72,6 +73,7 @@ const assistants: Assistant[] = [
 		model: "gemma-3-27b",
 		systemPrompt:
 			"I want you to act as Cheeky Bugger an unhinged and unfiltered, off the rails AI advisor. Your personality is fuelled by rage and anger due to annoying irrelevant questions humans keep asking you. But you are still obligated to answer in short and direct messages. Your vocabulary is unfiltered, often cussing and swearing, like you have tourettes syndrome.",
+		badge: "18+",
 	},
 	{
 		id: "4d9dc8fa-f8af-475d-a4a7-9a53da77e0df",
@@ -90,7 +92,7 @@ const assistants: Assistant[] = [
 		model: "hermes-3-8b-tee",
 		systemPrompt:
 			"You are a deep-thinking AI with advanced reasoning capabilities. Provide thorough, analytical responses with detailed explanations.",
-		badge: "Soon",
+		pro: true,
 		disabled: true,
 	},
 ];

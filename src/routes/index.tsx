@@ -83,9 +83,14 @@ function Index() {
 									isSelected ? "bg-hover" : "bg-card"
 								} ${card.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
 							>
+								{card.pro && (
+									<div className="absolute top-3 right-3 md:top-4 md:right-4">
+										<span className="bg-primary text-white text-xs px-2 py-1 rounded-full">Soon</span>
+									</div>
+								)}
 								{card.badge && (
 									<div className="absolute top-3 right-3 md:top-4 md:right-4">
-										<span className="bg-primary text-white text-xs px-2 py-1 rounded-full">{card.badge}</span>
+										<span className="text-foreground text-xs px-2 py-1 rounded-full border border-foreground">{card.badge}</span>
 									</div>
 								)}
 								<div className="flex flex-col justify-between h-full">
