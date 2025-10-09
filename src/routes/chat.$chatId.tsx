@@ -220,7 +220,7 @@ function Chat() {
 													),
 													ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
 													ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-													li: ({ children }) => <li className="text-sm">{children}</li>,
+													li: ({ children }) => <li className="text-sm [&>p]:inline [&>p]:m-0">{children}</li>,
 													blockquote: ({ children }) => (
 														<blockquote className="border-l-2 border-primary/50 pl-3 italic">{children}</blockquote>
 													),
