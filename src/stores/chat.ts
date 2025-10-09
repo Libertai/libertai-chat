@@ -16,6 +16,7 @@ interface ChatStore {
 	updateMessage: (chatId: string, messageId: string, content: string) => void;
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
+	renameChat: (chatId: string, title: string) => void;
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
@@ -142,6 +143,23 @@ export const useChatStore = create<ChatStore>()(
 				set((state) => {
 					const { [chatId]: _deleted, ...remaining } = state.chats;
 					return { chats: remaining };
+				});
+			},
+
+			renameChat: (chatId: string, title: string) => {
+				set((state) => {
+					const chat = state.chats[chatId];
+					if (!chat) return state;
+
+					return {
+						chats: {
+							...state.chats,
+							[chatId]: {
+								...chat,
+								title,
+							},
+						},
+					};
 				});
 			},
 

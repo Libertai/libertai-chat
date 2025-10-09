@@ -13,12 +13,8 @@ export const ChatV1Schema = z.object({
 	assistantId: z.string(),
 	createdAt: z.string(),
 	updatedAt: z.string(),
-});
-
-export const ChatStoreV1Schema = z.object({
-	chats: z.record(z.string(), ChatV1Schema),
+	title: z.string().optional(),
 });
 
 export type MessageV1 = z.infer<typeof MessageV1Schema>;
 export type ChatV1 = z.infer<typeof ChatV1Schema>;
-export type ChatStoreV1 = z.infer<typeof ChatStoreV1Schema>;
