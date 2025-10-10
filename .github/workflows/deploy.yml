@@ -36,5 +36,5 @@ jobs:
         with:
           path: 'dist'
           private-key: ${{ secrets.ALEPH_CLOUD_LTAI_CHAT_PROD }}
-          domain: test.libertai.io
+          domain: chat.libertai.io
           retention_days: 1
