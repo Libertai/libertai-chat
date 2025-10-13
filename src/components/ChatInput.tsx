@@ -22,7 +22,7 @@ export function ChatInput({
 	onSubmit,
 	onFocus,
 	onBlur,
-	placeholder = "Type your message...",
+	placeholder,
 	disabled = false,
 	isSubmitting = false,
 	inputRef,

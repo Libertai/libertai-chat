@@ -291,7 +291,7 @@ function Chat() {
 							value={input}
 							onChange={setInput}
 							onSubmit={() => handleSendMessage()}
-							placeholder="Type your message..."
+							placeholder="Continue private conversation..."
 							disabled={isLoading}
 							inputRef={inputRef}
 							assistantName={getAssistantOrDefault(chat?.assistantId).title}
