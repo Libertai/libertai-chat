@@ -8,11 +8,13 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
 	theme: "dark" | "light";
+	isSystem: boolean;
 	setTheme: (theme: "dark" | "light" | "system") => void;
 };
 
 const initialState: ThemeProviderState = {
 	theme: "light",
+	isSystem: false,
 	setTheme: () => null,
 };
 
@@ -24,11 +26,18 @@ export function ThemeProvider({
 	storageKey = "libertai-ui-theme",
 	...props
 }: Readonly<ThemeProviderProps>) {
-	const [theme, setTheme] = useState<"light" | "dark">(
-		() =>
-			(localStorage.getItem(storageKey) as "light" | "dark") ||
-			(defaultTheme === "system" ? getSystemTheme() : defaultTheme),
-	);
+	const [isSystem, setIsSystem] = useState<boolean>(() => {
+		const storedTheme = localStorage.getItem(storageKey);
+		return storedTheme === "system" || defaultTheme === "system";
+	});
+
+	const [theme, setTheme] = useState<"light" | "dark">(() => {
+		const storedTheme = localStorage.getItem(storageKey);
+		if (storedTheme === "system") {
+			return getSystemTheme();
+		}
+		return (storedTheme as "light" | "dark") || (defaultTheme === "system" ? getSystemTheme() : defaultTheme);
+	});
 
 	useEffect(() => {
 		const root = window.document.documentElement;
@@ -53,12 +62,15 @@ export function ThemeProvider({
 
 	const value = {
 		theme,
+		isSystem,
 		setTheme: (newTheme: "dark" | "light" | "system") => {
 			if (newTheme === "system") {
 				localStorage.setItem(storageKey, "system");
+				setIsSystem(true);
 				setTheme(getSystemTheme());
 			} else {
 				localStorage.setItem(storageKey, newTheme);
+				setIsSystem(false);
 				setTheme(newTheme);
 			}
 		},
