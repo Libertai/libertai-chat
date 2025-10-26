@@ -1,0 +1,40 @@
+name: Beta deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: "Deploy beta"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Create .env file
+        run: |
+          echo "VITE_THIRDWEB_CLIENT_ID=${{ secrets.THIRDWEB_CLIENT_ID }}" >> .env
+          echo "VITE_LTAI_INFERENCE_API_URL=${{ secrets.LTAI_INFERENCE_API_URL }}" >> .env
+          echo "VITE_SOLANA_RPC=${{ secrets.SOLANA_RPC }}" >> .env
+          echo "VITE_LTAI_CONNECTED_API_URL=${{ secrets.LTAI_CONNECTED_API_URL }}" >> .env
+      - name: Build project
+        run: pnpm run build
+
+      - name: Deploy with Aleph
+        uses: aleph-im/web3-hosting-action@v1.1.2
+        with:
+          path: 'dist'
+          private-key: ${{ secrets.ALEPH_CLOUD_LTAI_CHAT_BETA }}
+          domain: beta.chat.libertai.io
+          retention_days: 1
