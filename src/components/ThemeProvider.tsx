@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
 type ThemeProviderProps = {
 	children: ReactNode;
@@ -60,21 +60,24 @@ export function ThemeProvider({
 		};
 	}, [storageKey]);
 
-	const value = {
-		theme,
-		isSystem,
-		setTheme: (newTheme: "dark" | "light" | "system") => {
-			if (newTheme === "system") {
-				localStorage.setItem(storageKey, "system");
-				setIsSystem(true);
-				setTheme(getSystemTheme());
-			} else {
-				localStorage.setItem(storageKey, newTheme);
-				setIsSystem(false);
-				setTheme(newTheme);
-			}
-		},
-	};
+	const value = useMemo(
+		() => ({
+			theme,
+			isSystem,
+			setTheme: (newTheme: "dark" | "light" | "system") => {
+				if (newTheme === "system") {
+					localStorage.setItem(storageKey, "system");
+					setIsSystem(true);
+					setTheme(getSystemTheme());
+				} else {
+					localStorage.setItem(storageKey, newTheme);
+					setIsSystem(false);
+					setTheme(newTheme);
+				}
+			},
+		}),
+		[theme, isSystem, storageKey],
+	);
 
 	return (
 		<ThemeProviderContext.Provider {...props} value={value}>
