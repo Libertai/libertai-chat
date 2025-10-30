@@ -48,9 +48,6 @@ export function PaymentForm({
 	const handleApprovePayment = async () => {
 		if (account?.chain !== "base" || !tokenAmount || !discountedAmount) return;
 
-		// Approving a bit more than required in case of price fluctuations
-		const amountToApprove = discountedAmount * 1.1;
-
 		setIsApproving(true);
 		try {
 			try {
@@ -62,7 +59,7 @@ export function PaymentForm({
 						client: thirdwebClient,
 					},
 					spender: PAYMENT_PROCESSOR_ADDRESS,
-					amount: amountToApprove.toString(),
+					amount: discountedAmount.toString(),
 				});
 
 				// Send the transaction and get the hash
