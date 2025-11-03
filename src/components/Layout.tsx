@@ -46,6 +46,36 @@ function SidebarLogoLink() {
 	);
 }
 
+// Desktop header that adapts its width when the sidebar is open
+function DesktopHeader({ isOnChatPage }: { isOnChatPage: boolean }) {
+	const { open } = useSidebar();
+	const sidebarWidth = "16rem";
+
+	return (
+		<header
+			className="border-b border-border px-4 hidden md:flex items-center justify-between fixed top-0 bg-background z-20 transition-[width,left] duration-300"
+			style={{
+				paddingTop: "env(safe-area-inset-top)",
+				height: "calc(4rem + env(safe-area-inset-top))",
+				left: open ? sidebarWidth : 0,
+				width: open ? `calc(100% - ${sidebarWidth})` : "100%",
+			}}
+		>
+			<SidebarTrigger />
+			<div className="flex items-center gap-4">
+				{isOnChatPage && (
+					<Link to="/">
+						<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+							<Edit className="h-4 w-4" />
+						</Button>
+					</Link>
+				)}
+				<ConnectButton />
+			</div>
+		</header>
+	);
+}
+
 export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 	const router = useRouter();
 	const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
@@ -113,22 +143,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 				<SidebarInset className="w-full">
 					{/* Desktop Header */}
-					<header
-						className="border-b border-border px-4 hidden md:flex items-center justify-between"
-						style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(4rem + env(safe-area-inset-top))" }}
-					>
-						<SidebarTrigger />
-						<div className="flex items-center gap-4">
-							{isOnChatPage && (
-								<Link to="/">
-									<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-										<Edit className="h-4 w-4" />
-									</Button>
-								</Link>
-							)}
-							<ConnectButton />
-						</div>
-					</header>
+					<DesktopHeader isOnChatPage={isOnChatPage} />
 
 					{/* Main content */}
 					<main
