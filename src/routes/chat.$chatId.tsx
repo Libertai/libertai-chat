@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Copy, RotateCcw } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Lightbulb, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { ChatInput } from "@/components/ChatInput";
 import { ConversationNotFound } from "@/components/ConversationNotFound";
@@ -12,6 +12,7 @@ import { useAccountStore } from "@/stores/account";
 import { isMobileDevice } from "@/lib/utils";
 import env from "@/config/env";
 import OpenAI from "openai";
+import { parseStreamingContent } from "@/utils/thinking-parser";
 
 export const Route = createFileRoute("/chat/$chatId")({
 	component: Chat,
@@ -26,6 +27,7 @@ function Chat() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [isStreaming, setIsStreaming] = useState(false);
+	const [expandedThinking, setExpandedThinking] = useState<Set<string>>(new Set());
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -116,24 +118,28 @@ function Chat() {
 				stream: true,
 			});
 
-			let accumulatedContent = "";
+			let accumulatedRawContent = "";
 
 			for await (const chunk of stream) {
 				const content = chunk.choices[0]?.delta?.content;
 				if (content) {
-					accumulatedContent += content;
+					accumulatedRawContent += content;
 
 					if (!isStreaming) {
 						setIsStreaming(true);
 						setIsLoading(false);
 					}
 
-					updateMessage(chatId, assistantMessage.id, accumulatedContent);
+					// Parse thinking and content based on model
+					const parsed = parseStreamingContent(assistant.model, accumulatedRawContent);
+
+					// Update message with both content and thinking
+					updateMessage(chatId, assistantMessage.id, parsed.content, parsed.thinking);
 				}
 			}
 
 			// Final check to ensure we have content
-			if (!accumulatedContent) {
+			if (!accumulatedRawContent) {
 				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
 			}
 		} catch (error) {
@@ -182,6 +188,18 @@ function Chat() {
 		await generateAIResponse();
 	};
 
+	const toggleThinking = (messageId: string) => {
+		setExpandedThinking((prev) => {
+			const next = new Set(prev);
+			if (next.has(messageId)) {
+				next.delete(messageId);
+			} else {
+				next.add(messageId);
+			}
+			return next;
+		});
+	};
+
 	// Show 404 if chat doesn't exist
 	if (!chat) {
 		return <ConversationNotFound />;
@@ -195,6 +213,34 @@ function Chat() {
 					{messages.map((message, index) => (
 						<div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
 							<div className={`group ${message.role === "user" ? "" : "w-full"}`}>
+								{/* Thinking section for assistant messages */}
+								{message.role === "assistant" && message.thinking && (
+									<div className="mb-3">
+										<button
+											onClick={() => toggleThinking(message.id)}
+											className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted/20 rounded-lg transition-colors"
+										>
+											<Lightbulb className="w-4 h-4 text-yellow-500" />
+											<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+												Thinking
+											</span>
+											{expandedThinking.has(message.id) ? (
+												<ChevronDown className="w-4 h-4 text-muted-foreground" />
+											) : (
+												<ChevronRight className="w-4 h-4 text-muted-foreground" />
+											)}
+										</button>
+										{expandedThinking.has(message.id) && (
+											<div className="mt-2 px-4 py-3 bg-muted/30 rounded-lg border-l-2 border-yellow-500/30">
+												<div className="text-sm text-muted-foreground italic whitespace-pre-wrap">
+													{message.thinking}
+												</div>
+											</div>
+										)}
+									</div>
+								)}
+
+								{/* Main message content */}
 								<div
 									className={`px-4 py-2 text-foreground ${
 										message.role === "user" ? "bg-white dark:bg-card rounded-2xl rounded-br-none" : "bg-transparent"

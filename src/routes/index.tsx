@@ -87,7 +87,7 @@ function Index() {
 								>
 									{card.pro && (
 										<div className="absolute top-3 right-3 md:top-4 md:right-4">
-											<span className="bg-primary text-white text-xs px-2 py-1 rounded-full">Soon</span>
+											<span className="bg-primary text-white text-xs px-2 py-1 rounded-full">Pro</span>
 										</div>
 									)}
 									{card.badge && (

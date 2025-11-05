@@ -12,15 +12,15 @@ interface ChatStore {
 	getChat: (chatId: string) => Chat | undefined;
 	getAllChats: () => Chat[];
 	createChat: (chatId: string, firstMessage: string, assistantId: string) => void;
-	addMessage: (chatId: string, role: "user" | "assistant", content: string) => Message;
-	updateMessage: (chatId: string, messageId: string, content: string) => void;
+	addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string) => Message;
+	updateMessage: (chatId: string, messageId: string, content: string, thinking?: string) => void;
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
 	renameChat: (chatId: string, title: string) => void;
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
-const CHAT_VERSION = 1;
+const CHAT_VERSION = 2;
 
 export const useChatStore = create<ChatStore>()(
 	persist(
@@ -60,11 +60,12 @@ export const useChatStore = create<ChatStore>()(
 				}));
 			},
 
-			addMessage: (chatId: string, role: "user" | "assistant", content: string) => {
+			addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string) => {
 				const message: Message = {
 					id: crypto.randomUUID(),
 					role,
 					content,
+					thinking,
 					timestamp: new Date(),
 				};
 
@@ -103,7 +104,7 @@ export const useChatStore = create<ChatStore>()(
 				return message;
 			},
 
-			updateMessage: (chatId: string, messageId: string, content: string) => {
+			updateMessage: (chatId: string, messageId: string, content: string, thinking?: string) => {
 				set((state) => {
 					const chat = state.chats[chatId];
 					if (!chat) return state;
@@ -113,7 +114,7 @@ export const useChatStore = create<ChatStore>()(
 							...state.chats,
 							[chatId]: {
 								...chat,
-								messages: chat.messages.map((msg) => (msg.id === messageId ? { ...msg, content } : msg)),
+								messages: chat.messages.map((msg) => (msg.id === messageId ? { ...msg, content, thinking } : msg)),
 								updatedAt: new Date().toISOString(),
 							},
 						},
