@@ -44,7 +44,7 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 							onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
 							className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted/20 rounded-lg transition-colors"
 						>
-							<Lightbulb className="w-4 h-4 text-yellow-500" />
+							<Lightbulb className="w-4 h-4 text-primary" />
 							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Thinking</span>
 							{isThinkingExpanded ? (
 								<ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -53,7 +53,7 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 							)}
 						</button>
 						{isThinkingExpanded && (
-							<div className="mt-2 px-4 py-3 bg-muted/30 rounded-lg border-l-2 border-yellow-500/30">
+							<div className="mt-2 px-4 py-3 bg-muted/30 rounded-lg border-l-2 border-primary/30">
 								<div className="text-sm text-muted-foreground italic whitespace-pre-wrap">{message.thinking}</div>
 							</div>
 						)}
