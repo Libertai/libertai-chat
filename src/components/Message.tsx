@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ChevronDown, ChevronRight, Copy, Lightbulb, RotateCcw } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Lightbulb, RotateCcw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { Message as MessageType } from "@/types/chats";
@@ -15,8 +15,8 @@ interface MessageProps {
 
 export function Message({ message, isLastMessage, isLoading, isStreaming, onRegenerate }: MessageProps) {
 	const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
+	
 
-	// Auto-expand thinking if there's only thinking (no content yet - still streaming thinking)
 	useEffect(() => {
 		const hasOnlyThinking = message.role === "assistant" && message.thinking && !message.content;
 		if (hasOnlyThinking) {
@@ -63,7 +63,9 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 				{/* Main message content */}
 				<div
 					className={`px-4 py-2 text-foreground ${
-						message.role === "user" ? "bg-white dark:bg-card rounded-2xl rounded-br-none" : "bg-transparent"
+						message.role === "user"
+							? "bg-white dark:bg-card rounded-2xl rounded-br-none"
+							: "bg-transparent"
 					}`}
 				>
 					{/* Images for user messages */}
@@ -112,6 +114,15 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 						<p className="message-content">{message.content}</p>
 					)}
 				</div>
+
+				{/* Action buttons for user messages */}
+				{message.role === "user" && (
+					<div className="flex justify-end mt-1">
+						<Pencil
+							className="mt-1 mr-1 w-4 h-4 text-muted-foreground cursor-pointer opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity duration-200 hover:text-foreground"
+						/>
+					</div>
+				)}
 
 				{/* Action buttons for assistant messages */}
 				{message.role === "assistant" && message.content && (
