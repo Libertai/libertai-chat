@@ -11,9 +11,10 @@ interface MessageProps {
 	isLoading: boolean;
 	isStreaming: boolean;
 	onRegenerate: () => void;
+	onEditMessage?: (id: string, content: string) => void;
 }
 
-export function Message({ message, isLastMessage, isLoading, isStreaming, onRegenerate }: MessageProps) {
+export function Message({ message, isLastMessage, isLoading, isStreaming, onRegenerate, onEditMessage }: MessageProps) {
 	const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedContent, setEditedContent] = useState(message.content);
@@ -34,6 +35,20 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 			console.error("Failed to copy text: ", err);
 			toast.error("Failed to copy message");
 		}
+	};
+
+	const handleSave = () => {
+		if (onEditMessage) {
+			onEditMessage(message.id, editedContent);
+		} else {
+			message.content = editedContent; // fallback local
+		}
+		setIsEditing(false);
+	};
+
+	const handleCancel = () => {
+		setEditedContent(message.content);
+		setIsEditing(false);
 	};
 
 	return (
@@ -86,6 +101,28 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 					)}
 
 					{message.role === "assistant" ? (
+					{message.role === "user" ? (
+						isEditing ? (
+							<div className="flex flex-col gap-2">
+								<textarea
+									className="w-full bg-transparent border border-muted rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									value={editedContent}
+									onChange={(e) => setEditedContent(e.target.value)}
+									rows={3}
+								/>
+								<div className="flex justify-end gap-2">
+									<Button variant="outline" size="sm" onClick={handleCancel}>
+										Cancel
+									</Button>
+									<Button size="sm" onClick={handleSave}>
+										Save
+									</Button>
+								</div>
+							</div>
+						) : (
+							<p className="message-content whitespace-pre-wrap">{message.content}</p>
+						)
+					) : message.role === "assistant" ? (
 						<div className="markdown-content message-content">
 							<ReactMarkdown
 								components={{
@@ -117,12 +154,15 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 					)}
 				</div>
 
-				{/* Action buttons for user messages */}
-				{message.role === "user" && (
-					<div className="flex justify-end mt-1">
-						<Pencil
-							className="mt-1 mr-1 w-4 h-4 text-muted-foreground cursor-pointer opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity duration-200 hover:text-foreground"
-						/>
+				{/* Pencil icon for editing user messages */}
+				{message.role === "user" && !isEditing && (
+					<div className="relative mt-1 w-full">
+						<div className="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex justify-end items-center pr-4">
+							<Pencil
+								className="w-4 h-4 text-muted-foreground hover:text-foreground"
+								onClick={() => setIsEditing(true)}
+							/>
+						</div>
 					</div>
 				)}
 
