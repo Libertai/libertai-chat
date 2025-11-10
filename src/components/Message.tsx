@@ -15,8 +15,10 @@ interface MessageProps {
 
 export function Message({ message, isLastMessage, isLoading, isStreaming, onRegenerate }: MessageProps) {
 	const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
-	
+	const [isEditing, setIsEditing] = useState(false);
+	const [editedContent, setEditedContent] = useState(message.content);
 
+	// Auto-expand thinking if there's only thinking (no content yet - still streaming thinking)
 	useEffect(() => {
 		const hasOnlyThinking = message.role === "assistant" && message.thinking && !message.content;
 		if (hasOnlyThinking) {
