@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { runMigrations } from "@/types/chats/migrations";
-import { Chat, Message } from "@/types/chats";
+import { Chat, Message, ImageData } from "@/types/chats";
 import { useAssistantStore } from "./assistant";
 import { migrateLegacyChats } from "@/utils/legacy-chat-migration";
 
@@ -11,8 +11,8 @@ interface ChatStore {
 
 	getChat: (chatId: string) => Chat | undefined;
 	getAllChats: () => Chat[];
-	createChat: (chatId: string, firstMessage: string, assistantId: string) => void;
-	addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string) => Message;
+	createChat: (chatId: string, firstMessage: string, assistantId: string, images?: ImageData[]) => void;
+	addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string, images?: ImageData[]) => Message;
 	updateMessage: (chatId: string, messageId: string, content: string, thinking?: string) => void;
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
@@ -20,7 +20,7 @@ interface ChatStore {
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
-const CHAT_VERSION = 2;
+const CHAT_VERSION = 3;
 
 export const useChatStore = create<ChatStore>()(
 	persist(
@@ -37,12 +37,13 @@ export const useChatStore = create<ChatStore>()(
 				return chats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 			},
 
-			createChat: (chatId: string, firstMessage: string, assistantId: string) => {
+			createChat: (chatId: string, firstMessage: string, assistantId: string, images?: ImageData[]) => {
 				const now = new Date().toISOString();
 				const userMessage: Message = {
 					id: crypto.randomUUID(),
 					role: "user",
 					content: firstMessage,
+					images,
 					timestamp: new Date(),
 				};
 
@@ -60,12 +61,13 @@ export const useChatStore = create<ChatStore>()(
 				}));
 			},
 
-			addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string) => {
+			addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string, images?: ImageData[]) => {
 				const message: Message = {
 					id: crypto.randomUUID(),
 					role,
 					content,
 					thinking,
+					images,
 					timestamp: new Date(),
 				};
 

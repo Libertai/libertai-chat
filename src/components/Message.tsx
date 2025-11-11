@@ -66,6 +66,21 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 						message.role === "user" ? "bg-white dark:bg-card rounded-2xl rounded-br-none" : "bg-transparent"
 					}`}
 				>
+					{/* Images for user messages */}
+					{message.role === "user" && message.images && message.images.length > 0 && (
+						<div className="mb-3 flex flex-wrap gap-2">
+							{message.images.map((image, index) => (
+								<div key={index} className="relative">
+									<img
+										src={image.data}
+										alt={image.filename}
+										className="max-w-xs max-h-48 object-cover rounded-lg border border-card dark:border-hover"
+									/>
+								</div>
+							))}
+						</div>
+					)}
+
 					{message.role === "assistant" ? (
 						<div className="markdown-content message-content">
 							<ReactMarkdown

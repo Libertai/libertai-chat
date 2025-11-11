@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const MessageV2Schema = z.object({
-	id: z.string().uuid(),
+	id: z.uuid(),
 	role: z.enum(["user", "assistant"]),
 	content: z.string(),
 	thinking: z.string().optional(),
@@ -9,7 +9,7 @@ export const MessageV2Schema = z.object({
 });
 
 export const ChatV2Schema = z.object({
-	id: z.string().uuid(),
+	id: z.uuid(),
 	messages: z.array(MessageV2Schema),
 	assistantId: z.string(),
 	createdAt: z.string(),

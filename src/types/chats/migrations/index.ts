@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { v1ToV2Migration } from "./v2.ts";
+import { v2ToV3Migration } from "./v3.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -15,8 +16,7 @@ export interface Migration<TInput = any, TOutput = any> {
 
 const migrations: Migration[] = [
 	v1ToV2Migration,
-	// Add future migrations here:
-	// v3Migration,
+	v2ToV3Migration,
 ];
 
 export const runMigrations = (persistedState: any, currentVersion: number): any => {
