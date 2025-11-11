@@ -1,2 +1,2 @@
 // Re-export latest version schemas and types
-export type { MessageV2 as Message, ChatV2 as Chat } from "./v2";
+export type { MessageV3 as Message, ChatV3 as Chat, ImageDataV3 as ImageData } from "./v3";

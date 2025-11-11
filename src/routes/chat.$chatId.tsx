@@ -10,6 +10,7 @@ import { isMobileDevice } from "@/lib/utils";
 import env from "@/config/env";
 import OpenAI from "openai";
 import { parseStreamingContent } from "@/utils/thinking-parser";
+import type { ImageData } from "@/types/chats";
 
 export const Route = createFileRoute("/chat/$chatId")({
 	component: Chat,
@@ -106,10 +107,30 @@ function Chat() {
 						role: "system",
 						content: assistant.systemPrompt,
 					},
-					...messages.map((m) => ({
-						role: m.role,
-						content: m.content,
-					})),
+					...messages.map((m) => {
+						/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+						const messageContent: any = { role: m.role };
+
+						// Handle images for user messages
+						if (m.role === "user" && m.images && m.images.length > 0) {
+							messageContent.content = [
+								{
+									type: "text",
+									text: m.content,
+								},
+								...m.images.map((img) => ({
+									type: "image_url",
+									image_url: {
+										url: img.data,
+									},
+								})),
+							];
+						} else {
+							messageContent.content = m.content;
+						}
+
+						return messageContent;
+					}),
 				],
 				stream: true,
 			});
@@ -152,11 +173,11 @@ function Chat() {
 		}
 	};
 
-	const handleSendMessage = async (messageContent: string = input) => {
-		if (!messageContent.trim() || isLoading) return;
+	const handleSendMessage = async (images?: ImageData[]) => {
+		if (!input.trim() || isLoading) return;
 
-		// Add user message to store
-		addMessage(chatId, "user", messageContent.trim());
+		// Add user message to store with images
+		addMessage(chatId, "user", input.trim(), undefined, images);
 		setInput("");
 	};
 
@@ -226,11 +247,11 @@ function Chat() {
 						<ChatInput
 							value={input}
 							onChange={setInput}
-							onSubmit={() => handleSendMessage()}
+							onSubmit={handleSendMessage}
 							placeholder="Continue private conversation..."
 							disabled={isLoading}
 							inputRef={inputRef}
-							assistantName={getAssistantOrDefault(chat?.assistantId).title}
+							assistant={getAssistantOrDefault(chat?.assistantId)}
 						/>
 					</div>
 				</div>

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
+import type { ImageData } from "@/types/chats";
 
 export const Route = createFileRoute("/")({
 	component: Index,
@@ -26,7 +27,7 @@ function Index() {
 		}
 	}, [isSubmitting]);
 
-	const handleSubmit = () => {
+	const handleSubmit = (images?: ImageData[]) => {
 		if (!hasContent || isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -35,8 +36,8 @@ function Index() {
 		const chatId = crypto.randomUUID();
 		const firstMessage = inputValue.trim();
 
-		// Create chat with the first message
-		createChat(chatId, firstMessage, selectedAssistant);
+		// Create chat with the first message and images
+		createChat(chatId, firstMessage, selectedAssistant, images);
 
 		// Small delay to show the animation before navigating
 		setTimeout(() => {
@@ -137,7 +138,7 @@ function Index() {
 							placeholder="Start a private conversation..."
 							isSubmitting={isSubmitting}
 							inputRef={inputRef}
-							assistantName={getAssistantOrDefault(selectedAssistant).title}
+							assistant={getAssistantOrDefault(selectedAssistant)}
 						/>
 					</div>
 

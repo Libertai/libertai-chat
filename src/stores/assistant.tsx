@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { Brain, FileText, Zap } from "lucide-react";
 import { ReactElement } from "react";
 
-interface Assistant {
+export interface Assistant {
 	id: string;
 	icon: ReactElement;
 	title: string;
