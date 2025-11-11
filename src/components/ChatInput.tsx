@@ -1,4 +1,4 @@
-import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, RefObject, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import { ArrowUp, ImageIcon, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,40 +10,62 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ImageData } from "@/types/chats";
 import { supportsImages } from "@/config/model-capabilities";
+import { isMobileDevice } from "@/lib/utils";
 import type { Assistant } from "@/stores/assistant";
 
 interface ChatInputProps {
-	value: string;
-	onChange: (value: string) => void;
-	onSubmit: (images?: ImageData[]) => void;
+	onSubmit: (value: string, images?: ImageData[]) => void;
+	onChange?: (hasContent: boolean) => void;
 	onFocus?: () => void;
 	onBlur?: (e: FocusEvent<HTMLTextAreaElement>) => void;
 	placeholder?: string;
 	disabled?: boolean;
 	isSubmitting?: boolean;
-	inputRef?: RefObject<HTMLTextAreaElement | null>;
 	assistant: Assistant;
+	autoFocus?: boolean;
 }
 
 export function ChatInput({
-	value,
-	onChange,
 	onSubmit,
+	onChange,
 	onFocus,
 	onBlur,
 	placeholder,
 	disabled = false,
 	isSubmitting = false,
-	inputRef,
 	assistant,
+	autoFocus = false,
 }: Readonly<ChatInputProps>) {
-	const internalRef = useRef<HTMLTextAreaElement>(null);
-	const textareaRef = inputRef || internalRef;
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [value, setValue] = useState("");
 	const [images, setImages] = useState<ImageData[]>([]);
 
 	const hasContent = value.trim().length > 0;
 	const modelSupportsImages = supportsImages(assistant.model);
+
+	// Notify parent when content changes
+	useEffect(() => {
+		onChange?.(hasContent);
+	}, [hasContent, onChange]);
+
+	// Focus input when page loads (desktop only)
+	useEffect(() => {
+		if (autoFocus && !isMobileDevice()) {
+			const timer = setTimeout(() => {
+				textareaRef.current?.focus();
+			}, 600); // Wait for page transition to complete
+
+			return () => clearTimeout(timer);
+		}
+	}, [autoFocus]);
+
+	// Keep focus on input after sending messages (desktop only)
+	useEffect(() => {
+		if (autoFocus && !disabled && !isMobileDevice() && textareaRef.current) {
+			textareaRef.current.focus();
+		}
+	}, [disabled, autoFocus]);
 
 	const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -76,7 +98,9 @@ export function ChatInput({
 	};
 
 	const handleSubmit = () => {
-		onSubmit(images.length > 0 ? images : undefined);
+		if (!hasContent || disabled || isSubmitting) return;
+		onSubmit(value, images.length > 0 ? images : undefined);
+		setValue("");
 		setImages([]);
 	};
 
@@ -134,7 +158,7 @@ export function ChatInput({
 					placeholder={placeholder}
 					className="px-4 pb-15 pt-[14px] resize-none min-h-[48px] max-h-[240px] overflow-hidden border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
 					value={value}
-					onChange={(e) => onChange(e.target.value)}
+					onChange={(e) => setValue(e.target.value)}
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={handleKeyDown}

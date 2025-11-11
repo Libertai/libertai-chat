@@ -13,28 +13,19 @@ function Index() {
 	const navigate = useNavigate();
 	const { createChat } = useChatStore();
 	const { assistants, selectedAssistant, setSelectedAssistant, getAssistantOrDefault } = useAssistantStore();
-	const inputRef = useRef<HTMLTextAreaElement>(null);
-	const [inputValue, setInputValue] = useState("");
 	const [isFocused, setIsFocused] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const hasContent = inputValue.trim().length > 0;
+	const [hasContent, setHasContent] = useState(false);
 	const shouldShowCentered = isFocused || hasContent;
 
-	// Keep input focused during transition
-	useEffect(() => {
-		if (isSubmitting && inputRef.current) {
-			inputRef.current.focus();
-		}
-	}, [isSubmitting]);
-
-	const handleSubmit = (images?: ImageData[]) => {
-		if (!hasContent || isSubmitting) return;
+	const handleSubmit = (value: string, images?: ImageData[]) => {
+		if (!value.trim() || isSubmitting) return;
 
 		setIsSubmitting(true);
 
 		// Generate UUID for new chat
 		const chatId = crypto.randomUUID();
-		const firstMessage = inputValue.trim();
+		const firstMessage = value.trim();
 
 		// Create chat with the first message and images
 		createChat(chatId, firstMessage, selectedAssistant, images);
@@ -123,21 +114,17 @@ function Index() {
 					{/* Chat input */}
 					<div className="max-w-3xl mx-auto">
 						<ChatInput
-							value={inputValue}
-							onChange={setInputValue}
 							onSubmit={handleSubmit}
+							onChange={setHasContent}
 							onFocus={() => setIsFocused(true)}
-							onBlur={(e) => {
+							onBlur={() => {
 								// Don't blur during submission to maintain focus
 								if (!isSubmitting) {
 									setIsFocused(false);
-								} else {
-									e.target.focus();
 								}
 							}}
 							placeholder="Start a private conversation..."
 							isSubmitting={isSubmitting}
-							inputRef={inputRef}
 							assistant={getAssistantOrDefault(selectedAssistant)}
 						/>
 					</div>
