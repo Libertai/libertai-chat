@@ -15,6 +15,3 @@ export const ChatV1Schema = z.object({
 	updatedAt: z.string(),
 	title: z.string().optional(),
 });
-
-export type MessageV1 = z.infer<typeof MessageV1Schema>;
-export type ChatV1 = z.infer<typeof ChatV1Schema>;
