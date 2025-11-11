@@ -1,21 +1,10 @@
 import { z } from "zod";
+import { ChatV1Schema, MessageV1Schema } from "@/types/chats/v1.ts";
 
-export const MessageV2Schema = z.object({
-	id: z.uuid(),
-	role: z.enum(["user", "assistant"]),
-	content: z.string(),
+export const MessageV2Schema = MessageV1Schema.extend({
 	thinking: z.string().optional(),
-	timestamp: z.date(),
 });
 
-export const ChatV2Schema = z.object({
-	id: z.uuid(),
+export const ChatV2Schema = ChatV1Schema.omit({ messages: true }).extend({
 	messages: z.array(MessageV2Schema),
-	assistantId: z.string(),
-	createdAt: z.string(),
-	updatedAt: z.string(),
-	title: z.string().optional(),
 });
-
-export type MessageV2 = z.infer<typeof MessageV2Schema>;
-export type ChatV2 = z.infer<typeof ChatV2Schema>;
