@@ -6,7 +6,6 @@ import { Message } from "@/components/Message";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore } from "@/stores/account";
-import { isMobileDevice } from "@/lib/utils";
 import env from "@/config/env";
 import OpenAI from "openai";
 import { parseStreamingContent } from "@/utils/thinking-parser";
@@ -21,12 +20,10 @@ function Chat() {
 	const { getChat, addMessage, updateMessage, deleteMessage } = useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
 	const { isAuthenticated, chatApiKey } = useAccountStore();
-	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [isStreaming, setIsStreaming] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
-	const inputRef = useRef<HTMLTextAreaElement>(null);
 
 	const chat = getChat(chatId);
 	const messages = chat?.messages || [];
@@ -49,23 +46,6 @@ function Chat() {
 		}
 	}, [isInitialized]);
 
-	// Focus input when page loads (desktop only)
-	useEffect(() => {
-		if (!isMobileDevice()) {
-			const timer = setTimeout(() => {
-				inputRef.current?.focus();
-			}, 600); // Wait for page transition to complete
-
-			return () => clearTimeout(timer);
-		}
-	}, []);
-
-	// Keep focus on input after sending messages (desktop only)
-	useEffect(() => {
-		if (!isLoading && !isMobileDevice() && inputRef.current) {
-			inputRef.current.focus();
-		}
-	}, [isLoading]);
 
 	// Initialize chat
 	useEffect(() => {
@@ -173,12 +153,11 @@ function Chat() {
 		}
 	};
 
-	const handleSendMessage = async (images?: ImageData[]) => {
-		if (!input.trim() || isLoading) return;
+	const handleSendMessage = async (value: string, images?: ImageData[]) => {
+		if (!value.trim() || isLoading) return;
 
 		// Add user message to store with images
-		addMessage(chatId, "user", input.trim(), undefined, images);
-		setInput("");
+		addMessage(chatId, "user", value.trim(), undefined, images);
 	};
 
 	const handleRegenerateMessage = async () => {
@@ -245,13 +224,11 @@ function Chat() {
 				<div className="max-w-4xl mx-auto">
 					<div className="max-w-2xl mx-auto">
 						<ChatInput
-							value={input}
-							onChange={setInput}
 							onSubmit={handleSendMessage}
 							placeholder="Continue private conversation..."
 							disabled={isLoading}
-							inputRef={inputRef}
 							assistant={getAssistantOrDefault(chat?.assistantId)}
+							autoFocus
 						/>
 					</div>
 				</div>
