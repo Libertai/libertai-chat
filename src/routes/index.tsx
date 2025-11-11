@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
@@ -35,7 +35,7 @@ function Index() {
 			navigate({
 				to: "/chat/$chatId",
 				params: { chatId },
-			});
+			}).then();
 		}, 200);
 	};
 
@@ -106,8 +106,8 @@ function Index() {
 
 			{/* Single animated input container */}
 			<div
-				className={`md:absolute left-0 right-0 md:transition-all md:duration-500 md:ease-in-out ${
-					shouldShowCentered ? "top-[calc(100%-180px)] md:top-[45%]" : "top-[calc(100%-180px)]"
+				className={`md:absolute left-0 right-0 bottom-0 md:transition-all md:duration-500 md:ease-in-out ${
+					shouldShowCentered ? "md:-translate-y-[calc(40vh-50%)]" : ""
 				}`}
 			>
 				<div className="p-4 md:p-6 space-y-3 md:space-y-4">
