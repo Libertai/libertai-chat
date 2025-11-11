@@ -1,4 +1,4 @@
-import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, ImageIcon, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,7 +42,7 @@ export function ChatInput({
 	const [images, setImages] = useState<ImageData[]>([]);
 
 	const hasContent = value.trim().length > 0;
-	const modelSupportsImages = supportsImages(assistant.model);
+	const modelSupportsImages = useMemo(() => supportsImages(assistant.model), [assistant]);
 
 	// Notify parent when content changes
 	useEffect(() => {
@@ -99,7 +99,7 @@ export function ChatInput({
 
 	const handleSubmit = () => {
 		if (!hasContent || disabled || isSubmitting) return;
-		onSubmit(value, images.length > 0 ? images : undefined);
+		onSubmit(value, modelSupportsImages && images.length > 0 ? images : undefined);
 		setValue("");
 		setImages([]);
 	};
@@ -132,7 +132,7 @@ export function ChatInput({
 		<div className="relative">
 			<div className="relative rounded-2xl border border-input bg-input overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
 				{/* Image preview inside input */}
-				{images.length > 0 && (
+				{modelSupportsImages && images.length > 0 && (
 					<div className="px-4 pt-3 pb-2 flex flex-wrap gap-2">
 						{images.map((image, index) => (
 							<div key={image.filename} className="relative group">
@@ -143,6 +143,7 @@ export function ChatInput({
 								/>
 								<button
 									onClick={() => removeImage(index)}
+									onMouseDown={(e) => e.preventDefault()}
 									className="cursor-pointer absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
 								>
 									<X className="h-2.5 w-2.5" />
