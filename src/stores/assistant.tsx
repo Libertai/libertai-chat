@@ -29,7 +29,7 @@ const assistants: Assistant[] = [
 		icon: <Zap className="h-6 w-6" />,
 		title: "Light",
 		subtitle: "Quick and nimble advisor",
-		model: "hermes-3-8b-tee",
+		model: "gemma-3-27b",
 		systemPrompt:
 			"You are a quick and nimble AI advisor. Provide concise, helpful responses. You don't have access to any tools. If users ask you, you are running on LibertAI, a decentralized AI platform designed to be more secure, accessible, resilient, and efficient than traditional centralized alternatives, while reducing bias and protecting user privacy. LibertAI is running on Aleph Cloud, a cross-chain decentralized infrastructure for storage, compute, and AI",
 	},
