@@ -19,7 +19,6 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedContent, setEditedContent] = useState(message.content);
 
-	// Auto-expand thinking if there's only thinking (no content yet - still streaming thinking)
 	useEffect(() => {
 		const hasOnlyThinking = message.role === "assistant" && message.thinking && !message.content;
 		if (hasOnlyThinking) {
@@ -41,7 +40,7 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 		if (onEditMessage) {
 			onEditMessage(message.id, editedContent);
 		} else {
-			message.content = editedContent; // fallback local
+			message.content = editedContent;
 		}
 		setIsEditing(false);
 	};
@@ -109,6 +108,10 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 									value={editedContent}
 									onChange={(e) => setEditedContent(e.target.value)}
 									rows={3}
+									onKeyDown={(e) => {
+										if (e.ctrlKey && e.key === "Enter") handleSave();
+										if (e.key === "Escape") handleCancel();
+									}}
 								/>
 								<div className="flex justify-end gap-2">
 									<Button variant="outline" size="sm" onClick={handleCancel}>
@@ -159,7 +162,7 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 					<div className="relative mt-1 w-full">
 						<div className="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex justify-end items-center pr-4">
 							<Pencil
-								className="w-4 h-4 text-muted-foreground hover:text-foreground"
+								className="mt-4 mr-1 w-4 h-4 text-muted-foreground hover:text-foreground"
 								onClick={() => setIsEditing(true)}
 							/>
 						</div>
