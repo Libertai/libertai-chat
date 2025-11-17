@@ -58,7 +58,6 @@ export function Message({
 		setEditedContent(newContent);
 		setIsEditing(false);
 
-		// Regenerate assistant response for this edited user message
 		if (message.role === "user" && onRegenerateFromMessage) {
 			onRegenerateFromMessage(message.id);
 		}
@@ -71,7 +70,7 @@ export function Message({
 
 	return (
 		<div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-			<div className={`group ${message.role === "user" ? "" : "w-full"}`}>
+			<div className={`group ${message.role === "user" ? "max-w-full" : "w-full"}`}>
 
 				{/* Thinking section for assistant messages */}
 				{message.role === "assistant" && message.thinking && (
@@ -136,7 +135,7 @@ export function Message({
 							<p className="message-content whitespace-pre-wrap">{message.content}</p>
 						))}
 
-					{/* ASSISTANT MESSAGE */}
+					{/* Text for assistant messages */}
 					{message.role === "assistant" && (
 						<div className="markdown-content message-content">
 							<ReactMarkdown
