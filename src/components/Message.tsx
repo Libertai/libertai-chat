@@ -103,16 +103,16 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 					{message.role === "user" && (
 						isEditing ? (
 							<div className="flex flex-col gap-2">
-        <textarea
-					className="w-full bg-transparent border border-muted rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-					value={editedContent}
-					onChange={(e) => setEditedContent(e.target.value)}
-					rows={3}
-					onKeyDown={(e) => {
-						if (e.ctrlKey && e.key === "Enter") handleSave();
-						if (e.key === "Escape") handleCancel();
-					}}
-				/>
+        				<textarea
+									className="w-full bg-transparent border border-muted rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									value={editedContent}
+									onChange={(e) => setEditedContent(e.target.value)}
+									rows={3}
+									onKeyDown={(e) => {
+										if (!e.shiftKey && e.key === "Enter") handleSave();
+										if (e.key === "Escape") handleCancel();
+									}}
+								/>
 								<div className="flex justify-end gap-2">
 									<Button variant="outline" size="sm" onClick={handleCancel}>
 										Cancel
@@ -163,10 +163,15 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 				{message.role === "user" && !isEditing && (
 					<div className="relative mt-1 w-full">
 						<div className="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex justify-end items-center pr-4">
-							<Pencil
-								className="mt-8 py-1 px-3 w-10 h-8 text-muted-foreground hover:text-foreground hover:bg-white rounded-md"
+
+							<Button
+								variant="ghost"
+								size="sm"
 								onClick={() => setIsEditing(true)}
-							/>
+								className="h-8 px-2 mt-8 text-muted-foreground hover:text-foreground hover:bg-white hover:dark:bg-card"
+							>
+								<Pencil className="w-4 h-4"/>
+							</Button>
 						</div>
 					</div>
 				)}
