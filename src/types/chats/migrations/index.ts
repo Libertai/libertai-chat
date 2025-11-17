@@ -14,10 +14,7 @@ export interface Migration<TInput = any, TOutput = any> {
 	migrate: MigrationFunction<TInput, TOutput>;
 }
 
-const migrations: Migration[] = [
-	v1ToV2Migration,
-	v2ToV3Migration,
-];
+const migrations: Migration[] = [v1ToV2Migration, v2ToV3Migration];
 
 export const runMigrations = (persistedState: any, currentVersion: number): any => {
 	if (!persistedState) {

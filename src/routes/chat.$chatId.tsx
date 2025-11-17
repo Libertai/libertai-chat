@@ -17,7 +17,7 @@ export const Route = createFileRoute("/chat/$chatId")({
 
 function Chat() {
 	const { chatId } = Route.useParams();
-	const { getChat, addMessage, updateMessage, deleteMessage } = useChatStore();
+	const { getChat, addMessage, updateMessage, deleteMessage, truncateMessagesAfter } = useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
 	const { isAuthenticated, chatApiKey } = useAccountStore();
 	const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +45,6 @@ function Chat() {
 			scrollToBottom();
 		}
 	}, [isInitialized]);
-
 
 	// Initialize chat
 	useEffect(() => {
@@ -174,6 +173,17 @@ function Chat() {
 		await generateAIResponse();
 	};
 
+	const handleEditMessage = (messageId: string, newContent: string) => {
+		updateMessage(chatId, messageId, newContent);
+	};
+
+	const handleRegenerateFromMessage = async (messageId: string) => {
+		if (isLoading || isStreaming) return;
+
+		truncateMessagesAfter(chatId, messageId);
+		await generateAIResponse();
+	};
+
 	// Show 404 if chat doesn't exist
 	if (!chat) {
 		return <ConversationNotFound />;
@@ -192,6 +202,8 @@ function Chat() {
 							isLoading={isLoading}
 							isStreaming={isStreaming}
 							onRegenerate={handleRegenerateMessage}
+							onEditMessage={handleEditMessage}
+							onRegenerateFromMessage={handleRegenerateFromMessage}
 						/>
 					))}
 

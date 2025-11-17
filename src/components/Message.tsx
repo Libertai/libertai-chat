@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ChevronDown, ChevronRight, Copy, Lightbulb, RotateCcw } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Lightbulb, RotateCcw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { MessageEditInput } from "@/components/MessageEditInput";
 import type { Message as MessageType } from "@/types/chats";
 
 interface MessageProps {
@@ -11,14 +12,26 @@ interface MessageProps {
 	isLoading: boolean;
 	isStreaming: boolean;
 	onRegenerate: () => void;
+	onEditMessage?: (id: string, content: string) => void;
+	onRegenerateFromMessage?: (id: string) => void;
 }
 
-export function Message({ message, isLastMessage, isLoading, isStreaming, onRegenerate }: MessageProps) {
+export function Message({
+	message,
+	isLastMessage,
+	isLoading,
+	isStreaming,
+	onRegenerate,
+	onEditMessage,
+	onRegenerateFromMessage,
+}: MessageProps) {
 	const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
+	const [editedContent, setEditedContent] = useState(message.content);
 
-	// Auto-expand thinking if there's only thinking (no content yet - still streaming thinking)
 	useEffect(() => {
 		const hasOnlyThinking = message.role === "assistant" && message.thinking && !message.content;
+
 		if (hasOnlyThinking) {
 			setIsThinkingExpanded(true);
 		}
@@ -34,9 +47,29 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 		}
 	};
 
+	const handleSave = (newContent: string) => {
+		if (onEditMessage) {
+			onEditMessage(message.id, newContent);
+		} else {
+			message.content = newContent;
+		}
+
+		setEditedContent(newContent);
+		setIsEditing(false);
+
+		if (message.role === "user" && onRegenerateFromMessage) {
+			onRegenerateFromMessage(message.id);
+		}
+	};
+
+	const handleCancel = () => {
+		setEditedContent(message.content);
+		setIsEditing(false);
+	};
+
 	return (
 		<div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-			<div className={`group ${message.role === "user" ? "" : "w-full"}`}>
+			<div className={`group ${message.role === "user" ? "max-w-full" : "w-full"}`}>
 				{/* Thinking section for assistant messages */}
 				{message.role === "assistant" && message.thinking && (
 					<div className="mb-3">
@@ -52,6 +85,7 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 								<ChevronRight className="w-4 h-4 text-muted-foreground" />
 							)}
 						</button>
+
 						{isThinkingExpanded && (
 							<div className="mt-2 px-4 py-3 bg-muted/30 rounded-lg border-l-2 border-primary/30">
 								<div className="text-sm text-muted-foreground italic whitespace-pre-wrap">{message.thinking}</div>
@@ -81,7 +115,16 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 						</div>
 					)}
 
-					{message.role === "assistant" ? (
+					{/* Text for user messages */}
+					{message.role === "user" &&
+						(isEditing ? (
+							<MessageEditInput initialValue={editedContent} onSave={handleSave} onCancel={handleCancel} />
+						) : (
+							<p className="message-content whitespace-pre-wrap">{message.content}</p>
+						))}
+
+					{/* Text for assistant messages */}
+					{message.role === "assistant" && (
 						<div className="markdown-content message-content">
 							<ReactMarkdown
 								components={{
@@ -108,12 +151,26 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 								{message.content}
 							</ReactMarkdown>
 						</div>
-					) : (
-						<p className="message-content">{message.content}</p>
 					)}
 				</div>
 
-				{/* Action buttons for assistant messages */}
+				{/* Edit button */}
+				{message.role === "user" && !isEditing && (
+					<div className="relative mt-1 w-full">
+						<div className="absolute inset-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex justify-end items-center pr-4">
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => setIsEditing(true)}
+								className="h-8 px-2 mt-8 text-muted-foreground hover:text-foreground hover:bg-white hover:dark:bg-card"
+							>
+								<Pencil className="w-4 h-4" />
+							</Button>
+						</div>
+					</div>
+				)}
+
+				{/* Assistant actions */}
 				{message.role === "assistant" && message.content && (
 					<div className="flex items-center gap-2 mt-2 mx-2">
 						<Button
@@ -124,6 +181,7 @@ export function Message({ message, isLastMessage, isLoading, isStreaming, onRege
 						>
 							<Copy className="w-4 h-4" />
 						</Button>
+
 						{isLastMessage && !isLoading && !isStreaming && (
 							<Button
 								variant="ghost"

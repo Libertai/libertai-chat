@@ -12,11 +12,18 @@ interface ChatStore {
 	getChat: (chatId: string) => Chat | undefined;
 	getAllChats: () => Chat[];
 	createChat: (chatId: string, firstMessage: string, assistantId: string, images?: ImageData[]) => void;
-	addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string, images?: ImageData[]) => Message;
+	addMessage: (
+		chatId: string,
+		role: "user" | "assistant",
+		content: string,
+		thinking?: string,
+		images?: ImageData[],
+	) => Message;
 	updateMessage: (chatId: string, messageId: string, content: string, thinking?: string) => void;
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
 	renameChat: (chatId: string, title: string) => void;
+	truncateMessagesAfter: (chatId: string, messageId: string) => void;
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
@@ -61,7 +68,13 @@ export const useChatStore = create<ChatStore>()(
 				}));
 			},
 
-			addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string, images?: ImageData[]) => {
+			addMessage: (
+				chatId: string,
+				role: "user" | "assistant",
+				content: string,
+				thinking?: string,
+				images?: ImageData[],
+			) => {
 				const message: Message = {
 					id: crypto.randomUUID(),
 					role,
@@ -160,6 +173,26 @@ export const useChatStore = create<ChatStore>()(
 							[chatId]: {
 								...chat,
 								title,
+							},
+						},
+					};
+				});
+			},
+
+			truncateMessagesAfter: (chatId: string, messageId: string) => {
+				set((state) => {
+					const chat = state.chats[chatId];
+					if (!chat) return state;
+
+					const messageIndex = chat.messages.findIndex((msg) => msg.id === messageId);
+					if (messageIndex === -1) return state;
+					return {
+						chats: {
+							...state.chats,
+							[chatId]: {
+								...chat,
+								messages: chat.messages.slice(0, messageIndex + 1),
+								updatedAt: new Date().toISOString(),
 							},
 						},
 					};
