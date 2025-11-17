@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import { ChevronDown, ChevronRight, Copy, Lightbulb, RotateCcw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { MessageEditInput } from "@/components/MessageEditInput";
 import type { Message as MessageType } from "@/types/chats";
 
 interface MessageProps {
@@ -47,14 +48,17 @@ export function Message({
 		}
 	};
 
-	const handleSave = () => {
+	const handleSave = (newContent: string) => {
 		if (onEditMessage) {
-			onEditMessage(message.id, editedContent);
+			onEditMessage(message.id, newContent);
 		} else {
-			message.content = editedContent;
+			message.content = newContent;
 		}
 
+		setEditedContent(newContent);
 		setIsEditing(false);
+
+		// Regenerate assistant response for this edited user message
 		if (message.role === "user" && onRegenerateFromMessage) {
 			onRegenerateFromMessage(message.id);
 		}
@@ -123,26 +127,11 @@ export function Message({
 					{/* Text for user messages */}
 					{message.role === "user" &&
 						(isEditing ? (
-							<div className="flex flex-col gap-2">
-								<textarea
-									className="w-full bg-transparent border border-muted rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									value={editedContent}
-									onChange={(e) => setEditedContent(e.target.value)}
-									rows={3}
-									onKeyDown={(e) => {
-										if (!e.shiftKey && e.key === "Enter") handleSave();
-										if (e.key === "Escape") handleCancel();
-									}}
-								/>
-								<div className="flex justify-end gap-2">
-									<Button variant="outline" size="sm" onClick={handleCancel}>
-										Cancel
-									</Button>
-									<Button size="sm" onClick={handleSave}>
-										Save
-									</Button>
-								</div>
-							</div>
+							<MessageEditInput
+								initialValue={editedContent}
+								onSave={handleSave}
+								onCancel={handleCancel}
+							/>
 						) : (
 							<p className="message-content whitespace-pre-wrap">{message.content}</p>
 						))}
