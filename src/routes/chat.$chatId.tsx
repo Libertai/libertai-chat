@@ -46,7 +46,6 @@ function Chat() {
 		}
 	}, [isInitialized]);
 
-
 	// Initialize chat
 	useEffect(() => {
 		setIsInitialized(true);

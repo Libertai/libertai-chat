@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,7 @@ export function MessageEditInput({
 	onSave,
 	onCancel,
 	autoFocus = true,
-}: MessageEditInputProps) {
+}: Readonly<MessageEditInputProps>) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const [value, setValue] = useState(initialValue);
 	const [isFocused, setIsFocused] = useState(false);
@@ -29,12 +29,16 @@ export function MessageEditInput({
 		if (autoFocus && textareaRef.current) {
 			textareaRef.current.focus();
 			// Move cursor to end
-			textareaRef.current.setSelectionRange(
-				textareaRef.current.value.length,
-				textareaRef.current.value.length
-			);
+			textareaRef.current.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length);
 		}
 	}, [autoFocus]);
+
+	const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			onSave(value.trim());
+		}
+	};
 
 	// Auto-resize on mount and value change
 	useEffect(() => {
@@ -71,9 +75,7 @@ export function MessageEditInput({
 			<div
 				className={cn(
 					"w-full rounded-xl border bg-input transition-all duration-200",
-					isFocused
-						? "ring-2 ring-primary border-primary shadow-sm"
-						: "border-input hover:border-primary/50"
+					isFocused ? "ring-2 ring-primary border-primary shadow-sm" : "border-input hover:border-primary/50",
 				)}
 			>
 				<Textarea
@@ -84,6 +86,7 @@ export function MessageEditInput({
 					onFocus={() => setIsFocused(true)}
 					onBlur={() => setIsFocused(false)}
 					onInput={handleInput}
+					onKeyDown={handleKeyDown}
 					placeholder="Edit your message..."
 				/>
 			</div>
@@ -100,16 +103,16 @@ export function MessageEditInput({
 				</div>
 
 				{/* Action buttons */}
-				<div className="flex items-center gap-1 ml-2">
+				<div className="flex items-center gap-1">
 					<Button
-						variant="ghost"
+						variant="outline"
 						size="sm"
 						onClick={onCancel}
 						onMouseDown={(e) => e.preventDefault()}
 						className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-background/80 rounded-lg transition-colors"
 					>
-						<X className="w-3.5 h-3.5 mr-1" />
-						Cancel
+						<X className="w-3.5 h-3.5" />
+						<span>Cancel</span>
 					</Button>
 					<Button
 						size="sm"
@@ -118,13 +121,11 @@ export function MessageEditInput({
 						disabled={!canSave}
 						className={cn(
 							"h-7 px-2 text-xs rounded-lg transition-all duration-200",
-							canSave
-								? "bg-primary text-white hover:bg-primary/90 shadow-sm"
-								: "opacity-50 cursor-not-allowed"
+							canSave ? "bg-primary text-white hover:bg-primary/90 shadow-sm" : "opacity-50 cursor-not-allowed",
 						)}
 					>
-						<Check className="w-3.5 h-3.5 mr-1" />
-						Save
+						<Check className="w-3.5 h-3.5" />
+						<span>Save</span>
 					</Button>
 				</div>
 			</div>

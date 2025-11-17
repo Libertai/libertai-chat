@@ -23,16 +23,19 @@ export const v2ToV3Migration: Migration<V2Store, V3Store> = {
 	outputSchema: V3StoreSchema,
 	migrate: (state: V2Store): V3Store => {
 		// Add images field to all messages (defaults to undefined)
-		const migratedChats = Object.entries(state.chats).reduce((acc, [chatId, chat]) => {
-			acc[chatId] = {
-				...chat,
-				messages: chat.messages.map((msg) => ({
-					...msg,
-					images: undefined,
-				})),
-			};
-			return acc;
-		}, {} as Record<string, V3Store["chats"][string]>);
+		const migratedChats = Object.entries(state.chats).reduce(
+			(acc, [chatId, chat]) => {
+				acc[chatId] = {
+					...chat,
+					messages: chat.messages.map((msg) => ({
+						...msg,
+						images: undefined,
+					})),
+				};
+				return acc;
+			},
+			{} as Record<string, V3Store["chats"][string]>,
+		);
 
 		return {
 			...state,

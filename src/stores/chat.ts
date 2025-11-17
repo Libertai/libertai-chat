@@ -12,7 +12,13 @@ interface ChatStore {
 	getChat: (chatId: string) => Chat | undefined;
 	getAllChats: () => Chat[];
 	createChat: (chatId: string, firstMessage: string, assistantId: string, images?: ImageData[]) => void;
-	addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string, images?: ImageData[]) => Message;
+	addMessage: (
+		chatId: string,
+		role: "user" | "assistant",
+		content: string,
+		thinking?: string,
+		images?: ImageData[],
+	) => Message;
 	updateMessage: (chatId: string, messageId: string, content: string, thinking?: string) => void;
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
@@ -62,7 +68,13 @@ export const useChatStore = create<ChatStore>()(
 				}));
 			},
 
-			addMessage: (chatId: string, role: "user" | "assistant", content: string, thinking?: string, images?: ImageData[]) => {
+			addMessage: (
+				chatId: string,
+				role: "user" | "assistant",
+				content: string,
+				thinking?: string,
+				images?: ImageData[],
+			) => {
 				const message: Message = {
 					id: crypto.randomUUID(),
 					role,

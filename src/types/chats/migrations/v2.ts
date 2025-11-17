@@ -23,16 +23,19 @@ export const v1ToV2Migration: Migration<V1Store, V2Store> = {
 	outputSchema: V2StoreSchema,
 	migrate: (state: V1Store): V2Store => {
 		// Add thinking field to all messages (defaults to undefined)
-		const migratedChats = Object.entries(state.chats).reduce((acc, [chatId, chat]) => {
-			acc[chatId] = {
-				...chat,
-				messages: chat.messages.map((msg) => ({
-					...msg,
-					thinking: undefined,
-				})),
-			};
-			return acc;
-		}, {} as Record<string, V2Store["chats"][string]>);
+		const migratedChats = Object.entries(state.chats).reduce(
+			(acc, [chatId, chat]) => {
+				acc[chatId] = {
+					...chat,
+					messages: chat.messages.map((msg) => ({
+						...msg,
+						thinking: undefined,
+					})),
+				};
+				return acc;
+			},
+			{} as Record<string, V2Store["chats"][string]>,
+		);
 
 		return {
 			...state,

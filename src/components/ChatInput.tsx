@@ -172,7 +172,13 @@ export function ChatInput({
 				<div className="flex items-center space-x-3">
 					{modelSupportsImages && (
 						<>
-							<input type="file" ref={fileInputRef} className="hidden" accept="image/jpeg,image/jpg,image/png" onChange={handleImageUpload} />
+							<input
+								type="file"
+								ref={fileInputRef}
+								className="hidden"
+								accept="image/jpeg,image/jpg,image/png"
+								onChange={handleImageUpload}
+							/>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
