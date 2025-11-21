@@ -5,8 +5,8 @@ import { base } from "thirdweb/chains";
 import {
 	checkAuthStatusAuthStatusGet,
 	getAuthMessageAuthMessagePost,
-	loginWithWalletAuthLoginPost,
 	getChatApiKeyApiKeysChatGet,
+	loginWithWalletAuthLoginPost,
 } from "@/apis/inference/sdk.gen";
 import { toast } from "sonner";
 import { ethers } from "ethers";
@@ -100,6 +100,7 @@ export const useAccountStore = create<AccountStoreState>((set, get) => ({
 		// Check if a Base account is already connected with the same address
 		if (state.account !== null && newBaseAccount !== undefined && state.account.address === newBaseAccount.address) {
 			// Base account already connected with the same address
+			set({ isAuthenticated: true });
 			return;
 		}
 
@@ -110,6 +111,7 @@ export const useAccountStore = create<AccountStoreState>((set, get) => ({
 			state.account.address === newSolanaAccount.publicKey.toString()
 		) {
 			// Solana account already connected with the same address
+			set({ isAuthenticated: true });
 			return;
 		}
 

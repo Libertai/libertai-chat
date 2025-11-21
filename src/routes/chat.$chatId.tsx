@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatInput } from "@/components/ChatInput";
 import { ConversationNotFound } from "@/components/ConversationNotFound";
 import { Message } from "@/components/Message";
@@ -29,11 +29,15 @@ function Chat() {
 	const messages = chat?.messages || [];
 
 	// Use connected URL with API key when authenticated, otherwise use free URL without API key
-	const openai = new OpenAI({
-		baseURL: isAuthenticated ? env.LTAI_CONNECTED_API_URL : env.LTAI_INFERENCE_API_URL,
-		apiKey: isAuthenticated ? chatApiKey || "" : "",
-		dangerouslyAllowBrowser: true,
-	});
+	const openai = useMemo(
+		() =>
+			new OpenAI({
+				baseURL: isAuthenticated ? env.LTAI_CONNECTED_API_URL : env.LTAI_INFERENCE_API_URL,
+				apiKey: isAuthenticated ? (chatApiKey ?? "") : "",
+				dangerouslyAllowBrowser: true,
+			}),
+		[isAuthenticated, chatApiKey],
+	);
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
