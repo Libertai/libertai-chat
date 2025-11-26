@@ -6,7 +6,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Coins, Copy, Loader2, LogOut, Settings } from "lucide-react";
+import { Coins, Copy, Loader2, LogOut, Settings, Trophy } from "lucide-react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import { useAccountStore } from "@/stores/account";
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
@@ -98,6 +98,17 @@ export function ConnectedAccountFooter() {
 					>
 						<Settings className="h-4 w-4" />
 						Settings
+					</Link>
+				</DropdownMenuItem>
+				<DropdownMenuItem asChild className="cursor-pointer gap-2">
+					<Link
+						to="/rewards"
+						onClick={() => {
+							if (isMobile) setOpenMobile(false);
+						}}
+					>
+						<Trophy className="h-4 w-4" />
+						Rewards
 					</Link>
 				</DropdownMenuItem>
 				<DropdownMenuItem
