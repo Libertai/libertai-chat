@@ -1,5 +1,6 @@
 import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, ChevronDown, ImageIcon, Plus, X, LayoutDashboard } from "lucide-react";
+import { ArrowUp, ChevronDown, ChevronLeft, ImageIcon, Plus, X, LayoutDashboard } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -40,6 +41,7 @@ export function ChatInput({
 	autoFocus = false,
 	disableModelSelector = false,
 }: Readonly<ChatInputProps>) {
+	const navigate = useNavigate();
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const inputContainerRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,8 @@ export function ChatInput({
 	const [value, setValue] = useState("");
 	const [images, setImages] = useState<ImageData[]>([]);
 	const [dropdownAlignOffset, setDropdownAlignOffset] = useState(0);
-	const { assistants, setSelectedAssistant } = useAssistantStore();
+	const [showCustomAdvisors, setShowCustomAdvisors] = useState(false);
+	const { assistants, customAssistants, setSelectedAssistant } = useAssistantStore();
 
 	const hasContent = value.trim().length > 0;
 	const modelSupportsImages = useMemo(() => supportsImages(assistant.model), [assistant]);
@@ -249,71 +252,151 @@ export function ChatInput({
 									? `${inputContainerRef.current.offsetWidth}px`
 									: 'auto'
 							}}
+							onCloseAutoFocus={() => setShowCustomAdvisors(false)}
 						>
-							{assistants
-								.filter((a) => !a.hidden)
-								.map((item) => {
-									const isSelected = assistant.id === item.id;
-									return (
-										<DropdownMenuItem
-											key={item.id}
-											onClick={() => !item.disabled && setSelectedAssistant(item.id)}
-											className={`p-3 cursor-pointer ${
-												isSelected ? "bg-hover" : ""
-											} ${item.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-											disabled={item.disabled}
-										>
-											<div className="flex items-center gap-3 w-full">
-												{/* Icon on the left */}
-												<div className={`rounded-full p-2 flex-shrink-0 ${isSelected ? "bg-background" : "bg-hover"}`}>
-													{item.icon}
-												</div>
+							{!showCustomAdvisors ? (
+								<>
+									{/* Main menu - Built-in assistants */}
+									{assistants
+										.filter((a) => !a.hidden)
+										.map((item) => {
+											const isSelected = assistant.id === item.id;
+											return (
+												<DropdownMenuItem
+													key={item.id}
+													onClick={() => !item.disabled && setSelectedAssistant(item.id)}
+													className={`p-3 cursor-pointer ${
+														isSelected ? "bg-hover" : ""
+													} ${item.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+													disabled={item.disabled}
+												>
+													<div className="flex items-center gap-3 w-full">
+														{/* Icon on the left */}
+														<div className={`rounded-full p-2 flex-shrink-0 ${isSelected ? "bg-background" : "bg-hover"}`}>
+															{item.icon}
+														</div>
 
-												{/* Title and description in the center */}
-												<div className="flex-1 min-w-0">
-													<div className="font-medium text-sm">{item.title}</div>
-													<p className="text-xs text-muted-foreground">{item.subtitle}</p>
-												</div>
+														{/* Title and description in the center */}
+														<div className="flex-1 min-w-0">
+															<div className="font-medium text-sm">{item.title}</div>
+															<p className="text-xs text-muted-foreground">{item.subtitle}</p>
+														</div>
 
-												{/* Tags on the far right */}
-												{(item.pro || item.badge) && (
-													<div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-														{item.pro && (
-															<span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap">Pro</span>
-														)}
-														{item.badge && (
-															<span className="text-foreground text-xs px-2 py-0.5 rounded-full border border-foreground whitespace-nowrap">
-																{item.badge}
-															</span>
+														{/* Tags on the far right */}
+														{(item.pro || item.badge) && (
+															<div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+																{item.pro && (
+																	<span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap">Pro</span>
+																)}
+																{item.badge && (
+																	<span className="text-foreground text-xs px-2 py-0.5 rounded-full border border-foreground whitespace-nowrap">
+																		{item.badge}
+																	</span>
+																)}
+															</div>
 														)}
 													</div>
-												)}
+												</DropdownMenuItem>
+											);
+										})}
+
+									{/* Separator */}
+									<DropdownMenuSeparator />
+
+									{/* Custom Advisors item - shows submenu */}
+									<DropdownMenuItem
+										className="p-3 cursor-pointer"
+										onClick={() => setShowCustomAdvisors(true)}
+										onSelect={(e) => e.preventDefault()}
+									>
+										<div className="flex items-center gap-3 w-full">
+											{/* Icon on the left */}
+											<div className="rounded-full p-2 flex-shrink-0 bg-hover">
+												<LayoutDashboard className="h-6 w-6" />
 											</div>
-										</DropdownMenuItem>
-									);
-								})}
 
-							{/* Separator */}
-							<DropdownMenuSeparator />
+											{/* Title and description in the center */}
+											<div className="flex-1 min-w-0">
+												<div className="font-medium text-sm">Custom Advisors</div>
+												<p className="text-xs text-muted-foreground">Your very own creations</p>
+											</div>
+										</div>
+									</DropdownMenuItem>
+								</>
+							) : (
+								<>
+									{/* Custom Advisors submenu */}
+									{/* Back button */}
+									<DropdownMenuItem
+										className="p-3 cursor-pointer border-b border-border"
+										onClick={() => setShowCustomAdvisors(false)}
+										onSelect={(e) => e.preventDefault()}
+									>
+										<div className="flex items-center gap-2">
+											<ChevronLeft className="h-5 w-5" />
+											<span className="font-medium text-sm">Back</span>
+										</div>
+									</DropdownMenuItem>
 
-							{/* Custom Advisors item */}
-							<DropdownMenuItem
-								className="p-3 cursor-pointer opacity-50"
-								disabled
-							>
-								<div className="flex items-center gap-3 w-full">
-									{/* Icon on the left */}
-									<div className="rounded-full p-2 flex-shrink-0 bg-hover">
-										<LayoutDashboard className="h-6 w-6" />
-									</div>
+									{/* List of custom advisors */}
+									{customAssistants.map((item) => {
+										const isSelected = assistant.id === item.id;
+										return (
+											<DropdownMenuItem
+												key={item.id}
+												onClick={() => setSelectedAssistant(item.id)}
+												className={`p-3 cursor-pointer ${isSelected ? "bg-hover" : ""}`}
+											>
+												<div className="flex items-center gap-3 w-full">
+													{/* Avatar or icon */}
+													<div className={`rounded-full p-2 flex-shrink-0 ${isSelected ? "bg-background" : "bg-hover"} overflow-hidden`}>
+														{item.imageUrl ? (
+															<img src={item.imageUrl} alt={item.title} className="h-6 w-6 object-cover" />
+														) : (
+															item.icon
+														)}
+													</div>
 
-									{/* Title and description in the center */}
-									<div className="flex-1 min-w-0">
-										<div className="font-medium text-sm">Custom Advisors</div>
-										<p className="text-xs text-muted-foreground">Your very own creations</p>
-									</div>
-								</div>
-							</DropdownMenuItem>
+													{/* Title and description */}
+													<div className="flex-1 min-w-0">
+														<div className="font-medium text-sm">{item.title}</div>
+														<p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
+													</div>
+
+													{/* Model tag */}
+													<div className="flex-shrink-0">
+														<span className="text-xs text-muted-foreground">{item.model}</span>
+													</div>
+												</div>
+											</DropdownMenuItem>
+										);
+									})}
+
+									{customAssistants.length === 0 && (
+										<div className="p-6 text-center text-sm text-muted-foreground">
+											No custom advisors yet
+										</div>
+									)}
+
+									{/* Separator */}
+									<DropdownMenuSeparator />
+
+									{/* Create New button - navigates to dashboard */}
+									<DropdownMenuItem
+										className="p-3 cursor-pointer"
+										onClick={() => navigate({ to: "/custom-advisors" })}
+									>
+										<div className="flex items-center gap-3 w-full">
+											<div className="rounded-full p-2 flex-shrink-0 bg-primary/10">
+												<Plus className="h-6 w-6 text-primary" />
+											</div>
+											<div className="flex-1">
+												<div className="font-medium text-sm">Create New</div>
+											</div>
+										</div>
+									</DropdownMenuItem>
+								</>
+							)}
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>

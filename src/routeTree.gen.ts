@@ -14,6 +14,9 @@ import { Route as TopUpRouteImport } from './routes/top-up'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RewardsRouteImport } from './routes/rewards'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CustomAdvisorsIndexRouteImport } from './routes/custom-advisors.index'
+import { Route as CustomAdvisorsNewRouteImport } from './routes/custom-advisors.new'
+import { Route as CustomAdvisorsAdvisorIdRouteImport } from './routes/custom-advisors.$advisorId'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 
 const TransactionsRoute = TransactionsRouteImport.update({
@@ -41,6 +44,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomAdvisorsIndexRoute = CustomAdvisorsIndexRouteImport.update({
+  id: '/custom-advisors/',
+  path: '/custom-advisors/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomAdvisorsNewRoute = CustomAdvisorsNewRouteImport.update({
+  id: '/custom-advisors/new',
+  path: '/custom-advisors/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomAdvisorsAdvisorIdRoute = CustomAdvisorsAdvisorIdRouteImport.update({
+  id: '/custom-advisors/$advisorId',
+  path: '/custom-advisors/$advisorId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatChatIdRoute = ChatChatIdRouteImport.update({
   id: '/chat/$chatId',
   path: '/chat/$chatId',
@@ -54,6 +72,9 @@ export interface FileRoutesByFullPath {
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/custom-advisors/$advisorId': typeof CustomAdvisorsAdvisorIdRoute
+  '/custom-advisors/new': typeof CustomAdvisorsNewRoute
+  '/custom-advisors': typeof CustomAdvisorsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +83,9 @@ export interface FileRoutesByTo {
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/custom-advisors/$advisorId': typeof CustomAdvisorsAdvisorIdRoute
+  '/custom-advisors/new': typeof CustomAdvisorsNewRoute
+  '/custom-advisors': typeof CustomAdvisorsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +95,9 @@ export interface FileRoutesById {
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
   '/chat/$chatId': typeof ChatChatIdRoute
+  '/custom-advisors/$advisorId': typeof CustomAdvisorsAdvisorIdRoute
+  '/custom-advisors/new': typeof CustomAdvisorsNewRoute
+  '/custom-advisors/': typeof CustomAdvisorsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +108,9 @@ export interface FileRouteTypes {
     | '/top-up'
     | '/transactions'
     | '/chat/$chatId'
+    | '/custom-advisors/$advisorId'
+    | '/custom-advisors/new'
+    | '/custom-advisors'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +119,9 @@ export interface FileRouteTypes {
     | '/top-up'
     | '/transactions'
     | '/chat/$chatId'
+    | '/custom-advisors/$advisorId'
+    | '/custom-advisors/new'
+    | '/custom-advisors'
   id:
     | '__root__'
     | '/'
@@ -97,6 +130,9 @@ export interface FileRouteTypes {
     | '/top-up'
     | '/transactions'
     | '/chat/$chatId'
+    | '/custom-advisors/$advisorId'
+    | '/custom-advisors/new'
+    | '/custom-advisors/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +142,9 @@ export interface RootRouteChildren {
   TopUpRoute: typeof TopUpRoute
   TransactionsRoute: typeof TransactionsRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
+  CustomAdvisorsAdvisorIdRoute: typeof CustomAdvisorsAdvisorIdRoute
+  CustomAdvisorsNewRoute: typeof CustomAdvisorsNewRoute
+  CustomAdvisorsIndexRoute: typeof CustomAdvisorsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,6 +184,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/custom-advisors/': {
+      id: '/custom-advisors/'
+      path: '/custom-advisors'
+      fullPath: '/custom-advisors'
+      preLoaderRoute: typeof CustomAdvisorsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/custom-advisors/new': {
+      id: '/custom-advisors/new'
+      path: '/custom-advisors/new'
+      fullPath: '/custom-advisors/new'
+      preLoaderRoute: typeof CustomAdvisorsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/custom-advisors/$advisorId': {
+      id: '/custom-advisors/$advisorId'
+      path: '/custom-advisors/$advisorId'
+      fullPath: '/custom-advisors/$advisorId'
+      preLoaderRoute: typeof CustomAdvisorsAdvisorIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat/$chatId': {
       id: '/chat/$chatId'
       path: '/chat/$chatId'
@@ -162,6 +222,9 @@ const rootRouteChildren: RootRouteChildren = {
   TopUpRoute: TopUpRoute,
   TransactionsRoute: TransactionsRoute,
   ChatChatIdRoute: ChatChatIdRoute,
+  CustomAdvisorsAdvisorIdRoute: CustomAdvisorsAdvisorIdRoute,
+  CustomAdvisorsNewRoute: CustomAdvisorsNewRoute,
+  CustomAdvisorsIndexRoute: CustomAdvisorsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
