@@ -1,16 +1,18 @@
 import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, ImageIcon, Plus, X } from "lucide-react";
+import { ArrowUp, ChevronDown, ImageIcon, Plus, X, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ImageData } from "@/types/chats";
 import { supportsImages } from "@/config/model-capabilities";
 import { isMobileDevice } from "@/lib/utils";
+import { useAssistantStore } from "@/stores/assistant";
 import type { Assistant } from "@/stores/assistant";
 
 interface ChatInputProps {
@@ -23,6 +25,7 @@ interface ChatInputProps {
 	isSubmitting?: boolean;
 	assistant: Assistant;
 	autoFocus?: boolean;
+	disableModelSelector?: boolean;
 }
 
 export function ChatInput({
@@ -35,11 +38,16 @@ export function ChatInput({
 	isSubmitting = false,
 	assistant,
 	autoFocus = false,
+	disableModelSelector = false,
 }: Readonly<ChatInputProps>) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const inputContainerRef = useRef<HTMLDivElement>(null);
+	const triggerRef = useRef<HTMLButtonElement>(null);
 	const [value, setValue] = useState("");
 	const [images, setImages] = useState<ImageData[]>([]);
+	const [dropdownAlignOffset, setDropdownAlignOffset] = useState(0);
+	const { assistants, setSelectedAssistant } = useAssistantStore();
 
 	const hasContent = value.trim().length > 0;
 	const modelSupportsImages = useMemo(() => supportsImages(assistant.model), [assistant]);
@@ -128,8 +136,25 @@ export function ChatInput({
 		}
 	}, [textareaRef, value]);
 
+	// Calculate dropdown alignment offset to center it on the input container
+	useEffect(() => {
+		const calculateOffset = () => {
+			if (inputContainerRef.current && triggerRef.current) {
+				const Rect = inputContainerRef.current.getBoundingClientRect();
+				const trigger = triggerRef.current.getBoundingClientRect();
+				const offset = -(trigger.left - Rect.left);
+
+				setDropdownAlignOffset(offset);
+			}
+		};
+
+		calculateOffset();
+		window.addEventListener('resize', calculateOffset);
+		return () => window.removeEventListener('resize', calculateOffset);
+	}, []);
+
 	return (
-		<div className="relative">
+		<div className="relative" ref={inputContainerRef}>
 			<div className="relative rounded-2xl border border-input bg-input overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
 				{/* Image preview inside input */}
 				{modelSupportsImages && images.length > 0 && (
@@ -169,7 +194,7 @@ export function ChatInput({
 				/>
 			</div>
 			<div className="absolute bottom-4 left-0 right-0 flex items-center justify-between px-3">
-				<div className="flex items-center space-x-3">
+				<div className="flex items-center space-x-2">
 					{modelSupportsImages && (
 						<>
 							<input
@@ -198,9 +223,99 @@ export function ChatInput({
 							</DropdownMenu>
 						</>
 					)}
-					<span className="text-sm text-foreground font-medium border border-card dark:border-hover rounded-full px-3 py-1">
-						{assistant.title}
-					</span>
+
+					{/* Model selector dropdown */}
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild disabled={disableModelSelector}>
+							<Button
+								ref={triggerRef}
+								variant="ghost"
+								size="sm"
+								className="h-8 rounded-full border border-card dark:border-hover text-foreground px-3 gap-2"
+								disabled={disableModelSelector}
+							>
+								<span className="text-sm font-medium">{assistant.title}</span>
+								<ChevronDown className="h-3.5 w-3.5" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent
+							align="start"
+							side="top"
+							sideOffset={56}
+							alignOffset={dropdownAlignOffset}
+							className="max-h-[400px] overflow-y-auto"
+							style={{
+								width: inputContainerRef.current?.offsetWidth
+									? `${inputContainerRef.current.offsetWidth}px`
+									: 'auto'
+							}}
+						>
+							{assistants
+								.filter((a) => !a.hidden)
+								.map((item) => {
+									const isSelected = assistant.id === item.id;
+									return (
+										<DropdownMenuItem
+											key={item.id}
+											onClick={() => !item.disabled && setSelectedAssistant(item.id)}
+											className={`p-3 cursor-pointer ${
+												isSelected ? "bg-hover" : ""
+											} ${item.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+											disabled={item.disabled}
+										>
+											<div className="flex items-center gap-3 w-full">
+												{/* Icon on the left */}
+												<div className={`rounded-full p-2 flex-shrink-0 ${isSelected ? "bg-background" : "bg-hover"}`}>
+													{item.icon}
+												</div>
+
+												{/* Title and description in the center */}
+												<div className="flex-1 min-w-0">
+													<div className="font-medium text-sm">{item.title}</div>
+													<p className="text-xs text-muted-foreground">{item.subtitle}</p>
+												</div>
+
+												{/* Tags on the far right */}
+												{(item.pro || item.badge) && (
+													<div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+														{item.pro && (
+															<span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full whitespace-nowrap">Pro</span>
+														)}
+														{item.badge && (
+															<span className="text-foreground text-xs px-2 py-0.5 rounded-full border border-foreground whitespace-nowrap">
+																{item.badge}
+															</span>
+														)}
+													</div>
+												)}
+											</div>
+										</DropdownMenuItem>
+									);
+								})}
+
+							{/* Separator */}
+							<DropdownMenuSeparator />
+
+							{/* Custom Advisors item */}
+							<DropdownMenuItem
+								className="p-3 cursor-pointer opacity-50"
+								disabled
+							>
+								<div className="flex items-center gap-3 w-full">
+									{/* Icon on the left */}
+									<div className="rounded-full p-2 flex-shrink-0 bg-hover">
+										<LayoutDashboard className="h-6 w-6" />
+									</div>
+
+									{/* Title and description in the center */}
+									<div className="flex-1 min-w-0">
+										<div className="font-medium text-sm">Custom Advisors</div>
+										<p className="text-xs text-muted-foreground">Your very own creations</p>
+									</div>
+								</div>
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				</div>
 				<Button
 					variant="ghost"
