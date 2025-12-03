@@ -50,7 +50,7 @@ export function CustomAdvisorsDashboard() {
 			<main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 				<div className="space-y-8">
 					{/* Create New Card */}
-					<div className="bg-card border border-border rounded-3xl p-6 sm:p-8 lg:p-10 shadow-lg hover:shadow-xl transition-shadow">
+					<div className="bg-card border border-border rounded-3xl p-6 sm:p-8 lg:p-10 ">
 						<div className="flex flex-col items-center text-center space-y-4 sm:space-y-5">
 							<div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
 								<Brain className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
@@ -96,15 +96,15 @@ export function CustomAdvisorsDashboard() {
 										<article
 											key={advisor.id}
 											className={`
-												group bg-card border border-border rounded-2xl p-5 sm:p-6
-												hover:border-primary/50 hover:shadow-md
-												transition-all duration-200
-												${shouldSpanFull ? "lg:col-span-2" : ""}
-											`}
+    group bg-card border border-border rounded-2xl py-2 px-4
+    transition-all duration-200
+    ${shouldSpanFull ? "lg:col-span-2" : ""}
+  `}
 										>
-											<div className={`flex gap-4 sm:gap-6 ${shouldSpanFull ? "lg:max-w-2xl lg:mx-auto" : ""}`}>
-												{/* Avatar */}
-												<div className="w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 flex-shrink-0 rounded-xl bg-hover/50 border border-border overflow-hidden">
+											<div className="flex gap-4 sm:gap-6">
+
+											{/* Avatar */}
+												<div className="size-36 lg:size-42 flex-shrink-0 rounded-xl bg-hover/50 border border-border overflow-hidden">
 													{advisor.imageUrl ? (
 														<img
 															src={advisor.imageUrl}
@@ -141,7 +141,7 @@ export function CustomAdvisorsDashboard() {
 													<Button
 														variant="outline"
 														size="sm"
-														className="rounded-full px-4 sm:px-6 gap-2 w-full sm:w-auto sm:text-base group-hover:border-primary/50 transition-colors"
+														className="rounded-full px-4 sm:px-6 gap-2 w-full transition-colors"
 														onClick={() =>
 															navigate({
 																to: "/custom-advisors/$advisorId",
@@ -149,7 +149,6 @@ export function CustomAdvisorsDashboard() {
 															})
 														}
 													>
-														<Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
 														Edit
 													</Button>
 												</div>
