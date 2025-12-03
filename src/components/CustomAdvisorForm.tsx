@@ -129,7 +129,7 @@ export function CustomAdvisorForm({ advisorId }: Readonly<CustomAdvisorFormProps
 							className="rounded-full px-4"
 							onClick={() => navigate({ to: "/" })}
 						>
-							<Upload className={"mr-2 h-4 w-4"} />
+							<Upload className="mr-2 h-4 w-4" />
 							Export
 						</Button>
 					</div>
