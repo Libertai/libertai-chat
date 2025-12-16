@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Brain, Upload, Pencil } from "lucide-react";
+import { X, Plus, Brain, Upload } from "lucide-react";
 import { useAssistantStore } from "@/stores/assistant";
 
 export function CustomAdvisorsDashboard() {
