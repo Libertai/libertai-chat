@@ -32,7 +32,7 @@ jobs:
         run: pnpm run build
 
       - name: Deploy with Aleph
-        uses: aleph-im/web3-hosting-action@f28f9fe979ad15986b75e8ba0e2d68641a2d43e0
+        uses: aleph-im/web3-hosting-action@v1.1.4
         with:
           path: 'dist'
           private-key: ${{ secrets.ALEPH_CLOUD_LTAI_CHAT_BETA }}
