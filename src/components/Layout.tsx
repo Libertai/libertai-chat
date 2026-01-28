@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, ImageIcon } from "lucide-react";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
 import { ChatSearch } from "@/components/ChatSearch";
@@ -43,6 +43,26 @@ function SidebarLogoLink() {
 		>
 			<LibertaiLogo className="h-6 w-auto text-foreground" />
 		</Link>
+	);
+}
+
+// Images link in sidebar
+function SidebarImagesLink() {
+	const { isMobile, setOpenMobile } = useSidebar();
+
+	return (
+		<div className="px-2 py-1">
+			<Link
+				to="/images"
+				onClick={() => {
+					if (isMobile) setOpenMobile(false);
+				}}
+				className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
+			>
+				<ImageIcon className="h-4 w-4" />
+				Image Generation
+			</Link>
+		</div>
 	);
 }
 
@@ -133,6 +153,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 					<SidebarContent>
 						<ChatSearch />
+						<SidebarImagesLink />
 						<ChatList />
 					</SidebarContent>
 
