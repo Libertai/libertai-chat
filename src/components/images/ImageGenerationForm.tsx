@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent } from "react";
+import { useState, useEffect, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,13 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 	const addImage = useImageStore((state) => state.addImage);
 	const imageCount = Object.keys(images).length;
 
+	// Fallback to first model if selected model doesn't exist
+	useEffect(() => {
+		if (models.length > 0 && !models.some((m) => m.id === model)) {
+			setModel(models[0].id);
+		}
+	}, [models, model]);
+
 	const handleGenerate = async () => {
 		if (!prompt.trim() || isGenerating) return;
 
@@ -69,7 +76,10 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 		};
 
 		if (seed.trim()) {
-			params.seed = parseInt(seed, 10);
+			const parsedSeed = parseInt(seed, 10);
+			if (!Number.isNaN(parsedSeed)) {
+				params.seed = parsedSeed;
+			}
 		}
 
 		try {
@@ -129,9 +139,8 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 									disabled={modelsLoading || isGenerating}
 									className="text-sm text-foreground font-medium border border-border rounded-full pl-3 pr-7 py-1.5 bg-background cursor-pointer hover:bg-muted transition-colors appearance-none"
 								>
-									<option value={DEFAULT_MODEL}>{DEFAULT_MODEL}</option>
-									{models
-										.filter((m) => m.id !== DEFAULT_MODEL)
+									{[...models]
+										.sort((a, b) => (a.id === DEFAULT_MODEL ? -1 : b.id === DEFAULT_MODEL ? 1 : 0))
 										.map((m) => (
 											<option key={m.id} value={m.id}>
 												{m.name}
@@ -183,11 +192,12 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 				<div className="space-y-4 p-4 bg-muted/50 rounded-xl border border-border">
 					<div className="flex items-center justify-between">
 						<div>
-							<label className="text-sm font-medium">Steps</label>
+							<label htmlFor="steps-input" className="text-sm font-medium">Steps</label>
 							<p className="text-xs text-muted-foreground">More steps = more detail</p>
 						</div>
 						<div className="flex items-center gap-3">
 							<input
+								id="steps-input"
 								type="range"
 								min="1"
 								max="20"
@@ -202,10 +212,11 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 
 					<div className="flex items-center justify-between border-t border-border pt-4">
 						<div>
-							<label className="text-sm font-medium">Seed</label>
+							<label htmlFor="seed-input" className="text-sm font-medium">Seed</label>
 							<p className="text-xs text-muted-foreground">For reproducible results</p>
 						</div>
 						<Input
+							id="seed-input"
 							type="number"
 							placeholder="Random"
 							value={seed}
@@ -217,10 +228,10 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 
 					<div className="flex items-center justify-between border-t border-border pt-4">
 						<div>
-							<label className="text-sm font-medium">Remove background</label>
+							<label htmlFor="remove-bg-switch" className="text-sm font-medium">Remove background</label>
 							<p className="text-xs text-muted-foreground">Transparent PNG</p>
 						</div>
-						<Switch checked={removeBackground} onCheckedChange={setRemoveBackground} disabled={isGenerating} />
+						<Switch id="remove-bg-switch" checked={removeBackground} onCheckedChange={setRemoveBackground} disabled={isGenerating} />
 					</div>
 				</div>
 			)}
