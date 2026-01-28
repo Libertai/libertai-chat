@@ -1,9 +1,8 @@
-import { useState, useEffect, KeyboardEvent } from "react";
+import { useState, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useImageModels } from "@/hooks/data/use-image-models";
 import { useImageGeneration, ImageGenerationParams } from "@/hooks/data/use-image-generation";
 import { useImageStore, MAX_IMAGES, GeneratedImage } from "@/stores/image";
 import { AlertTriangle, ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react";
@@ -33,7 +32,6 @@ function findSizePresetIndex(width: number, height: number): number {
 
 export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGenerationFormProps) {
 	const [prompt, setPrompt] = useState(initialSettings?.prompt ?? "");
-	const [model, setModel] = useState(initialSettings?.model ?? DEFAULT_MODEL);
 	const [sizePreset, setSizePreset] = useState(
 		initialSettings ? findSizePresetIndex(initialSettings.width, initialSettings.height) : 0,
 	);
@@ -42,18 +40,10 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 	const [removeBackground, setRemoveBackground] = useState(false);
 	const [showAdvanced, setShowAdvanced] = useState(!!initialSettings?.seed);
 
-	const { models, isLoading: modelsLoading } = useImageModels();
 	const { generate, isGenerating } = useImageGeneration();
 	const images = useImageStore((state) => state.images);
 	const addImage = useImageStore((state) => state.addImage);
 	const imageCount = Object.keys(images).length;
-
-	// Fallback to first model if selected model doesn't exist
-	useEffect(() => {
-		if (models.length > 0 && !models.some((m) => m.id === model)) {
-			setModel(models[0].id);
-		}
-	}, [models, model]);
 
 	const handleGenerate = async () => {
 		if (!prompt.trim() || isGenerating) return;
@@ -67,7 +57,7 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 
 		const size = SIZE_PRESETS[sizePreset];
 		const params: ImageGenerationParams = {
-			model,
+			model: DEFAULT_MODEL,
 			prompt: prompt.trim(),
 			width: size.width,
 			height: size.height,
@@ -90,7 +80,7 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 					id: crypto.randomUUID(),
 					prompt: prompt.trim(),
 					base64: `data:image/png;base64,${result.images[0]}`,
-					model,
+					model: DEFAULT_MODEL,
 					width: size.width,
 					height: size.height,
 					seed: result.parameters.seed,
@@ -131,25 +121,6 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 				/>
 				<div className="absolute bottom-3 left-0 right-0 flex items-center justify-between px-3">
 					<div className="flex items-center gap-2 flex-wrap">
-						{models.length > 1 && (
-							<div className="relative">
-								<select
-									value={model}
-									onChange={(e) => setModel(e.target.value)}
-									disabled={modelsLoading || isGenerating}
-									className="text-sm text-foreground font-medium border border-border rounded-full pl-3 pr-7 py-1.5 bg-background cursor-pointer hover:bg-muted transition-colors appearance-none"
-								>
-									{[...models]
-										.sort((a, b) => (a.id === DEFAULT_MODEL ? -1 : b.id === DEFAULT_MODEL ? 1 : 0))
-										.map((m) => (
-											<option key={m.id} value={m.id}>
-												{m.name}
-											</option>
-										))}
-								</select>
-								<ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none text-muted-foreground" />
-							</div>
-						)}
 						<div className="relative">
 							<select
 								value={sizePreset}
