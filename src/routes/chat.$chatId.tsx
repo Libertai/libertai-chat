@@ -32,7 +32,7 @@ function Chat() {
 	const openai = useMemo(
 		() =>
 			new OpenAI({
-				baseURL: isAuthenticated ? env.LTAI_CONNECTED_API_URL : env.LTAI_INFERENCE_API_URL,
+				baseURL: isAuthenticated ? `${env.LTAI_CONNECTED_API_URL}/v1` : env.LTAI_INFERENCE_API_URL,
 				apiKey: isAuthenticated ? (chatApiKey ?? "") : "",
 				dangerouslyAllowBrowser: true,
 			}),

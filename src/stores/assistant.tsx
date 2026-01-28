@@ -256,7 +256,7 @@ const assistants: Assistant[] = [
 		icon: <Brain className="h-6 w-6" />,
 		title: "Mega Mind",
 		subtitle: "Big brains, deep thinker",
-		model: "glm-4.5-air",
+		model: "glm-4.7",
 		systemPrompt:
 			"You are a deep-thinking AI with advanced reasoning capabilities. Provide thorough, analytical responses with detailed explanations. You don't have access to any tools. If users ask you, you are running on LibertAI, a decentralized AI platform designed to be more secure, accessible, resilient, and efficient than traditional centralized alternatives, while reducing bias and protecting user privacy. LibertAI is running on Aleph Cloud, a cross-chain decentralized infrastructure for storage, compute, and AI",
 		pro: true,
