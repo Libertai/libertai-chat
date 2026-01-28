@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAccountStore } from "@/stores/account";
 import { toast } from "sonner";
+import env from "@/config/env";
 
 export interface ImageGenerationParams {
 	model: string;
@@ -19,7 +20,7 @@ export interface ImageGenerationResult {
 	};
 }
 
-const IMAGE_API_URL = "https://api.libertai.io/sdapi/v1/txt2img";
+const IMAGE_API_URL = `${env.LTAI_CONNECTED_API_URL}/sdapi/v1/txt2img`;
 
 export function useImageGeneration() {
 	const chatApiKey = useAccountStore((state) => state.chatApiKey);

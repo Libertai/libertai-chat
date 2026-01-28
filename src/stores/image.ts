@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { indexedDBStorage } from "@/utils/indexed-db-storage";
 
 export interface GeneratedImage {
 	id: string;
@@ -22,7 +23,7 @@ interface ImageStore {
 	getImageCount: () => number;
 }
 
-const IMAGE_VERSION = 1;
+const IMAGE_VERSION = 2;
 const MAX_IMAGES = 50;
 
 export const useImageStore = create<ImageStore>()(
@@ -74,6 +75,7 @@ export const useImageStore = create<ImageStore>()(
 		{
 			name: "libertai-images",
 			version: IMAGE_VERSION,
+			storage: createJSONStorage(() => indexedDBStorage),
 		},
 	),
 );

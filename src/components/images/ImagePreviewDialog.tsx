@@ -74,9 +74,6 @@ export function ImagePreviewDialog({ image, open, onOpenChange, onCopySettings }
 			});
 
 			if (result.images && result.images.length > 0) {
-				// Delete old image
-				deleteImage(displayImage.id);
-
 				// Create new image
 				const newImage: GeneratedImage = {
 					id: crypto.randomUUID(),
@@ -89,9 +86,15 @@ export function ImagePreviewDialog({ image, open, onOpenChange, onCopySettings }
 					createdAt: new Date().toISOString(),
 				};
 
-				addImage(newImage);
-				setDisplayImage(newImage);
-				toast.success("Image regenerated");
+				const added = addImage(newImage);
+				if (added) {
+					// Only delete old image if new one was added successfully
+					deleteImage(displayImage.id);
+					setDisplayImage(newImage);
+					toast.success("Image regenerated");
+				} else {
+					toast.error("Failed to save - storage limit reached");
+				}
 			}
 		} catch {
 			// Error handled in hook
