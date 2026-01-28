@@ -64,8 +64,13 @@ export function ImageGallery() {
 
 				{/* Generation Form Card */}
 				<div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border p-5 md:p-6 relative">
-					{!isConnected && (
-						<div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl z-10 flex items-center justify-center">
+					{isConnected ? (
+						<ImageGenerationForm
+							key={formSettings ? JSON.stringify(formSettings) : "default"}
+							initialSettings={formSettings ?? undefined}
+						/>
+					) : (
+						<div className="flex items-center justify-center py-8">
 							<div className="text-center p-6">
 								<Wallet className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
 								<p className="font-medium mb-1">Connect your wallet</p>
@@ -73,10 +78,6 @@ export function ImageGallery() {
 							</div>
 						</div>
 					)}
-					<ImageGenerationForm
-						key={formSettings ? JSON.stringify(formSettings) : "default"}
-						initialSettings={formSettings ?? undefined}
-					/>
 				</div>
 
 				{/* Gallery Section - only show when connected */}
