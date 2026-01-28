@@ -112,7 +112,7 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 			{/* Prompt Input */}
 			<div className="relative rounded-2xl border border-input bg-input overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
 				<Textarea
-					placeholder="Describe the image you want to generate..."
+					placeholder="Describe your image..."
 					value={prompt}
 					onChange={(e) => setPrompt(e.target.value)}
 					onKeyDown={handleKeyDown}
