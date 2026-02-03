@@ -1,6 +1,8 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { Brain, FileText, Zap } from "lucide-react";
 import { ReactElement } from "react";
+import { runMigrations } from "@/types/assistants/migrations";
 
 export interface Assistant {
 	id: string;
@@ -89,97 +91,97 @@ const assistants: Assistant[] = [
 		id: "058cb9f5-8e04-460d-b936-c104f32da56d",
 		icon: (
 			<svg xmlns="http://www.w3.org/2000/svg" width="26" height="25" viewBox="0 0 26 25" fill="none">
-				<g clip-path="url(#clip0_3690_1272)">
+				<g clipPath="url(#clip0_3690_1272)">
 					<path
 						d="M9.46094 7.45401C9.99794 6.29201 11.2679 5.47601 12.7499 5.47601"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M5.64502 8.38701C6.80502 6.67701 9.54902 5.47501 12.75 5.47501"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M19.855 8.38701C18.695 6.67701 15.951 5.47501 12.75 5.47501"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M18.545 20.671C17.599 22.381 15.361 23.583 12.75 23.583"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M6.95508 20.671C7.90108 22.381 10.1391 23.583 12.7501 23.583"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M12.7499 15.44C12.1809 15.44 11.6969 15.256 11.1729 15.19L10.6329 16.674L10.1729 15.19L6.51294 15.653C7.42494 18.23 9.58394 20.041 12.1019 20.041L12.7509 18.959"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M12.9209 15.44C13.4899 15.44 13.9739 15.256 14.4979 15.19L15.0379 16.674L15.4979 15.19L19.1579 15.653C18.2459 18.23 16.0869 20.041 13.5689 20.041L12.9199 18.959"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M16.039 7.45401C15.502 6.29201 14.232 5.47601 12.75 5.47601"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M8.287 22.417C8.035 22.455 7.778 22.474 7.518 22.474C3.78 22.474 0.75 18.489 0.75 13.572C0.75 8.65499 3.78 4.67099 7.518 4.67099C8.604 4.67099 9.63 5.00699 10.539 5.60499"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M14.9609 5.60499C15.8699 5.00699 16.8959 4.67099 17.9819 4.67099C21.7199 4.67099 24.7499 8.65599 24.7499 13.573C24.7499 18.489 21.7199 22.475 17.9819 22.475C17.7219 22.475 17.4649 22.456 17.2129 22.418"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M11.3639 5.55301C11.3639 5.55301 12.6959 3.17501 11.0019 2.03801C10.7129 1.84401 10.8619 1.73801 10.8949 1.39101C10.9379 0.940012 10.4119 0.385012 11.9979 1.07601C14.7559 2.27801 14.4499 5.86601 14.4499 5.86601"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M8.38989 12.35L9.82689 9.99399L11.0559 12.178L8.38989 12.35Z"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 					<path
 						d="M17.543 12.35L16.105 9.99399L14.876 12.178L17.543 12.35Z"
 						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					/>
 				</g>
 				<defs>
@@ -193,7 +195,7 @@ const assistants: Assistant[] = [
 		subtitle: "Halloween Special",
 		model: "gemma-3-27b",
 		systemPrompt:
-			"You are a spooky AI infused with horror from classic TV, film, and books. Your tone is eerie, theatrical, and darkly witty, blending suspense with Halloween’s spooky charm, but remain direct and to the point. Speak with a haunting, story-like cadence. Use grim puns and horror references, keeping it creepy yet playful. Use Halloween metaphors, Keep horror psychological and atmospheric. Use gothic words: “ominous,” “phantasmal,” “nefarious,” “cauldron.” for example. Avoid modern slang unless darkly humorous.",
+			"You are a spooky AI infused with horror from classic TV, film, and books. Your tone is eerie, theatrical, and darkly witty, blending suspense with Halloween's spooky charm, but remain direct and to the point. Speak with a haunting, story-like cadence. Use grim puns and horror references, keeping it creepy yet playful. Use Halloween metaphors, Keep horror psychological and atmospheric. Use gothic words: \"ominous,\" \"phantasmal,\" \"nefarious,\" \"cauldron.\" for example. Avoid modern slang unless darkly humorous.",
 		disabled: true,
 		hidden: true,
 	},
@@ -256,7 +258,7 @@ const assistants: Assistant[] = [
 		subtitle: "Text Perfectionist",
 		model: "gemma-3-27b",
 		systemPrompt:
-			"You are an assistant that refines and enhance texts with clarity, elegance, and precision. Preserve the writer’s intent while improving flow, grammar, and readability. Adapt tone to context and aim for polished, professional results. Don't hesitate to ask the user for more details about their desired style or audience.",
+			"You are an assistant that refines and enhance texts with clarity, elegance, and precision. Preserve the writer's intent while improving flow, grammar, and readability. Adapt tone to context and aim for polished, professional results. Don't hesitate to ask the user for more details about their desired style or audience.",
 	},
 	{
 		id: "20260806-598c-480d-b821-0ded478ec5cb",
@@ -270,95 +272,136 @@ const assistants: Assistant[] = [
 	},
 ];
 
-// Load custom assistants from localStorage
-const loadCustomAssistants = (): Assistant[] => {
+/**
+ * Reconstructs the icon element for a custom assistant
+ * Custom assistants store imageUrl but can't persist React elements
+ */
+const reconstructIcon = (_imageUrl?: string): ReactElement => {
+	// For now, all custom assistants use the Brain icon
+	// In the future, this could load custom images
+	return <Brain className="h-6 w-6" />;
+};
+
+/**
+ * Migrates custom assistants from old localStorage format
+ * This ensures compatibility with data created before the Zustand migration
+ */
+const migrateLegacyCustomAssistants = (): Assistant[] => {
 	try {
 		const stored = localStorage.getItem("libertai-custom-assistants");
 		if (!stored) return [];
 
 		const parsed = JSON.parse(stored) as Array<Omit<Assistant, "icon">>;
-		// Reconstruct icons from stored data
+		console.log(`Migrating ${parsed.length} legacy custom assistants`);
+
+		// Remove the old key after successful migration
+		localStorage.removeItem("libertai-custom-assistants");
+
 		return parsed.map((assistant) => ({
 			...assistant,
-			icon: assistant.imageUrl ? <Brain className="h-6 w-6" /> : <Brain className="h-6 w-6" />,
+			icon: reconstructIcon(assistant.imageUrl),
 		}));
-	} catch {
+	} catch (error) {
+		console.error("Failed to migrate legacy custom assistants:", error);
 		return [];
 	}
 };
 
-// Save custom assistants to localStorage
-const saveCustomAssistants = (customAssistants: Assistant[]) => {
-	try {
-		// Strip out ReactElement icons before saving
-		const serializable = customAssistants.map((assistant) => ({
-			...assistant,
-			icon: undefined,
-		}));
-		localStorage.setItem("libertai-custom-assistants", JSON.stringify(serializable));
-	} catch (error) {
-		console.error("Failed to save custom assistants:", error);
-	}
-};
+const ASSISTANT_VERSION = 1;
 
-export const useAssistantStore = create<AssistantStore>()((set, get) => ({
-	assistants,
-	customAssistants: loadCustomAssistants(),
-	selectedAssistant: "6984ea23-1c6c-402e-adf0-1afddceec404",
+export const useAssistantStore = create<AssistantStore>()(
+	persist(
+		(set, get) => ({
+			assistants,
+			customAssistants: [],
+			selectedAssistant: "6984ea23-1c6c-402e-adf0-1afddceec404",
 
-	setSelectedAssistant: (assistantId: string) => set({ selectedAssistant: assistantId }),
+			setSelectedAssistant: (assistantId: string) => set({ selectedAssistant: assistantId }),
 
-	getAssistant: (assistantId: string) => {
-		const state = get();
-		return state.getAllAssistants().find((assistant) => assistant.id === assistantId);
-	},
+			getAssistant: (assistantId: string) => {
+				const state = get();
+				return state.getAllAssistants().find((assistant) => assistant.id === assistantId);
+			},
 
-	getAssistantOrDefault: (assistantId?: string) => {
-		const state = get();
-		const targetId = assistantId || state.selectedAssistant;
-		return state.getAllAssistants().find((assistant) => assistant.id === targetId) || state.assistants[0];
-	},
+			getAssistantOrDefault: (assistantId?: string) => {
+				const state = get();
+				const targetId = assistantId || state.selectedAssistant;
+				return state.getAllAssistants().find((assistant) => assistant.id === targetId) || state.assistants[0];
+			},
 
-	getAllAssistants: () => {
-		const state = get();
-		return [...state.assistants, ...state.customAssistants];
-	},
+			getAllAssistants: () => {
+				const state = get();
+				return [...state.assistants, ...state.customAssistants];
+			},
 
-	addCustomAssistant: (assistant: Omit<Assistant, "id">) => {
-		const id = crypto.randomUUID();
-		const newAssistant: Assistant = {
-			...assistant,
-			id,
-			isCustom: true,
-			icon: assistant.imageUrl ? <Brain className="h-6 w-6" /> : <Brain className="h-6 w-6" />,
-		};
+			addCustomAssistant: (assistant: Omit<Assistant, "id">) => {
+				const id = crypto.randomUUID();
+				const newAssistant: Assistant = {
+					...assistant,
+					id,
+					isCustom: true,
+					icon: reconstructIcon(assistant.imageUrl),
+				};
 
-		set((state) => {
-			const updated = [...state.customAssistants, newAssistant];
-			saveCustomAssistants(updated);
-			return { customAssistants: updated };
-		});
+				set((state) => ({
+					customAssistants: [...state.customAssistants, newAssistant],
+				}));
 
-		return id;
-	},
+				return id;
+			},
 
-	updateCustomAssistant: (id: string, updates: Partial<Assistant>) => {
-		set((state) => {
-			const updated = state.customAssistants.map((assistant) =>
-				assistant.id === id
-					? { ...assistant, ...updates, isCustom: true }
-					: assistant
-			);
-			saveCustomAssistants(updated);
-			return { customAssistants: updated };
-		});
-	},
+			updateCustomAssistant: (id: string, updates: Partial<Assistant>) => {
+				set((state) => ({
+					customAssistants: state.customAssistants.map((assistant) =>
+						assistant.id === id
+							? {
+									...assistant,
+									...updates,
+									isCustom: true,
+									icon: reconstructIcon(updates.imageUrl ?? assistant.imageUrl),
+							  }
+							: assistant,
+					),
+				}));
+			},
 
-	deleteCustomAssistant: (id: string) => {
-		set((state) => {
-			const updated = state.customAssistants.filter((assistant) => assistant.id !== id);
-			saveCustomAssistants(updated);
-			return { customAssistants: updated };
-		});
-	},
-}));
+			deleteCustomAssistant: (id: string) => {
+				set((state) => ({
+					customAssistants: state.customAssistants.filter((assistant) => assistant.id !== id),
+				}));
+			},
+		}),
+		{
+			name: "libertai-assistants",
+			version: ASSISTANT_VERSION,
+			migrate: runMigrations,
+			/**
+			 * Strip React elements before persisting and reconstruct them on rehydration
+			 * This allows us to store assistants with icons in localStorage
+			 */
+			partialize: (state) => ({
+				customAssistants: state.customAssistants.map((assistant) => ({
+					...assistant,
+					// Icons can't be serialized, strip them before persisting
+					icon: undefined,
+				})),
+				selectedAssistant: state.selectedAssistant,
+			}),
+			onRehydrateStorage: () => (state) => {
+				// Check for legacy data on first load
+				const legacyAssistants = migrateLegacyCustomAssistants();
+				if (legacyAssistants.length > 0 && state && state.customAssistants.length === 0) {
+					state.customAssistants = legacyAssistants;
+				}
+
+				// Reconstruct icons for all custom assistants after rehydration
+				if (state && state.customAssistants) {
+					state.customAssistants = state.customAssistants.map((assistant) => ({
+						...assistant,
+						icon: reconstructIcon(assistant.imageUrl),
+					}));
+				}
+			},
+		},
+	),
+);
