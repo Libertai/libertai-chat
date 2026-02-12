@@ -13,14 +13,21 @@ export interface Assistant {
 	pro?: boolean;
 	disabled?: boolean;
 	hidden?: boolean;
+	isCustom?: boolean;
+	imageUrl?: string; // For custom advisors with uploaded images
 }
 
 interface AssistantStore {
 	assistants: Assistant[];
+	customAssistants: Assistant[];
 	selectedAssistant: string;
 	setSelectedAssistant: (assistantId: string) => void;
 	getAssistant: (assistantId: string) => Assistant | undefined;
 	getAssistantOrDefault: (assistantId?: string) => Assistant;
+	addCustomAssistant: (assistant: Omit<Assistant, "id">) => string;
+	updateCustomAssistant: (id: string, assistant: Partial<Assistant>) => void;
+	deleteCustomAssistant: (id: string) => void;
+	getAllAssistants: () => Assistant[];
 }
 
 const assistants: Assistant[] = [
@@ -263,14 +270,95 @@ const assistants: Assistant[] = [
 	},
 ];
 
+// Load custom assistants from localStorage
+const loadCustomAssistants = (): Assistant[] => {
+	try {
+		const stored = localStorage.getItem("libertai-custom-assistants");
+		if (!stored) return [];
+
+		const parsed = JSON.parse(stored) as Array<Omit<Assistant, "icon">>;
+		// Reconstruct icons from stored data
+		return parsed.map((assistant) => ({
+			...assistant,
+			icon: assistant.imageUrl ? <Brain className="h-6 w-6" /> : <Brain className="h-6 w-6" />,
+		}));
+	} catch {
+		return [];
+	}
+};
+
+// Save custom assistants to localStorage
+const saveCustomAssistants = (customAssistants: Assistant[]) => {
+	try {
+		// Strip out ReactElement icons before saving
+		const serializable = customAssistants.map((assistant) => ({
+			...assistant,
+			icon: undefined,
+		}));
+		localStorage.setItem("libertai-custom-assistants", JSON.stringify(serializable));
+	} catch (error) {
+		console.error("Failed to save custom assistants:", error);
+	}
+};
+
 export const useAssistantStore = create<AssistantStore>()((set, get) => ({
 	assistants,
+	customAssistants: loadCustomAssistants(),
 	selectedAssistant: "6984ea23-1c6c-402e-adf0-1afddceec404",
+
 	setSelectedAssistant: (assistantId: string) => set({ selectedAssistant: assistantId }),
-	getAssistant: (assistantId: string) => get().assistants.find((assistant) => assistant.id === assistantId),
+
+	getAssistant: (assistantId: string) => {
+		const state = get();
+		return state.getAllAssistants().find((assistant) => assistant.id === assistantId);
+	},
+
 	getAssistantOrDefault: (assistantId?: string) => {
 		const state = get();
 		const targetId = assistantId || state.selectedAssistant;
-		return state.assistants.find((assistant) => assistant.id === targetId) || state.assistants[0];
+		return state.getAllAssistants().find((assistant) => assistant.id === targetId) || state.assistants[0];
+	},
+
+	getAllAssistants: () => {
+		const state = get();
+		return [...state.assistants, ...state.customAssistants];
+	},
+
+	addCustomAssistant: (assistant: Omit<Assistant, "id">) => {
+		const id = crypto.randomUUID();
+		const newAssistant: Assistant = {
+			...assistant,
+			id,
+			isCustom: true,
+			icon: assistant.imageUrl ? <Brain className="h-6 w-6" /> : <Brain className="h-6 w-6" />,
+		};
+
+		set((state) => {
+			const updated = [...state.customAssistants, newAssistant];
+			saveCustomAssistants(updated);
+			return { customAssistants: updated };
+		});
+
+		return id;
+	},
+
+	updateCustomAssistant: (id: string, updates: Partial<Assistant>) => {
+		set((state) => {
+			const updated = state.customAssistants.map((assistant) =>
+				assistant.id === id
+					? { ...assistant, ...updates, isCustom: true }
+					: assistant
+			);
+			saveCustomAssistants(updated);
+			return { customAssistants: updated };
+		});
+	},
+
+	deleteCustomAssistant: (id: string) => {
+		set((state) => {
+			const updated = state.customAssistants.filter((assistant) => assistant.id !== id);
+			saveCustomAssistants(updated);
+			return { customAssistants: updated };
+		});
 	},
 }));
