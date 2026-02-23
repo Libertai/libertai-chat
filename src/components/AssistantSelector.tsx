@@ -11,11 +11,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAssistantStore } from "@/stores/assistant";
 import type { Assistant } from "@/stores/assistant";
+import { CustomAdvisorForm } from "@/components/CustomAdvisorForm";
 
 interface AssistantSelectorProps {
 	assistant: Assistant;
 	disabled?: boolean;
-	containerRef: RefObject<HTMLDivElement>;
+	containerRef: RefObject<HTMLDivElement | null>;
 }
 
 export function AssistantSelector({ assistant, disabled = false, containerRef }: Readonly<AssistantSelectorProps>) {
@@ -25,7 +26,6 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 	const [showCustomAdvisors, setShowCustomAdvisors] = useState(false);
 	const { assistants, customAssistants, setSelectedAssistant } = useAssistantStore();
 
-	// Calculate dropdown alignment offset to center it on the input container
 	useEffect(() => {
 		const calculateOffset = () => {
 			if (containerRef.current && triggerRef.current) {
@@ -69,7 +69,6 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 			>
 				{!showCustomAdvisors ? (
 					<>
-						{/* Main menu - Built-in assistants */}
 						{assistants
 							.filter((a) => !a.hidden)
 							.map((item) => {
@@ -84,20 +83,17 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 										disabled={item.disabled}
 									>
 										<div className="flex items-center gap-3 w-full">
-											{/* Icon on the left */}
 											<div
 												className={`rounded-full p-2 flex-shrink-0 ${isSelected ? "bg-background" : "bg-hover"}`}
 											>
 												{item.icon}
 											</div>
 
-											{/* Title and description in the center */}
 											<div className="flex-1 min-w-0">
 												<div className="font-medium text-sm">{item.title}</div>
 												<p className="text-xs text-muted-foreground">{item.subtitle}</p>
 											</div>
 
-											{/* Tags on the far right */}
 											{(item.pro || item.badge) && (
 												<div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
 													{item.pro && (
@@ -117,22 +113,18 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 								);
 							})}
 
-						{/* Separator */}
 						<DropdownMenuSeparator />
 
-						{/* Custom Advisors item - shows submenu */}
 						<DropdownMenuItem
 							className="p-3 cursor-pointer"
 							onClick={() => setShowCustomAdvisors(true)}
 							onSelect={(e) => e.preventDefault()}
 						>
 							<div className="flex items-center gap-3 w-full">
-								{/* Icon on the left */}
 								<div className="rounded-full p-2 flex-shrink-0 bg-hover">
 									<LayoutDashboard className="h-6 w-6" />
 								</div>
 
-								{/* Title and description in the center */}
 								<div className="flex-1 min-w-0">
 									<div className="font-medium text-sm">Custom Advisors</div>
 									<p className="text-xs text-muted-foreground">Your very own creations</p>
@@ -142,8 +134,6 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 					</>
 				) : (
 					<>
-						{/* Custom Advisors submenu */}
-						{/* Back button */}
 						<DropdownMenuItem
 							className="p-3 cursor-pointer border-b border-border"
 							onClick={() => setShowCustomAdvisors(false)}
@@ -155,7 +145,6 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 							</div>
 						</DropdownMenuItem>
 
-						{/* List of custom advisors */}
 						{customAssistants.map((item) => {
 							const isSelected = assistant.id === item.id;
 							return (
@@ -165,7 +154,6 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 									className={`p-3 cursor-pointer ${isSelected ? "bg-hover" : ""}`}
 								>
 									<div className="flex items-center gap-3 w-full">
-										{/* Avatar or icon */}
 										<div
 											className={`rounded-full p-2 flex-shrink-0 ${isSelected ? "bg-background" : "bg-hover"} overflow-hidden`}
 										>
@@ -176,13 +164,11 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 											)}
 										</div>
 
-										{/* Title and description */}
 										<div className="flex-1 min-w-0">
 											<div className="font-medium text-sm">{item.title}</div>
 											<p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
 										</div>
 
-										{/* Model tag */}
 										<div className="flex-shrink-0">
 											<span className="text-xs text-muted-foreground">{item.model}</span>
 										</div>
@@ -195,10 +181,8 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 							<div className="p-6 text-center text-sm text-muted-foreground">No custom advisors yet</div>
 						)}
 
-						{/* Separator */}
 						<DropdownMenuSeparator />
 
-						{/* Create New button - navigates to dashboard */}
 						<DropdownMenuItem className="p-3 cursor-pointer" onClick={() => navigate({ to: "/custom-advisors" })}>
 							<div className="flex items-center gap-3 w-full">
 								<div className="rounded-full p-2 flex-shrink-0 bg-primary/10">
@@ -214,4 +198,8 @@ export function AssistantSelector({ assistant, disabled = false, containerRef }:
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);
+}
+
+export function NewCustomAdvisor() {
+	return <CustomAdvisorForm />;
 }

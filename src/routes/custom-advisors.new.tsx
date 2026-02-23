@@ -1,10 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CustomAdvisorForm } from "@/components/CustomAdvisorForm";
+import { NewCustomAdvisor } from "@/components/AssistantSelector";
 
 export const Route = createFileRoute("/custom-advisors/new")({
 	component: NewCustomAdvisor,
 });
-
-function NewCustomAdvisor() {
-	return <CustomAdvisorForm />;
-}

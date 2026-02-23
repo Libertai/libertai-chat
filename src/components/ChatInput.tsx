@@ -135,7 +135,6 @@ export function ChatInput({
 	return (
 		<div className="relative" ref={inputContainerRef}>
 			<div className="relative rounded-2xl border border-input bg-input overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
-				{/* Image preview inside input */}
 				{modelSupportsImages && images.length > 0 && (
 					<div className="px-4 pt-3 pb-2 flex flex-wrap gap-2">
 						{images.map((image, index) => (
@@ -203,7 +202,6 @@ export function ChatInput({
 						</>
 					)}
 
-					{/* Model selector dropdown */}
 					<AssistantSelector
 						assistant={assistant}
 						disabled={disableModelSelector}
