@@ -1,10 +1,4 @@
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { GeneratedImage, useImageStore } from "@/stores/image";
 import { useImageGeneration } from "@/hooks/data/use-image-generation";

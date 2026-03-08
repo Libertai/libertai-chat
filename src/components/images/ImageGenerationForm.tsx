@@ -163,7 +163,9 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 				<div className="space-y-4 p-4 bg-muted/50 rounded-xl border border-border">
 					<div className="flex items-center justify-between">
 						<div>
-							<label htmlFor="steps-input" className="text-sm font-medium">Steps</label>
+							<label htmlFor="steps-input" className="text-sm font-medium">
+								Steps
+							</label>
 							<p className="text-xs text-muted-foreground">More steps = more detail</p>
 						</div>
 						<div className="flex items-center gap-3">
@@ -183,7 +185,9 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 
 					<div className="flex items-center justify-between border-t border-border pt-4">
 						<div>
-							<label htmlFor="seed-input" className="text-sm font-medium">Seed</label>
+							<label htmlFor="seed-input" className="text-sm font-medium">
+								Seed
+							</label>
 							<p className="text-xs text-muted-foreground">For reproducible results</p>
 						</div>
 						<Input
@@ -199,10 +203,17 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 
 					<div className="flex items-center justify-between border-t border-border pt-4">
 						<div>
-							<label htmlFor="remove-bg-switch" className="text-sm font-medium">Remove background</label>
+							<label htmlFor="remove-bg-switch" className="text-sm font-medium">
+								Remove background
+							</label>
 							<p className="text-xs text-muted-foreground">Transparent PNG</p>
 						</div>
-						<Switch id="remove-bg-switch" checked={removeBackground} onCheckedChange={setRemoveBackground} disabled={isGenerating} />
+						<Switch
+							id="remove-bg-switch"
+							checked={removeBackground}
+							onCheckedChange={setRemoveBackground}
+							disabled={isGenerating}
+						/>
 					</div>
 				</div>
 			)}
