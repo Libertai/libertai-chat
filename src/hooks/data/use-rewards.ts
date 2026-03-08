@@ -35,7 +35,7 @@ export function useRewards() {
 					throw new Error(`HTTP error! status: ${response.status}`);
 				}
 
-				const data = await response.json() as AlephAggregateResponse;
+				const data = (await response.json()) as AlephAggregateResponse;
 
 				const pendingTokens = data?.data?.pending_tokens?.[account.address] ?? 0;
 				const estimated3YrTokens = data?.data?.estimated_3yr_tokens?.[account.address] ?? 0;

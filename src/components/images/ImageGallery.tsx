@@ -29,9 +29,7 @@ export function ImageGallery() {
 	const isConnected = !!account?.address;
 
 	const sortedImages = useMemo(() => {
-		const all = Object.values(images).sort(
-			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-		);
+		const all = Object.values(images).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 		if (!searchQuery.trim()) return all;
 		const query = searchQuery.toLowerCase();
 		return all.filter((img) => img.prompt.toLowerCase().includes(query));
