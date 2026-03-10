@@ -8,7 +8,7 @@ import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore } from "@/stores/account";
 import env from "@/config/env";
 import OpenAI from "openai";
-import { parseStreamingContent } from "@/utils/thinking-parser";
+import type { ParsedMessage } from "@/utils/thinking-parser";
 import type { ImageData } from "@/types/chats";
 
 export const Route = createFileRoute("/chat/$chatId")({
@@ -118,28 +118,35 @@ function Chat() {
 				stream: true,
 			});
 
-			let accumulatedRawContent = "";
+			const accumulated: ParsedMessage = { thinking: "", content: "" };
 
 			for await (const chunk of stream) {
-				const content = chunk.choices[0]?.delta?.content;
-				if (content) {
-					accumulatedRawContent += content;
+				const delta = chunk.choices[0]?.delta;
+				if (!delta) continue;
 
+				// Capture reasoning_content from the delta (sent as a separate field by thinking models)
+				const reasoningContent = (delta as Record<string, unknown>).reasoning_content as string | undefined;
+				const content = delta.content;
+
+				if (reasoningContent) {
+					accumulated.thinking += reasoningContent;
+				}
+				if (content) {
+					accumulated.content += content;
+				}
+
+				if (reasoningContent || content) {
 					if (!isStreaming) {
 						setIsStreaming(true);
 						setIsLoading(false);
 					}
 
-					// Parse thinking and content based on model
-					const parsed = parseStreamingContent(assistant.model, accumulatedRawContent);
-
-					// Update message with both content and thinking
-					updateMessage(chatId, assistantMessage.id, parsed.content, parsed.thinking);
+					updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
 				}
 			}
 
 			// Final check to ensure we have content
-			if (!accumulatedRawContent) {
+			if (!accumulated.content && !accumulated.thinking) {
 				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
 			}
 		} catch (error) {
