@@ -157,17 +157,15 @@ export const useAccountStore = create<AccountStoreState>((set, get) => ({
 					state.queryClient.invalidateQueries();
 				}
 
-				// Get LTAI token balance from blockchain
-				const ltaiBalance = await state.getLTAIBalance();
-				set({ ltaiBalance: ltaiBalance });
-				if (newSolanaAccount?.publicKey) {
-					const solBalance = await state.getSOLBalance();
-					set({ solBalance: solBalance });
-				}
-
-				// Fetch chat API key
+				// Fetch chat API key first — it's needed for inference immediately
 				const chatApiKey = await state.getChatApiKey();
 				set({ chatApiKey });
+
+				// Fetch balances in background (display-only, non-blocking)
+				state.getLTAIBalance().then((ltaiBalance) => set({ ltaiBalance }));
+				if (newSolanaAccount?.publicKey) {
+					state.getSOLBalance().then((solBalance) => set({ solBalance }));
+				}
 			}
 		} catch (error) {
 			console.error("Account change error:", error);
