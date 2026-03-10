@@ -13,7 +13,7 @@ export interface ModelCapabilities {
 /**
  * Models that support image inputs
  */
-export const IMAGE_CAPABLE_MODELS = ["gemma-3-27b"];
+export const IMAGE_CAPABLE_MODELS = ["gemma-3-27b", "qwen3.5-35b-a3b", "qwen3.5-27b"];
 
 /**
  * Check if a model supports images
