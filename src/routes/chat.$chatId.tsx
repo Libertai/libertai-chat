@@ -252,6 +252,7 @@ function Chat() {
 							disabled={isLoading}
 							assistant={getAssistantOrDefault(chat?.assistantId)}
 							autoFocus
+						disableModelSelector
 						/>
 					</div>
 				</div>

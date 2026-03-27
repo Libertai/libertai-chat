@@ -12,6 +12,7 @@ import { ImageData } from "@/types/chats";
 import { supportsImages } from "@/config/model-capabilities";
 import { isMobileDevice } from "@/lib/utils";
 import type { Assistant } from "@/stores/assistant";
+import { AssistantSelector } from "@/components/AssistantSelector";
 
 interface ChatInputProps {
 	onSubmit: (value: string, images?: ImageData[]) => void;
@@ -23,6 +24,7 @@ interface ChatInputProps {
 	isSubmitting?: boolean;
 	assistant: Assistant;
 	autoFocus?: boolean;
+	disableModelSelector?: boolean;
 }
 
 export function ChatInput({
@@ -35,9 +37,11 @@ export function ChatInput({
 	isSubmitting = false,
 	assistant,
 	autoFocus = false,
+	disableModelSelector = false,
 }: Readonly<ChatInputProps>) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const inputContainerRef = useRef<HTMLDivElement>(null);
 	const [value, setValue] = useState("");
 	const [images, setImages] = useState<ImageData[]>([]);
 
@@ -129,9 +133,8 @@ export function ChatInput({
 	}, [textareaRef, value]);
 
 	return (
-		<div className="relative">
+		<div className="relative" ref={inputContainerRef}>
 			<div className="relative rounded-2xl border border-input bg-input overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
-				{/* Image preview inside input */}
 				{modelSupportsImages && images.length > 0 && (
 					<div className="px-4 pt-3 pb-2 flex flex-wrap gap-2">
 						{images.map((image, index) => (
@@ -169,7 +172,7 @@ export function ChatInput({
 				/>
 			</div>
 			<div className="absolute bottom-4 left-0 right-0 flex items-center justify-between px-3">
-				<div className="flex items-center space-x-3">
+				<div className="flex items-center space-x-2">
 					{modelSupportsImages && (
 						<>
 							<input
@@ -198,9 +201,12 @@ export function ChatInput({
 							</DropdownMenu>
 						</>
 					)}
-					<span className="text-sm text-foreground font-medium border border-card dark:border-hover rounded-full px-3 py-1">
-						{assistant.title}
-					</span>
+
+					<AssistantSelector
+						assistant={assistant}
+						disabled={disableModelSelector}
+						containerRef={inputContainerRef}
+					/>
 				</div>
 				<Button
 					variant="ghost"
