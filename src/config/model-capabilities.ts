@@ -1,38 +1,16 @@
-/**
- * Model capabilities configuration
- * Defines which features each model supports
- */
+import type { Model } from "@/hooks/data/use-models";
 
-export interface ModelCapabilities {
-	supportsImages: boolean;
-	// Add more capabilities here as needed
-	// supportsAudio?: boolean;
-	// supportsVideo?: boolean;
+const THINKING_SUFFIX = "-thinking";
+
+// `-thinking` is just a flag to enable thinking mode on the base model — strip it for capability lookup
+function getBaseModelId(model: string): string {
+	return model.endsWith(THINKING_SUFFIX) ? model.slice(0, -THINKING_SUFFIX.length) : model;
 }
 
-/**
- * Models that support image inputs
- */
-export const IMAGE_CAPABLE_MODELS = [
-	"gemma-3-27b",
-	"qwen3.5-35b-a3b",
-	"qwen3.5-35b-a3b-thinking",
-	"qwen3.5-27b",
-	"qwen3.5-27b-thinking",
-];
-
-/**
- * Check if a model supports images
- */
-export function supportsImages(model: string): boolean {
-	return IMAGE_CAPABLE_MODELS.includes(model);
+function findModel(model: string, models: Model[]): Model | undefined {
+	return models.find((m) => m.id === getBaseModelId(model));
 }
 
-/**
- * Get all capabilities for a model
- */
-export function getModelCapabilities(model: string): ModelCapabilities {
-	return {
-		supportsImages: supportsImages(model),
-	};
+export function supportsImages(model: string, models: Model[]): boolean {
+	return findModel(model, models)?.capabilities.text?.vision ?? false;
 }

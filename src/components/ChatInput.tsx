@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ImageData } from "@/types/chats";
 import { supportsImages } from "@/config/model-capabilities";
+import { useModels } from "@/hooks/data/use-models";
 import { isMobileDevice } from "@/lib/utils";
 import type { Assistant } from "@/stores/assistant";
 
@@ -42,7 +43,8 @@ export function ChatInput({
 	const [images, setImages] = useState<ImageData[]>([]);
 
 	const hasContent = value.trim().length > 0;
-	const modelSupportsImages = useMemo(() => supportsImages(assistant.model), [assistant]);
+	const { data: models } = useModels();
+	const modelSupportsImages = useMemo(() => supportsImages(assistant.model, models ?? []), [assistant, models]);
 
 	// Notify parent when content changes
 	useEffect(() => {
