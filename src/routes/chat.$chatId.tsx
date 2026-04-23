@@ -124,8 +124,10 @@ function Chat() {
 				const delta = chunk.choices[0]?.delta;
 				if (!delta) continue;
 
-				// Capture reasoning_content from the delta (sent as a separate field by thinking models)
-				const reasoningContent = (delta as Record<string, unknown>).reasoning_content as string | undefined;
+				// Capture reasoning from the delta (sent as a separate field by thinking models;
+				// some backends use `reasoning`, others `reasoning_content`)
+				const deltaRecord = delta as Record<string, unknown>;
+				const reasoningContent = (deltaRecord.reasoning ?? deltaRecord.reasoning_content) as string | undefined;
 				const content = delta.content;
 
 				if (reasoningContent) {
