@@ -24,5 +24,7 @@ export function useChatApiKey() {
 		staleTime: 5 * 60 * 1000,
 	});
 
-	return { chatApiKey: query.data ?? null, isLoading: query.isLoading };
+	// Gate on isAuthenticated: React Query keeps the last cached data when `enabled`
+	// flips false, so without this a signed-out state could expose a prior user's key.
+	return { chatApiKey: isAuthenticated ? (query.data ?? null) : null, isLoading: query.isLoading };
 }
