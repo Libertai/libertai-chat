@@ -22,9 +22,15 @@ export default function WalletSync() {
 		onAccountChange(thirdwebAccount, solanaWallet).then();
 	}, [thirdwebAccount, solanaWallet, onAccountChange, evmWallet]);
 
-	evmWallet?.subscribe("accountChanged", (newAccount) => {
-		onAccountChange(newAccount, solanaWallet).then();
-	});
+	// Subscribe to in-wallet EVM account switches once per wallet (in an effect, with
+	// cleanup) — doing it during render would register a new listener every render.
+	useEffect(() => {
+		if (!evmWallet) return;
+		const unsubscribe = evmWallet.subscribe("accountChanged", (newAccount) => {
+			onAccountChange(newAccount, solanaWallet).then();
+		});
+		return () => unsubscribe();
+	}, [evmWallet, solanaWallet, onAccountChange]);
 
 	return (
 		<div className="absolute invisible opacity-0 pointer-events-none -z-10">
