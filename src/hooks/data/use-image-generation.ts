@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAccountStore } from "@/stores/account";
+import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { toast } from "sonner";
 import env from "@/config/env";
 
@@ -23,7 +23,7 @@ export interface ImageGenerationResult {
 const IMAGE_API_URL = `${env.LTAI_CONNECTED_API_URL}/sdapi/v1/txt2img`;
 
 export function useImageGeneration() {
-	const chatApiKey = useAccountStore((state) => state.chatApiKey);
+	const { chatApiKey } = useChatApiKey();
 
 	const mutation = useMutation({
 		mutationFn: async (params: ImageGenerationParams): Promise<ImageGenerationResult> => {

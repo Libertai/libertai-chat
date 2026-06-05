@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRewards } from "@/hooks/data/use-rewards";
-import { useAccountStore } from "@/stores/account";
+import { useAccountStore } from "@libertai/auth";
 import { formatAddress } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

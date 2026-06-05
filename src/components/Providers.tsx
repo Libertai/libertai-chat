@@ -1,33 +1,13 @@
-import { ReactNode, useEffect } from "react";
-import { ThirdwebProvider } from "thirdweb/react";
+import { ReactNode } from "react";
 import { ThemeProvider } from "./ThemeProvider";
 import { Toaster } from "./ui/sonner";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/react";
-import { SolanaProvider } from "./SolanaProvider";
-import { useAccountStore } from "@/stores/account";
+import { LibertaiProviders } from "@libertai/auth";
+import { queryClient } from "@/lib/query-client";
 
 type ProvidersProps = {
 	children: ReactNode;
-};
-
-// Create a client
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			staleTime: 5 * 60 * 1000, // 5 minutes
-		},
-	},
-});
-
-const QueryClientInitializer = ({ children }: { children: ReactNode }) => {
-	const setQueryClient = useAccountStore((state) => state.setQueryClient);
-
-	useEffect(() => {
-		setQueryClient(queryClient);
-	}, [setQueryClient]);
-
-	return <>{children}</>;
 };
 
 const Providers = ({ children }: ProvidersProps) => {
@@ -35,11 +15,7 @@ const Providers = ({ children }: ProvidersProps) => {
 		<NuqsAdapter>
 			<ThemeProvider defaultTheme="system" storageKey="libertai-ui-theme">
 				<QueryClientProvider client={queryClient}>
-					<QueryClientInitializer>
-						<SolanaProvider>
-							<ThirdwebProvider>{children}</ThirdwebProvider>
-						</SolanaProvider>
-					</QueryClientInitializer>
+					<LibertaiProviders>{children}</LibertaiProviders>
 					<Toaster richColors />
 				</QueryClientProvider>
 			</ThemeProvider>

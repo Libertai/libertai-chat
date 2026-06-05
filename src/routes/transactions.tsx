@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRequireAuth } from "@/hooks/use-auth";
-import { CreditTransactionProvider, CreditTransactionResponse } from "@/apis/inference";
+import { CreditTransactionProvider, CreditTransactionResponse } from "@libertai/inference-sdk";
 import { useTransactions } from "@/hooks/data/use-transactions";
 import { Skeleton } from "@/components/ui/skeleton";
 import dayjs from "dayjs";

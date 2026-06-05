@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useAccountStore } from "@/stores/account";
+import { useAccountStore } from "@libertai/auth";
 import { useImageStore, GeneratedImage } from "@/stores/image";
 import { ImageCard } from "./ImageCard";
 import { ImageGenerationForm } from "./ImageGenerationForm";

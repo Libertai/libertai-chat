@@ -1,6 +1,6 @@
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useAccountStore } from "@/stores/account";
+import { useAccountStore } from "@libertai/auth";
 import { useENS } from "@/hooks/useENS";
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";

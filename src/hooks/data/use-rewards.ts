@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAccountStore } from "@/stores/account.ts";
+import { useAccountStore } from "@libertai/auth";
 import env from "@/config/env";
 
 interface RewardsData {

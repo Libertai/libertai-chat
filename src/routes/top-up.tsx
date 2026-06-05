@@ -2,7 +2,7 @@ import { TopUpAmountInput } from "@/components/payment/TopUpAmountInput.tsx";
 import { Button } from "@/components/ui/button";
 import { useCredits } from "@/hooks/data/use-credits";
 import { useRequireAuth } from "@/hooks/use-auth";
-import { useAccountStore } from "@/stores/account";
+import { useAccountStore } from "@libertai/auth";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CheckCircle, ChevronRight, HelpCircle, Zap } from "lucide-react";
 import { useQueryState } from "nuqs";
