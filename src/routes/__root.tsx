@@ -1,16 +1,30 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import Providers from "@/components/Providers";
 import { Layout } from "@/components/Layout";
 import WalletSync from "@/components/WalletSync";
 
-export const Route = createRootRoute({
-	component: () => (
+// Routes rendered standalone (full page), without the chat sidebar/header chrome.
+const CHROMELESS_ROUTES = ["/login"];
+
+function RootComponent() {
+	const pathname = useRouterState({ select: (state) => state.location.pathname });
+	const chromeless = CHROMELESS_ROUTES.includes(pathname);
+
+	return (
 		<Providers>
 			{/* Keeps wallet sessions in sync globally, independent of the header UI */}
 			<WalletSync />
-			<Layout>
+			{chromeless ? (
 				<Outlet />
-			</Layout>
+			) : (
+				<Layout>
+					<Outlet />
+				</Layout>
+			)}
 		</Providers>
-	),
+	);
+}
+
+export const Route = createRootRoute({
+	component: RootComponent,
 });
