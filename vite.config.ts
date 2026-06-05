@@ -24,5 +24,17 @@ export default defineConfig({
 			"@libertai/auth": path.resolve(__dirname, "./src/shared/auth"),
 			"@libertai/inference-sdk": path.resolve(__dirname, "./src/shared/inference-sdk"),
 		},
+		// Force a single copy of these React-context packages. pnpm gives the
+		// src/shared submodule its own thirdweb install, so without dedupe the bundle
+		// gets two ThirdwebProviders → "useActiveAccount must be used within <ThirdwebProvider>".
+		dedupe: [
+			"thirdweb",
+			"react",
+			"react-dom",
+			"@tanstack/react-query",
+			"@solana/wallet-adapter-react",
+			"@solana/wallet-adapter-react-ui",
+			"@solana/wallet-adapter-base",
+		],
 	},
 });
