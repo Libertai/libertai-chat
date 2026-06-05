@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Scan the shared package source so its Tailwind classes aren't purged. */
+@source "./shared/**/*.{ts,tsx}";
+
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));

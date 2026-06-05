@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserBalanceCreditsBalanceGet } from "@/apis/inference";
-import { useAccountStore } from "@/stores/account.ts";
+import { getUserBalanceCreditsBalanceGet } from "@libertai/inference-sdk";
+import { useAccountStore } from "@libertai/auth";
 import { toast } from "sonner";
 
 export function useCredits() {

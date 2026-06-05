@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Coins, Copy, Loader2, LogOut, Settings, Trophy } from "lucide-react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
-import { useAccountStore } from "@/stores/account";
+import { useAccountStore } from "@libertai/auth";
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
 import { useENS } from "@/hooks/useENS";
 import { ProfileAvatar } from "@/components/ProfileAvatar";

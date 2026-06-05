@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
-import { useAccountStore } from "@/stores/account.ts";
+import { useAccountStore } from "@libertai/auth";
 import { toast } from "sonner";
 import { approve } from "thirdweb/extensions/erc20";
 import { base } from "thirdweb/chains";

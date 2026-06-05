@@ -27,6 +27,18 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@libertai/auth": [
+        "src/shared/auth"
+      ],
+      "@libertai/auth/*": [
+        "src/shared/auth/*"
+      ],
+      "@libertai/inference-sdk": [
+        "src/shared/inference-sdk"
+      ],
+      "@libertai/inference-sdk/*": [
+        "src/shared/inference-sdk/*"
       ]
     }
   },

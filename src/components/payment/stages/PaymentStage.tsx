@@ -8,7 +8,7 @@ import env from "@/config/env.ts";
 import { PaymentForm } from "@/components/payment/PaymentForm.tsx";
 import { useLTAIPrice } from "@/hooks/use-ltai-price.ts";
 import { useSOLPrice } from "@/hooks/use-sol-price.ts";
-import { useAccountStore } from "@/stores/account.ts";
+import { useAccountStore } from "@libertai/auth";
 import { useQueryState } from "nuqs";
 import { prepareContractCall, sendTransaction } from "thirdweb";
 import { parseUnits } from "viem";
