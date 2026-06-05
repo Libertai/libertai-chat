@@ -11,10 +11,11 @@ import { queryClient } from "@/lib/query-client";
 import env from "@/config/env.ts";
 import { useChatStore } from "@/stores/chat";
 
-// Configure the shared inference SDK + auth store. Cookie-based auth: in dev we hit a
-// same-origin "/api" proxy (see vite.config.ts) so the httpOnly session cookie works.
+// Configure the shared inference SDK + auth store. Cookie-based auth: the backend, the
+// console and chat are all same-site (*.libertai.io; localhost in dev), so the httpOnly
+// SameSite=Lax session cookie is sent on credentialed cross-origin requests (CORS allows it).
 initLibertaiAuth({
-	apiBaseUrl: import.meta.env.DEV ? "/api" : env.LTAI_INFERENCE_API_URL,
+	apiBaseUrl: env.LTAI_INFERENCE_API_URL,
 	thirdwebClientId: env.THIRDWEB_CLIENT_ID,
 	solanaRpc: env.SOLANA_RPC,
 	ltaiBaseAddress: env.LTAI_BASE_ADDRESS,
