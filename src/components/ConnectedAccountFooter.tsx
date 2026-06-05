@@ -6,7 +6,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Coins, Copy, Loader2, LogOut, Settings, Trophy } from "lucide-react";
+import { CircleUser, Coins, Copy, Loader2, LogOut, Settings, Trophy } from "lucide-react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import { useAccountStore } from "@libertai/auth";
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
@@ -16,12 +16,17 @@ import { formatAddress, copyAddressToClipboard } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { useSidebar } from "@/components/ui/sidebar";
 
+type Me = { email?: string | null; display_name?: string | null; address?: string | null } | null;
+
 export function ConnectedAccountFooter() {
 	const thirdwebAccount = useActiveAccount();
 	const evmWallet = useActiveWallet();
 	const solanaWallet = useSolanaWallet();
 	const { disconnect } = useDisconnect();
 	const account = useAccountStore((state) => state.account);
+	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
+	const me = useAccountStore((state) => state.me) as Me;
+	const logout = useAccountStore((state) => state.logout);
 	const formattedLtaiBalance = useAccountStore((state) => state.formattedLTAIBalance());
 	const isAuthenticating = useAccountStore((state) => state.isAuthenticating);
 	const { isMobile, setOpenMobile } = useSidebar();
@@ -33,10 +38,26 @@ export function ConnectedAccountFooter() {
 	const shouldShowEvmLoading = isAuthenticating && thirdwebAccount && evmWallet;
 	const shouldShowSolanaLoading = isAuthenticating && solanaWallet.wallet;
 
-	// Only render when connected
-	if (!account?.address) {
+	// Render whenever there's a session — a connected wallet OR an email/OAuth (cookie) login.
+	if (!account?.address && !isAuthenticated) {
 		return null;
 	}
+
+	const isWallet = !!account?.address;
+	const label = isWallet
+		? (ensDisplayName ?? ensName ?? formatAddress(account.address))
+		: (me?.email ?? me?.display_name ?? "Account");
+
+	const handleSignOut = async () => {
+		if (isMobile) setOpenMobile(false);
+		// Cookie-based: end the server session, then drop any connected wallet.
+		await logout();
+		if (thirdwebAccount !== undefined && evmWallet !== undefined) {
+			disconnect(evmWallet);
+		} else if (solanaWallet.wallet !== null) {
+			await solanaWallet.disconnect();
+		}
+	};
 
 	return (
 		<DropdownMenu>
@@ -45,49 +66,59 @@ export function ConnectedAccountFooter() {
 					variant="outline"
 					className="flex items-center gap-3 px-3 py-2 border-border w-full justify-start h-auto"
 				>
-					<ProfileAvatar src={ensAvatar} address={account.address} size="md" />
+					{isWallet ? (
+						<ProfileAvatar src={ensAvatar} address={account.address} size="md" />
+					) : (
+						<CircleUser className="h-8 w-8 text-muted-foreground" />
+					)}
 					<div className="flex flex-col items-start flex-1 min-w-0">
-						<div className="text-md font-medium truncate w-full text-left">
-							{ensDisplayName ?? ensName ?? formatAddress(account.address)}
-						</div>
+						<div className="text-md font-medium truncate w-full text-left">{label}</div>
 					</div>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="min-w-[220px]">
-				<div className="px-2 py-2 border-b border-border">
-					<p className="text-xs text-muted-foreground">Connected as</p>
+				<div className="px-2 py-2">
+					<p className="text-xs text-muted-foreground">{isWallet ? "Connected as" : "Signed in as"}</p>
 					<div className="flex items-center gap-2">
-						<ProfileAvatar src={ensAvatar} address={account.address} size="sm" />
+						{isWallet ? (
+							<ProfileAvatar src={ensAvatar} address={account.address} size="sm" />
+						) : (
+							<CircleUser className="h-6 w-6 text-muted-foreground" />
+						)}
 						<div className="flex-1 min-w-0">
-							<p className="font-medium truncate text-sm">{ensName ?? formatAddress(account.address)}</p>
+							<p className="font-medium truncate text-sm">{label}</p>
 						</div>
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={() => copyAddressToClipboard(account.address)}
-							className="h-6 w-6 p-0 hover:bg-muted flex-shrink-0"
-						>
-							<Copy className="h-3 w-3" />
-						</Button>
+						{isWallet && (
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => copyAddressToClipboard(account.address)}
+								className="h-6 w-6 p-0 hover:bg-muted flex-shrink-0"
+							>
+								<Copy className="h-3 w-3" />
+							</Button>
+						)}
 					</div>
 				</div>
 
-				<div className="px-2 py-2">
-					<p className="text-xs text-muted-foreground">Balance</p>
-					<p className="font-medium flex items-center">
-						{shouldShowSolanaLoading || shouldShowEvmLoading ? (
-							<>
-								<Loader2 className="h-3 w-3 mr-1 animate-spin" />
-								Loading...
-							</>
-						) : (
-							<>
-								<Coins className="h-3 w-3 mr-1 text-primary" />
-								{formattedLtaiBalance} LTAI
-							</>
-						)}
-					</p>
-				</div>
+				{isWallet && (
+					<div className="px-2 py-2">
+						<p className="text-xs text-muted-foreground">Balance</p>
+						<p className="font-medium flex items-center">
+							{shouldShowSolanaLoading || shouldShowEvmLoading ? (
+								<>
+									<Loader2 className="h-3 w-3 mr-1 animate-spin" />
+									Loading...
+								</>
+							) : (
+								<>
+									<Coins className="h-3 w-3 mr-1 text-primary" />
+									{formattedLtaiBalance} LTAI
+								</>
+							)}
+						</p>
+					</div>
+				)}
 				<DropdownMenuSeparator />
 				<DropdownMenuItem asChild className="cursor-pointer gap-2">
 					<Link
@@ -111,19 +142,9 @@ export function ConnectedAccountFooter() {
 						Rewards
 					</Link>
 				</DropdownMenuItem>
-				<DropdownMenuItem
-					onClick={async () => {
-						if (isMobile) setOpenMobile(false);
-						if (thirdwebAccount !== undefined && evmWallet !== undefined) {
-							disconnect(evmWallet);
-						} else if (solanaWallet.wallet !== null) {
-							await solanaWallet.disconnect();
-						}
-					}}
-					className="cursor-pointer gap-2 text-destructive"
-				>
+				<DropdownMenuItem onClick={handleSignOut} className="cursor-pointer gap-2 text-destructive">
 					<LogOut className="h-4 w-4" />
-					Disconnect
+					Sign out
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
