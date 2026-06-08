@@ -176,7 +176,7 @@ function Chat() {
 		}
 	};
 
-	const handleSendMessage = async (value: string, images?: ImageData[]) => {
+	const handleSendMessage = async (value: string, images?: ImageData[], _forcedTool?: "web_search" | "generate_image") => {
 		if (!value.trim() || isLoading) return;
 
 		// Add user message to store with images
@@ -265,6 +265,7 @@ function Chat() {
 							disabled={isLoading}
 							assistant={getAssistantOrDefault(chat?.assistantId)}
 							autoFocus
+							isConnected={isAuthenticated && !!chatApiKey}
 						/>
 					</div>
 				</div>

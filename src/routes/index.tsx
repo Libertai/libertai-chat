@@ -3,6 +3,8 @@ import { useState } from "react";
 import { ChatInput } from "@/components/ChatInput";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
+import { useAccountStore } from "@libertai/auth";
+import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import type { ImageData } from "@/types/chats";
 
 export const Route = createFileRoute("/")({
@@ -13,12 +15,14 @@ function Index() {
 	const navigate = useNavigate();
 	const { createChat } = useChatStore();
 	const { assistants, selectedAssistant, setSelectedAssistant, getAssistantOrDefault } = useAssistantStore();
+	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
+	const { chatApiKey } = useChatApiKey();
 	const [isFocused, setIsFocused] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasContent, setHasContent] = useState(false);
 	const shouldShowCentered = isFocused || hasContent;
 
-	const handleSubmit = (value: string, images?: ImageData[]) => {
+	const handleSubmit = (value: string, images?: ImageData[], _forcedTool?: "web_search" | "generate_image") => {
 		if (!value.trim() || isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -126,6 +130,7 @@ function Index() {
 							placeholder="Start a private conversation..."
 							isSubmitting={isSubmitting}
 							assistant={getAssistantOrDefault(selectedAssistant)}
+							isConnected={isAuthenticated && !!chatApiKey}
 						/>
 					</div>
 

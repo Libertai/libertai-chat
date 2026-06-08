@@ -1,5 +1,5 @@
 import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, ImageIcon, Plus, X } from "lucide-react";
+import { ArrowUp, Globe, Paperclip, Plus, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -8,14 +8,16 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ImageData } from "@/types/chats";
-import { supportsImages } from "@/config/model-capabilities";
+import { supportsImages, supportsTools } from "@/config/model-capabilities";
 import { useModels } from "@/hooks/data/use-models";
 import { isMobileDevice } from "@/lib/utils";
 import type { Assistant } from "@/stores/assistant";
+import type React from "react";
 
 interface ChatInputProps {
-	onSubmit: (value: string, images?: ImageData[]) => void;
+	onSubmit: (value: string, images?: ImageData[], forcedTool?: "web_search" | "generate_image") => void;
 	onChange?: (hasContent: boolean) => void;
 	onFocus?: () => void;
 	onBlur?: (e: FocusEvent<HTMLTextAreaElement>) => void;
@@ -24,6 +26,7 @@ interface ChatInputProps {
 	isSubmitting?: boolean;
 	assistant: Assistant;
 	autoFocus?: boolean;
+	isConnected: boolean;
 }
 
 export function ChatInput({
@@ -36,6 +39,7 @@ export function ChatInput({
 	isSubmitting = false,
 	assistant,
 	autoFocus = false,
+	isConnected,
 }: Readonly<ChatInputProps>) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,6 +49,13 @@ export function ChatInput({
 	const hasContent = value.trim().length > 0;
 	const { data: models } = useModels();
 	const modelSupportsImages = useMemo(() => supportsImages(assistant.model, models ?? []), [assistant, models]);
+	const modelSupportsTools = useMemo(() => supportsTools(assistant.model, models ?? []), [assistant, models]);
+	const [forcedTool, setForcedTool] = useState<"web_search" | "generate_image" | null>(null);
+
+	// Clear a stale forced tool if the user switches to a model that can't use tools.
+	useEffect(() => {
+		if (!modelSupportsTools) setForcedTool(null);
+	}, [modelSupportsTools]);
 
 	// Notify parent when content changes
 	useEffect(() => {
@@ -101,9 +112,10 @@ export function ChatInput({
 
 	const handleSubmit = () => {
 		if (!hasContent || disabled || isSubmitting) return;
-		onSubmit(value, modelSupportsImages && images.length > 0 ? images : undefined);
+		onSubmit(value, modelSupportsImages && images.length > 0 ? images : undefined, forcedTool ?? undefined);
 		setValue("");
 		setImages([]);
+		setForcedTool(null);
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -155,6 +167,22 @@ export function ChatInput({
 					</div>
 				)}
 
+				{forcedTool && (
+					<div className="px-4 pt-3 flex">
+						<span className="inline-flex items-center gap-1.5 text-xs font-medium bg-primary/10 text-primary rounded-full pl-2.5 pr-1.5 py-1">
+							{forcedTool === "web_search" ? <Globe className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />}
+							{forcedTool === "web_search" ? "Web search" : "Create image"}
+							<button
+								type="button"
+								onClick={() => setForcedTool(null)}
+								className="cursor-pointer rounded-full hover:bg-primary/20 p-0.5"
+							>
+								<X className="h-2.5 w-2.5" />
+							</button>
+						</span>
+					</div>
+				)}
+
 				<Textarea
 					id="chat-input"
 					ref={textareaRef}
@@ -172,7 +200,7 @@ export function ChatInput({
 			</div>
 			<div className="absolute bottom-4 left-0 right-0 flex items-center justify-between px-3">
 				<div className="flex items-center space-x-3">
-					{modelSupportsImages && (
+					{(modelSupportsTools || modelSupportsImages) && (
 						<>
 							<input
 								type="file"
@@ -192,10 +220,28 @@ export function ChatInput({
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="start">
-									<DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-										<ImageIcon className="mr-2 h-4 w-4" />
-										<span>Images</span>
-									</DropdownMenuItem>
+									{modelSupportsImages && (
+										<DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+											<Paperclip className="mr-2 h-4 w-4" />
+											<span>Add photos & files</span>
+										</DropdownMenuItem>
+									)}
+									{modelSupportsTools && (
+										<>
+											<ToolMenuItem
+												icon={<Sparkles className="mr-2 h-4 w-4" />}
+												label="Create image"
+												isConnected={isConnected}
+												onSelect={() => setForcedTool("generate_image")}
+											/>
+											<ToolMenuItem
+												icon={<Globe className="mr-2 h-4 w-4" />}
+												label="Web search"
+												isConnected={isConnected}
+												onSelect={() => setForcedTool("web_search")}
+											/>
+										</>
+									)}
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</>
@@ -215,5 +261,35 @@ export function ChatInput({
 				</Button>
 			</div>
 		</div>
+	);
+}
+
+function ToolMenuItem({
+	icon,
+	label,
+	isConnected,
+	onSelect,
+}: Readonly<{ icon: React.ReactNode; label: string; isConnected: boolean; onSelect: () => void }>) {
+	if (isConnected) {
+		return (
+			<DropdownMenuItem onClick={onSelect}>
+				{icon}
+				<span>{label}</span>
+			</DropdownMenuItem>
+		);
+	}
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>
+				{/* span wrapper: disabled items don't fire pointer events for the tooltip */}
+				<div>
+					<DropdownMenuItem disabled onSelect={(e) => e.preventDefault()} className="opacity-50">
+						{icon}
+						<span>{label}</span>
+					</DropdownMenuItem>
+				</div>
+			</TooltipTrigger>
+			<TooltipContent side="right">Connect your account to use this</TooltipContent>
+		</Tooltip>
 	);
 }
