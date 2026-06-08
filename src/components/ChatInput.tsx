@@ -1,5 +1,5 @@
 import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Globe, Paperclip, Plus, Sparkles, X } from "lucide-react";
+import { ArrowUp, Globe, Paperclip, Plus, Sparkles, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -27,6 +27,8 @@ interface ChatInputProps {
 	assistant: Assistant;
 	autoFocus?: boolean;
 	isConnected: boolean;
+	isGenerating?: boolean;
+	onStop?: () => void;
 }
 
 export function ChatInput({
@@ -40,6 +42,8 @@ export function ChatInput({
 	assistant,
 	autoFocus = false,
 	isConnected,
+	isGenerating = false,
+	onStop,
 }: Readonly<ChatInputProps>) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -250,15 +254,26 @@ export function ChatInput({
 						{assistant.title}
 					</span>
 				</div>
-				<Button
-					variant="ghost"
-					size="icon"
-					className="h-8 w-8 rounded-full transition-all duration-200 text-white bg-primary hover:bg-primary/80 dark:hover:bg-primary/80"
-					disabled={!hasContent || disabled || isSubmitting}
-					onClick={handleSubmit}
-				>
-					<ArrowUp className="h-4 w-4" />
-				</Button>
+				{isGenerating ? (
+					<Button
+						variant="ghost"
+						size="icon"
+						onClick={onStop}
+						className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
+					>
+						<Square className="h-4 w-4" />
+					</Button>
+				) : (
+					<Button
+						variant="ghost"
+						size="icon"
+						disabled={!hasContent || disabled || isSubmitting}
+						onClick={handleSubmit}
+						className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
+					>
+						<ArrowUp className="h-4 w-4" />
+					</Button>
+				)}
 			</div>
 		</div>
 	);

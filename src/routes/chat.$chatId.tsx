@@ -8,8 +8,15 @@ import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { resolveChatEndpoint } from "@/utils/chat-endpoint";
+import { useModels } from "@/hooks/data/use-models";
+import { supportsTools } from "@/config/model-capabilities";
+import { buildRequestMessages } from "@/utils/build-request-messages";
+import { ToolCallAccumulator } from "@/utils/tool-call-accumulator";
+import { TOOL_DEFINITIONS, executeWebSearch, executeGenerateImage } from "@/utils/chat-tools";
+import type { GenerateImageArgs } from "@/utils/chat-tools";
 import env from "@/config/env";
 import OpenAI from "openai";
+import { toast } from "sonner";
 import type { ParsedMessage } from "@/utils/thinking-parser";
 import type { ImageData } from "@/types/chats";
 
@@ -19,17 +26,28 @@ export const Route = createFileRoute("/chat/$chatId")({
 
 function Chat() {
 	const { chatId } = Route.useParams();
-	const { getChat, addMessage, updateMessage, deleteMessage, truncateMessagesAfter } = useChatStore();
+	const { getChat, addMessage, updateMessage, updateMessageArtifacts, deleteMessage, truncateMessagesAfter } =
+		useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { chatApiKey } = useChatApiKey();
+	const { data: models } = useModels();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [isStreaming, setIsStreaming] = useState(false);
+	const [toolStatus, setToolStatus] = useState<string | null>(null);
+	const pendingForcedToolRef = useRef<"web_search" | "generate_image" | undefined>(undefined);
+	const abortRef = useRef<AbortController | null>(null);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	const chat = getChat(chatId);
 	const messages = chat?.messages || [];
+
+	const useConnected = isAuthenticated && !!chatApiKey;
+	const modelSupportsTools = useMemo(
+		() => supportsTools(getAssistantOrDefault(chat?.assistantId).model, models ?? []),
+		[chat?.assistantId, models], // eslint-disable-line react-hooks/exhaustive-deps
+	);
 
 	// Authenticated users always use the connected endpoint with their chat API key (chat keys are
 	// free at the gateway — never credit-gated). Logged-out users (or while the key is still being
@@ -72,114 +90,156 @@ function Chat() {
 			const lastMessage = messages[messages.length - 1];
 			// Only generate response if last message is from user and there's no pending assistant message
 			if (lastMessage.role === "user") {
-				generateAIResponse().then();
+				const forced = pendingForcedToolRef.current;
+				pendingForcedToolRef.current = undefined;
+				generateAIResponse(forced).then();
 			}
 		}
 	}, [messages.length, isLoading, isStreaming, isInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	const generateAIResponse = async () => {
-		if (isLoading || isStreaming) return;
+	const TOOL_LABELS: Record<string, string> = {
+		web_search: "Searching the web…",
+		generate_image: "Generating image…",
+	};
 
-		// Double-check that the last message is from user (prevents duplicate calls)
+	const generateAIResponse = async (forcedTool?: "web_search" | "generate_image") => {
+		if (isLoading || isStreaming) return;
 		if (messages.length === 0) return;
-		const lastMessage = messages[messages.length - 1];
-		if (lastMessage.role !== "user") return;
+		if (messages[messages.length - 1].role !== "user") return;
 
 		setIsLoading(true);
 		setIsStreaming(false);
+		setToolStatus(null);
 
-		// Add assistant message placeholder for streaming
+		const controller = new AbortController();
+		abortRef.current = controller;
+
+		const assistant = getAssistantOrDefault(chat?.assistantId);
 		const assistantMessage = addMessage(chatId, "assistant", "");
 
+		const toolsEnabled = useConnected && modelSupportsTools;
+
+		const requestMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+			{ role: "system", content: assistant.systemPrompt },
+			...buildRequestMessages(messages, assistant.model, models ?? []),
+		];
+
+		const accumulated: ParsedMessage = { thinking: "", content: "" };
+		const collectedSources: { title: string; url: string; snippet: string }[] = [];
+		const collectedImages: ImageData[] = [];
+
 		try {
-			const assistant = getAssistantOrDefault(chat?.assistantId);
+			for (let iteration = 0; iteration < 5; iteration++) {
+				const toolAcc = new ToolCallAccumulator();
+				accumulated.content = "";
+				accumulated.thinking = "";
 
-			const stream = await openai.chat.completions.create({
-				model: assistant.model,
-				messages: [
+				const stream = await openai.chat.completions.create(
 					{
-						role: "system",
-						content: assistant.systemPrompt,
+						model: assistant.model,
+						messages: requestMessages,
+						stream: true,
+						...(toolsEnabled ? { tools: TOOL_DEFINITIONS } : {}),
+						...(toolsEnabled && iteration === 0 && forcedTool
+							? { tool_choice: { type: "function", function: { name: forcedTool } } }
+							: toolsEnabled
+								? { tool_choice: "auto" }
+								: {}),
 					},
-					...messages.map((m) => {
-						/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-						const messageContent: any = { role: m.role };
+					{ signal: controller.signal },
+				);
 
-						// Handle images for user messages
-						if (m.role === "user" && m.images && m.images.length > 0) {
-							messageContent.content = [
-								{
-									type: "text",
-									text: m.content,
-								},
-								...m.images.map((img) => ({
-									type: "image_url",
-									image_url: {
-										url: img.data,
-									},
-								})),
-							];
-						} else {
-							messageContent.content = m.content;
+				for await (const chunk of stream) {
+					const delta = chunk.choices[0]?.delta;
+					if (!delta) continue;
+
+					const deltaRecord = delta as Record<string, unknown>;
+					const reasoningContent = (deltaRecord.reasoning ?? deltaRecord.reasoning_content) as string | undefined;
+					const content = delta.content;
+
+					if (reasoningContent) accumulated.thinking += reasoningContent;
+					if (content) accumulated.content += content;
+					toolAcc.add(delta.tool_calls as never);
+
+					if (reasoningContent || content) {
+						if (!isStreaming) {
+							setIsStreaming(true);
+							setIsLoading(false);
 						}
-
-						return messageContent;
-					}),
-				],
-				stream: true,
-			});
-
-			const accumulated: ParsedMessage = { thinking: "", content: "" };
-
-			for await (const chunk of stream) {
-				const delta = chunk.choices[0]?.delta;
-				if (!delta) continue;
-
-				// Capture reasoning from the delta (sent as a separate field by thinking models;
-				// some backends use `reasoning`, others `reasoning_content`)
-				const deltaRecord = delta as Record<string, unknown>;
-				const reasoningContent = (deltaRecord.reasoning ?? deltaRecord.reasoning_content) as string | undefined;
-				const content = delta.content;
-
-				if (reasoningContent) {
-					accumulated.thinking += reasoningContent;
-				}
-				if (content) {
-					accumulated.content += content;
-				}
-
-				if (reasoningContent || content) {
-					if (!isStreaming) {
-						setIsStreaming(true);
-						setIsLoading(false);
+						setToolStatus(null);
+						updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
 					}
-
-					updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
 				}
+
+				if (!toolAcc.hasCalls()) break;
+
+				setIsStreaming(false);
+				setIsLoading(true);
+
+				const calls = toolAcc.finalize();
+				requestMessages.push({
+					role: "assistant",
+					content: accumulated.content || null,
+					tool_calls: calls.map((c) => ({
+						id: c.id,
+						type: "function",
+						function: { name: c.name, arguments: JSON.stringify(c.arguments) },
+					})),
+				});
+
+				if (forcedTool && iteration === 0 && !calls.some((c) => c.name === forcedTool)) {
+					toast.warning("The model didn't run the requested tool.");
+				}
+
+				for (const call of calls) {
+					setToolStatus(TOOL_LABELS[call.name] ?? "Working…");
+					const opts = {
+						connectedApiUrl: env.LTAI_CONNECTED_API_URL,
+						chatApiKey: chatApiKey ?? "",
+						signal: controller.signal,
+					};
+
+					if (call.name === "web_search") {
+						const query = String(call.arguments.query ?? "");
+						const { sources, toolText } = await executeWebSearch(query, opts);
+						collectedSources.push(...sources);
+						updateMessageArtifacts(chatId, assistantMessage.id, { sources: collectedSources });
+						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
+					} else if (call.name === "generate_image") {
+						const { image, toolText } = await executeGenerateImage(call.arguments as unknown as GenerateImageArgs, opts);
+						if (image) {
+							collectedImages.push(image);
+							updateMessageArtifacts(chatId, assistantMessage.id, { images: collectedImages });
+						}
+						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
+					} else {
+						requestMessages.push({ role: "tool", tool_call_id: call.id, content: "Unknown tool." });
+					}
+				}
+				setToolStatus(null);
 			}
 
-			// Final check to ensure we have content
-			if (!accumulated.content && !accumulated.thinking) {
+			if (!accumulated.content && !accumulated.thinking && collectedImages.length === 0) {
 				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
 			}
 		} catch (error) {
-			console.error("Error sending message:", error);
-			updateMessage(
-				chatId,
-				assistantMessage.id,
-				"Sorry, there was an error processing your request. Please try again.",
-			);
+			if (controller.signal.aborted) {
+				if (!accumulated.content) updateMessage(chatId, assistantMessage.id, accumulated.content || "_(stopped)_");
+			} else {
+				console.error("Error sending message:", error);
+				updateMessage(chatId, assistantMessage.id, "Sorry, there was an error processing your request. Please try again.");
+			}
 		} finally {
-			// Ensure loading and streaming states are properly set at the end
 			setIsLoading(false);
 			setIsStreaming(false);
+			setToolStatus(null);
+			abortRef.current = null;
 		}
 	};
 
-	const handleSendMessage = async (value: string, images?: ImageData[], _forcedTool?: "web_search" | "generate_image") => {
+	const handleSendMessage = async (value: string, images?: ImageData[], forcedTool?: "web_search" | "generate_image") => {
 		if (!value.trim() || isLoading) return;
-
-		// Add user message to store with images
+		pendingForcedToolRef.current = forcedTool;
 		addMessage(chatId, "user", value.trim(), undefined, images);
 	};
 
@@ -225,6 +285,7 @@ function Chat() {
 							isLastMessage={index === messages.length - 1}
 							isLoading={isLoading}
 							isStreaming={isStreaming}
+							toolStatus={index === messages.length - 1 ? toolStatus : null}
 							onRegenerate={handleRegenerateMessage}
 							onEditMessage={handleEditMessage}
 							onRegenerateFromMessage={handleRegenerateFromMessage}
@@ -265,7 +326,9 @@ function Chat() {
 							disabled={isLoading}
 							assistant={getAssistantOrDefault(chat?.assistantId)}
 							autoFocus
-							isConnected={isAuthenticated && !!chatApiKey}
+							isConnected={useConnected}
+							isGenerating={isLoading || isStreaming}
+							onStop={() => abortRef.current?.abort()}
 						/>
 					</div>
 				</div>
