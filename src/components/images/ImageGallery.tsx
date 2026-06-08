@@ -5,7 +5,7 @@ import { ImageCard } from "./ImageCard";
 import { ImageGenerationForm } from "./ImageGenerationForm";
 import { ImagePreviewDialog } from "./ImagePreviewDialog";
 import { Input } from "@/components/ui/input";
-import { Search, ImageIcon, Wallet } from "lucide-react";
+import { Search, ImageIcon, LogIn } from "lucide-react";
 import { toast } from "sonner";
 
 export interface ImageSettings {
@@ -18,7 +18,9 @@ export interface ImageSettings {
 }
 
 export function ImageGallery() {
-	const account = useAccountStore((state) => state.account);
+	// Image generation uses the (free) chat API key, just like chat — so it works for ANY authenticated
+	// session, including email/OAuth users who have no wallet `account`. Gate on the session, not a wallet.
+	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const images = useImageStore((state) => state.images);
 	const deleteImage = useImageStore((state) => state.deleteImage);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -26,7 +28,7 @@ export function ImageGallery() {
 	const [previewOpen, setPreviewOpen] = useState(false);
 	const [formSettings, setFormSettings] = useState<ImageSettings | null>(null);
 
-	const isConnected = !!account?.address;
+	const isConnected = isAuthenticated;
 
 	const sortedImages = useMemo(() => {
 		const all = Object.values(images).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -70,9 +72,9 @@ export function ImageGallery() {
 					) : (
 						<div className="flex items-center justify-center py-8">
 							<div className="text-center p-6">
-								<Wallet className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-								<p className="font-medium mb-1">Connect your wallet</p>
-								<p className="text-sm text-muted-foreground">to start generating images</p>
+								<LogIn className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+								<p className="font-medium mb-1">Sign in to generate images</p>
+								<p className="text-sm text-muted-foreground">Use your email, a social account, or a wallet</p>
 							</div>
 						</div>
 					)}

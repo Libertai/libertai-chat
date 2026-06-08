@@ -6,20 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { copyAddressToClipboard, formatAddress } from "@/lib/utils";
 
+type Me = { email?: string | null; display_name?: string | null; address?: string | null } | null;
+
 export function Settings() {
+	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const account = useAccountStore((state) => state.account);
+	const me = useAccountStore((state) => state.me) as Me;
 	const { name: ensName, displayName: ensDisplayName, avatar: ensAvatar } = useENS(account?.address);
 
-	if (!account?.address) {
+	if (!isAuthenticated) {
 		return (
 			<div className="flex-1 flex items-center justify-center">
 				<div className="text-center">
-					<h2 className="text-lg font-semibold mb-2">Please connect your wallet</h2>
-					<p className="text-muted-foreground">You need to connect a wallet to access settings</p>
+					<h2 className="text-lg font-semibold mb-2">Please sign in</h2>
+					<p className="text-muted-foreground">You need to sign in to access settings</p>
 				</div>
 			</div>
 		);
 	}
+
+	const isWallet = !!account?.address;
 
 	return (
 		<div className="flex-1 flex items-start justify-center p-6">
@@ -39,29 +45,38 @@ export function Settings() {
 						<div className="space-y-2">
 							<div className="text-sm font-medium">Profile Picture</div>
 							<div className="flex items-center gap-4">
-								<ProfileAvatar src={ensAvatar} address={account.address} size="lg" />
+								<ProfileAvatar src={ensAvatar} address={account?.address} size="lg" />
 								<div className="text-sm text-muted-foreground">
-									{ensAvatar ? "ENS Avatar" : "Generated from address"}
+									{ensAvatar ? "ENS Avatar" : isWallet ? "Generated from address" : "Generated"}
 								</div>
 							</div>
 						</div>
 
-						<div className="space-y-2">
-							<div className="text-sm font-medium">Address</div>
-							<div className="flex items-center gap-2 p-3 bg-muted rounded-md">
-								<code className="flex-1 text-sm font-mono">
-									{ensDisplayName ?? ensName ?? formatAddress(account.address)}
-								</code>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => copyAddressToClipboard(account.address)}
-									className="h-8 w-8 p-0 hover:bg-background"
-								>
-									<Copy className="h-4 w-4" />
-								</Button>
+						{isWallet ? (
+							<div className="space-y-2">
+								<div className="text-sm font-medium">Address</div>
+								<div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+									<code className="flex-1 text-sm font-mono">
+										{ensDisplayName ?? ensName ?? formatAddress(account!.address)}
+									</code>
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => copyAddressToClipboard(account!.address)}
+										className="h-8 w-8 p-0 hover:bg-background"
+									>
+										<Copy className="h-4 w-4" />
+									</Button>
+								</div>
 							</div>
-						</div>
+						) : (
+							<div className="space-y-2">
+								<div className="text-sm font-medium">{me?.email ? "Email" : "Account"}</div>
+								<div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+									<code className="flex-1 text-sm font-mono">{me?.email ?? me?.display_name ?? "Signed in"}</code>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 

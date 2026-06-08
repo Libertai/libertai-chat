@@ -19,6 +19,19 @@ function Rewards() {
 		window.open("https://libertai.io/tokenomics", "_blank");
 	};
 
+	// LTAI rewards are on-chain and keyed by wallet address — they only exist for a connected wallet.
+	// Email/OAuth sessions have no wallet, so prompt to connect one instead of rendering empty stats.
+	if (!account?.address) {
+		return (
+			<div className="container mx-auto px-4 py-8 max-w-4xl">
+				<div className="text-center py-16">
+					<h1 className="text-3xl font-bold mb-2">Earn LTAI Tokens</h1>
+					<p className="text-muted-foreground">Connect a wallet to view and earn your LTAI rewards.</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="container mx-auto px-4 py-8 max-w-4xl">
 			<div className="flex flex-col space-y-8">

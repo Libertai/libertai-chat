@@ -3,13 +3,15 @@ import { getTransactionHistoryCreditsTransactionsGet } from "@libertai/inference
 import { useAccountStore } from "@libertai/auth";
 
 export function useTransactions() {
-	const account = useAccountStore((state) => state.account);
+	// Gate on the cookie session, not the wallet `account`: /credits/transactions is session-based
+	// (get_current_user), so email/OAuth users (who have no wallet account) must still see their history.
+	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 
 	// Query for transaction history
 	const transactionsQuery = useQuery({
-		queryKey: ["transactions", account?.address],
+		queryKey: ["transactions"],
 		queryFn: async () => {
-			if (!account) {
+			if (!isAuthenticated) {
 				return { address: "", transactions: [] };
 			}
 
@@ -23,7 +25,7 @@ export function useTransactions() {
 
 			return response.data;
 		},
-		enabled: !!account, // Only run the query when account exists
+		enabled: isAuthenticated, // Only run the query when a session exists
 		staleTime: 5 * 60 * 1000, // 5 minutes
 		refetchOnWindowFocus: false,
 	});

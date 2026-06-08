@@ -5,7 +5,6 @@ import { useAccountStore } from "@libertai/auth";
 
 export function useRequireAuth() {
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
-	const account = useAccountStore((state) => state.account);
 	const isInitialLoad = useAccountStore((state) => state.isInitialLoad);
 	const navigate = useNavigate();
 	const [hasWaited, setHasWaited] = useState(false);
@@ -22,17 +21,19 @@ export function useRequireAuth() {
 	}, [isInitialLoad, hasWaited]);
 
 	useEffect(() => {
-		// Only redirect if not on initial load OR we've waited for auth to complete
-		if ((hasWaited || !isInitialLoad) && (!isAuthenticated || !account?.address)) {
+		// Gate on the cookie session only — NOT on a connected wallet. Email/OAuth users are
+		// authenticated without ever connecting a wallet, so requiring `account?.address` here
+		// wrongly bounced them from every protected page (transactions, top-up, settings, rewards).
+		if ((hasWaited || !isInitialLoad) && !isAuthenticated) {
 			if (!isInitialLoad) {
 				toast.error("Authentication Required", {
-					description: "Please connect your wallet & sign the message to access this page",
+					description: "Please sign in to access this page",
 					duration: 5000,
 				});
 			}
-			navigate({ to: "/" });
+			navigate({ to: "/login" });
 		}
-	}, [isAuthenticated, account?.address, navigate, isInitialLoad, hasWaited]);
+	}, [isAuthenticated, navigate, isInitialLoad, hasWaited]);
 
 	return { isAuthenticated };
 }
