@@ -223,6 +223,13 @@ function Chat() {
 					}
 				}
 				setToolStatus(null);
+
+				// An explicit "Create image" request is satisfied by the image alone — don't loop back for
+				// a trailing text answer the user didn't ask for. (Only when it actually produced an image;
+				// on failure we keep looping so the model can explain what went wrong.)
+				if (forcedTool === "generate_image" && iteration === 0 && collectedImages.length > 0) {
+					break;
+				}
 			}
 
 			if (!accumulated.content && !accumulated.thinking && collectedImages.length === 0) {
