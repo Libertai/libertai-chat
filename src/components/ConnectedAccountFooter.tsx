@@ -6,7 +6,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CircleUser, Coins, Copy, Loader2, LogOut, Settings, Trophy } from "lucide-react";
+import { Coins, Copy, Loader2, LogOut, Settings, Trophy } from "lucide-react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import { useAccountStore } from "@libertai/auth";
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
@@ -16,7 +16,12 @@ import { formatAddress, copyAddressToClipboard } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { useSidebar } from "@/components/ui/sidebar";
 
-type Me = { email?: string | null; display_name?: string | null; address?: string | null } | null;
+type Me = {
+	email?: string | null;
+	display_name?: string | null;
+	avatar_url?: string | null;
+	address?: string | null;
+} | null;
 
 export function ConnectedAccountFooter() {
 	const thirdwebAccount = useActiveAccount();
@@ -44,9 +49,10 @@ export function ConnectedAccountFooter() {
 	}
 
 	const isWallet = !!account?.address;
+	// Prefer the user's chosen display name everywhere; fall back to ENS/address (wallet) or email.
 	const label = isWallet
-		? (ensDisplayName ?? ensName ?? formatAddress(account.address))
-		: (me?.email ?? me?.display_name ?? "Account");
+		? (me?.display_name ?? ensDisplayName ?? ensName ?? formatAddress(account.address))
+		: (me?.display_name ?? me?.email ?? "Account");
 
 	const handleSignOut = async () => {
 		if (isMobile) setOpenMobile(false);
@@ -69,7 +75,7 @@ export function ConnectedAccountFooter() {
 					{isWallet ? (
 						<ProfileAvatar src={ensAvatar} address={account.address} size="md" />
 					) : (
-						<CircleUser className="h-8 w-8 text-muted-foreground" />
+						<ProfileAvatar src={me?.avatar_url} size="md" />
 					)}
 					<div className="flex flex-col items-start flex-1 min-w-0">
 						<div className="text-md font-medium truncate w-full text-left">{label}</div>
@@ -83,7 +89,7 @@ export function ConnectedAccountFooter() {
 						{isWallet ? (
 							<ProfileAvatar src={ensAvatar} address={account.address} size="sm" />
 						) : (
-							<CircleUser className="h-6 w-6 text-muted-foreground" />
+							<ProfileAvatar src={me?.avatar_url} size="sm" />
 						)}
 						<div className="flex-1 min-w-0">
 							<p className="font-medium truncate text-sm">{label}</p>

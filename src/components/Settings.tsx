@@ -1,18 +1,25 @@
+import { useState } from "react";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAccountStore } from "@libertai/auth";
 import { useENS } from "@/hooks/useENS";
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Copy, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { copyAddressToClipboard, formatAddress } from "@/lib/utils";
 
-type Me = { email?: string | null; display_name?: string | null; address?: string | null } | null;
+type Me = { email?: string | null; display_name?: string | null; avatar_url?: string | null } | null;
 
 export function Settings() {
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const account = useAccountStore((state) => state.account);
 	const me = useAccountStore((state) => state.me) as Me;
+	const updateProfile = useAccountStore((state) => state.updateProfile);
 	const { name: ensName, displayName: ensDisplayName, avatar: ensAvatar } = useENS(account?.address);
+
+	const [name, setName] = useState(me?.display_name ?? "");
+	const [saving, setSaving] = useState(false);
 
 	if (!isAuthenticated) {
 		return (
@@ -26,6 +33,15 @@ export function Settings() {
 	}
 
 	const isWallet = !!account?.address;
+	const avatarSrc = me?.avatar_url ?? ensAvatar;
+	const dirty = name.trim() !== (me?.display_name ?? "");
+
+	const handleSave = async () => {
+		setSaving(true);
+		const ok = await updateProfile(name.trim() || null);
+		setSaving(false);
+		if (ok) toast.success("Profile updated");
+	};
 
 	return (
 		<div className="flex-1 flex items-start justify-center p-6">
@@ -45,11 +61,30 @@ export function Settings() {
 						<div className="space-y-2">
 							<div className="text-sm font-medium">Profile Picture</div>
 							<div className="flex items-center gap-4">
-								<ProfileAvatar src={ensAvatar} address={account?.address} size="lg" />
+								<ProfileAvatar src={avatarSrc} address={account?.address} size="lg" />
 								<div className="text-sm text-muted-foreground">
-									{ensAvatar ? "ENS Avatar" : isWallet ? "Generated from address" : "Generated"}
+									{ensAvatar ? "ENS Avatar" : avatarSrc ? "From your account" : isWallet ? "Generated from address" : "Generated"}
 								</div>
 							</div>
+						</div>
+
+						{/* Editable display name (all sessions) */}
+						<div className="space-y-2">
+							<div className="text-sm font-medium">Display name</div>
+							<div className="flex items-center gap-2">
+								<Input
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+									placeholder="Your name"
+									maxLength={50}
+									className="flex-1"
+								/>
+								<Button onClick={handleSave} disabled={!dirty || saving}>
+									{saving && <Loader2 className="h-4 w-4 animate-spin" />}
+									Save
+								</Button>
+							</div>
+							<p className="text-xs text-muted-foreground">Shown across the app instead of your email or address.</p>
 						</div>
 
 						{isWallet ? (
@@ -70,12 +105,14 @@ export function Settings() {
 								</div>
 							</div>
 						) : (
-							<div className="space-y-2">
-								<div className="text-sm font-medium">{me?.email ? "Email" : "Account"}</div>
-								<div className="flex items-center gap-2 p-3 bg-muted rounded-md">
-									<code className="flex-1 text-sm font-mono">{me?.email ?? me?.display_name ?? "Signed in"}</code>
+							me?.email && (
+								<div className="space-y-2">
+									<div className="text-sm font-medium">Email</div>
+									<div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+										<code className="flex-1 text-sm font-mono">{me.email}</code>
+									</div>
 								</div>
-							</div>
+							)
 						)}
 					</div>
 				</div>
