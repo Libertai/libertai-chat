@@ -129,8 +129,8 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.2.1)
       thirdweb:
-        specifier: 5.119.1
-        version: 5.119.1(@hey-api/openapi-ts@0.98.2(typescript@5.9.3))(@react-native-async-storage/async-storage@1.24.0(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.90.20)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(bufferutil@4.0.9)(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react-dom@19.2.4(react@19.2.4))(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        specifier: 5.120.0
+        version: 5.120.0(@hey-api/openapi-ts@0.98.2(typescript@5.9.3))(@react-native-async-storage/async-storage@1.24.0(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.90.20)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(bufferutil@4.0.9)(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react-dom@19.2.4(react@19.2.4))(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       viem:
         specifier: ^2.45.0
         version: 2.47.0(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.3.6)
@@ -4501,10 +4501,6 @@ packages:
     resolution: {integrity: sha512-A6p/pu/6fyBcA1TRz/GqWYPViplrftcW2gZC9q79ngNCKAeR/X3gcEdXQHl4KNXV+3wgIJ1CPkJQ3IHM6lcsyA==}
     engines: {node: '>=18'}
 
-  default-browser@5.2.1:
-    resolution: {integrity: sha512-WY/3TUME0x3KPYdRRxEJJvXRHV4PyPoUsxtZa78lwItwRQRHhd2U9xOscaT/YTf8uCXIAjeJOFBVEh/7FtD8Xg==}
-    engines: {node: '>=18'}
-
   default-browser@5.5.0:
     resolution: {integrity: sha512-H9LMLr5zwIbSxrmvikGuI/5KGhZ8E2zH3stkMgM5LpOWDutGM2JZaj460Udnf1a+946zc7YBgrqEWwbk7zHvGw==}
     engines: {node: '>=18'}
@@ -7684,6 +7680,61 @@ packages:
       typescript:
         optional: true
 
+  thirdweb@5.120.0:
+    resolution: {integrity: sha512-hzTtfCC87E2rpZAtinW4/3T7JqK5FIs0kzm3kdWp7VKZl2ON0bV+SdlTdf4J30vaNVjSfxSsEcVF2Ak3xrCwbQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      '@aws-sdk/client-kms': '*'
+      '@aws-sdk/client-lambda': ^3
+      '@aws-sdk/credential-providers': ^3
+      '@coinbase/wallet-mobile-sdk': ^1
+      '@mobile-wallet-protocol/client': ^1
+      '@react-native-async-storage/async-storage': '*'
+      ethers: ^5 || ^6
+      expo-linking: '*'
+      expo-web-browser: '*'
+      react: ^18 || ^19
+      react-native: '*'
+      react-native-aes-gcm-crypto: ^0.2
+      react-native-passkey: ^3
+      react-native-quick-crypto: '>=0.7.0-rc.6 || >=0.7'
+      react-native-svg: ^15
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      '@aws-sdk/client-kms':
+        optional: true
+      '@aws-sdk/client-lambda':
+        optional: true
+      '@aws-sdk/credential-providers':
+        optional: true
+      '@coinbase/wallet-mobile-sdk':
+        optional: true
+      '@mobile-wallet-protocol/client':
+        optional: true
+      '@react-native-async-storage/async-storage':
+        optional: true
+      ethers:
+        optional: true
+      expo-linking:
+        optional: true
+      expo-web-browser:
+        optional: true
+      react:
+        optional: true
+      react-native:
+        optional: true
+      react-native-aes-gcm-crypto:
+        optional: true
+      react-native-passkey:
+        optional: true
+      react-native-quick-crypto:
+        optional: true
+      react-native-svg:
+        optional: true
+      typescript:
+        optional: true
+
   thread-stream@0.15.2:
     resolution: {integrity: sha512-UkEhKIg2pD+fjkHQKyJO3yoIvAP3N6RlNFt2dUhcS1FGvCD1cQa1M/PGknCLFIyZdtJOWQjejp7bdNqmN7zwdA==}
 
@@ -9868,7 +9919,7 @@ snapshots:
       debug: 4.4.3
       lodash: 4.18.1
       pony-cause: 2.1.11
-      semver: 7.8.1
+      semver: 7.8.2
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
@@ -9892,7 +9943,7 @@ snapshots:
       '@types/debug': 4.1.13
       debug: 4.4.3
       pony-cause: 2.1.11
-      semver: 7.8.1
+      semver: 7.8.2
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
@@ -9906,7 +9957,7 @@ snapshots:
       '@types/debug': 4.1.13
       debug: 4.4.3
       pony-cause: 2.1.11
-      semver: 7.8.1
+      semver: 7.8.2
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
@@ -14522,11 +14573,6 @@ snapshots:
 
   default-browser-id@5.0.0: {}
 
-  default-browser@5.2.1:
-    dependencies:
-      bundle-name: 4.1.0
-      default-browser-id: 5.0.0
-
   default-browser@5.5.0:
     dependencies:
       bundle-name: 4.1.0
@@ -16925,7 +16971,7 @@ snapshots:
 
   open@10.1.1:
     dependencies:
-      default-browser: 5.2.1
+      default-browser: 5.5.0
       define-lazy-prop: 3.0.0
       is-inside-container: 1.0.0
       is-wsl: 3.1.0
@@ -18407,9 +18453,9 @@ snapshots:
 
   text-extensions@1.9.0: {}
 
-  thirdweb@5.119.1(@hey-api/openapi-ts@0.98.2(typescript@5.9.3))(@react-native-async-storage/async-storage@1.24.0(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.90.20)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(bufferutil@4.0.9)(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react-dom@19.2.4(react@19.2.4))(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
+  thirdweb@5.119.1(@hey-api/openapi-ts@0.98.2(typescript@5.9.3))(@react-native-async-storage/async-storage@1.24.0(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.90.20)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(bufferutil@4.0.9)(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react-dom@19.2.4(react@19.2.4))(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
-      '@base-org/account': 2.5.0(@types/react@19.2.14)(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@3.25.75)
+      '@base-org/account': 2.5.0(@types/react@19.2.14)(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@3.25.75)
       '@coinbase/wallet-sdk': 4.3.0
       '@emotion/react': 11.14.0(@types/react@19.2.14)(react@19.2.4)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.4))(@types/react@19.2.14)(react@19.2.4)
@@ -18481,9 +18527,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  thirdweb@5.119.1(@hey-api/openapi-ts@0.98.2(typescript@5.9.3))(@react-native-async-storage/async-storage@1.24.0(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.90.20)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(bufferutil@4.0.9)(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react-dom@19.2.4(react@19.2.4))(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
+  thirdweb@5.120.0(@hey-api/openapi-ts@0.98.2(typescript@5.9.3))(@react-native-async-storage/async-storage@1.24.0(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.90.20)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(bufferutil@4.0.9)(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react-dom@19.2.4(react@19.2.4))(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
-      '@base-org/account': 2.5.0(@types/react@19.2.14)(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@3.25.75)
+      '@base-org/account': 2.5.0(@types/react@19.2.14)(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(immer@10.1.3)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(utf-8-validate@5.0.10)(zod@3.25.75)
       '@coinbase/wallet-sdk': 4.3.0
       '@emotion/react': 11.14.0(@types/react@19.2.14)(react@19.2.4)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.14)(react@19.2.4))(@types/react@19.2.14)(react@19.2.4)
