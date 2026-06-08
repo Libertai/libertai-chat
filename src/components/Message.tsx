@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ChevronDown, ChevronRight, Copy, Globe, Lightbulb, RotateCcw, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Globe, Lightbulb, Loader2, RotateCcw, Pencil, Square, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MessageEditInput } from "@/components/MessageEditInput";
+import { useReadAloud } from "@/hooks/use-read-aloud";
 import type { Message as MessageType } from "@/types/chats";
 
 function faviconDomain(url: string): string {
@@ -39,6 +40,7 @@ export function Message({
 	const [isSourcesExpanded, setIsSourcesExpanded] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedContent, setEditedContent] = useState(message.content);
+	const { isPlaying, isPreparing, toggle: toggleReadAloud } = useReadAloud();
 
 	useEffect(() => {
 		const hasOnlyThinking = message.role === "assistant" && message.thinking && !message.content;
@@ -254,6 +256,23 @@ export function Message({
 							className="h-8 px-2 text-muted-foreground hover:text-foreground hover:bg-white hover:dark:bg-card"
 						>
 							<Copy className="w-4 h-4" />
+						</Button>
+
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => toggleReadAloud(message.content)}
+							aria-label={isPlaying || isPreparing ? "Stop reading" : "Read aloud"}
+							title={isPlaying || isPreparing ? "Stop reading" : "Read aloud"}
+							className="h-8 px-2 text-muted-foreground hover:text-foreground hover:bg-white hover:dark:bg-card"
+						>
+							{isPreparing ? (
+								<Loader2 className="w-4 h-4 animate-spin" />
+							) : isPlaying ? (
+								<Square className="w-4 h-4" />
+							) : (
+								<Volume2 className="w-4 h-4" />
+							)}
 						</Button>
 
 						{isLastMessage && !isLoading && !isStreaming && (
