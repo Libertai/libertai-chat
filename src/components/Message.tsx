@@ -1,16 +1,25 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { ChevronDown, ChevronRight, Copy, Lightbulb, RotateCcw, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Globe, Lightbulb, RotateCcw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MessageEditInput } from "@/components/MessageEditInput";
 import type { Message as MessageType } from "@/types/chats";
+
+function faviconDomain(url: string): string {
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return "";
+	}
+}
 
 interface MessageProps {
 	message: MessageType;
 	isLastMessage: boolean;
 	isLoading: boolean;
 	isStreaming: boolean;
+	toolStatus?: string | null;
 	onRegenerate: () => void;
 	onEditMessage?: (id: string, content: string) => void;
 	onRegenerateFromMessage?: (id: string) => void;
@@ -21,11 +30,13 @@ export function Message({
 	isLastMessage,
 	isLoading,
 	isStreaming,
+	toolStatus,
 	onRegenerate,
 	onEditMessage,
 	onRegenerateFromMessage,
 }: MessageProps) {
 	const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
+	const [isSourcesExpanded, setIsSourcesExpanded] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedContent, setEditedContent] = useState(message.content);
 
@@ -94,6 +105,13 @@ export function Message({
 					</div>
 				)}
 
+				{message.role === "assistant" && isLastMessage && toolStatus && (
+					<div className="mb-3 flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
+						<span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" />
+						{toolStatus}
+					</div>
+				)}
+
 				{/* Main message content */}
 				<div
 					className={`px-4 py-2 text-foreground ${
@@ -123,6 +141,20 @@ export function Message({
 							<p className="message-content whitespace-pre-wrap">{message.content}</p>
 						))}
 
+					{/* Images for assistant messages */}
+					{message.role === "assistant" && message.images && message.images.length > 0 && (
+						<div className="mb-3 flex flex-wrap gap-2">
+							{message.images.map((image, index) => (
+								<img
+									key={index}
+									src={image.data}
+									alt={image.filename}
+									className="max-w-sm w-full rounded-lg border border-card dark:border-hover"
+								/>
+							))}
+						</div>
+					)}
+
 					{/* Text for assistant messages */}
 					{message.role === "assistant" && (
 						<div className="markdown-content message-content">
@@ -150,6 +182,48 @@ export function Message({
 							>
 								{message.content}
 							</ReactMarkdown>
+						</div>
+					)}
+
+					{message.role === "assistant" && message.sources && message.sources.length > 0 && (
+						<div className="mt-3">
+							<button
+								onClick={() => setIsSourcesExpanded(!isSourcesExpanded)}
+								className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-muted/20 rounded-lg transition-colors"
+							>
+								<Globe className="w-4 h-4 text-primary" />
+								<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+									{message.sources.length} source{message.sources.length > 1 ? "s" : ""}
+								</span>
+								{isSourcesExpanded ? (
+										<ChevronDown className="w-4 h-4 text-muted-foreground" />
+									) : (
+										<ChevronRight className="w-4 h-4 text-muted-foreground" />
+									)}
+							</button>
+							{isSourcesExpanded && (
+								<div className="mt-2 space-y-2">
+									{message.sources.map((s) => (
+										<a
+											key={s.url}
+											href={s.url}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="flex items-start gap-2 px-3 py-2 rounded-lg hover:bg-muted/20 transition-colors"
+										>
+											<img
+												src={`https://www.google.com/s2/favicons?domain=${faviconDomain(s.url)}&sz=32`}
+												alt=""
+												className="w-4 h-4 mt-0.5 rounded"
+											/>
+											<span className="min-w-0">
+												<span className="block text-sm font-medium truncate">{s.title}</span>
+												<span className="block text-xs text-muted-foreground truncate">{s.snippet}</span>
+											</span>
+										</a>
+									))}
+								</div>
+							)}
 						</div>
 					)}
 				</div>
