@@ -29,14 +29,23 @@ describe("resolveChatEndpoint", () => {
 		expect(result.apiKey).toBe("");
 	});
 
-	// Regression guard for Bug #2: chat is FREE and must never be gated on credits. The signature
-	// has no credits input by design — an authenticated, keyed user always reaches the connected
-	// endpoint regardless of balance (this is what broke email/OAuth users, whose credits read 0).
-	it("does not depend on a credit balance", () => {
-		const zeroCredits = resolveChatEndpoint({ ...base, isAuthenticated: true, chatApiKey: "sk-chat-123" });
-		// Same inputs, no credits knob to flip — result is purely auth + key driven.
-		expect(zeroCredits.useConnected).toBe(true);
-		// The public type must not carry a credits field.
-		expect("credits" in base).toBe(false);
+	// Regression guard for Bug #2: chat is FREE and must never be gated on credits. The result is
+	// purely auth + key driven — an authenticated, keyed user always reaches the connected endpoint
+	// regardless of balance (this is what broke email/OAuth users, whose credits read 0). The
+	// `credits`-independence is also enforced at compile time: ChatEndpointInput has no credits field,
+	// so any attempt to re-introduce credit-gating would not type-check.
+	it("reaches the connected endpoint for an authenticated keyed user (no credit gate)", () => {
+		const result = resolveChatEndpoint({ ...base, isAuthenticated: true, chatApiKey: "sk-chat-123" });
+
+		expect(result.useConnected).toBe(true);
+		expect(result.baseURL).toBe(`${CONNECTED}/v1`);
+	});
+
+	// Guards the auth gating: even if a stale key lingers in cache after logout (isAuthenticated has
+	// flipped false before the query cache is cleared), we must never send it to the paid endpoint.
+	it("stays on the free endpoint when logged out even with a stale key present", () => {
+		const result = resolveChatEndpoint({ ...base, isAuthenticated: false, chatApiKey: "sk-stale-key" });
+
+		expect(result).toEqual({ baseURL: FREE, apiKey: "", useConnected: false });
 	});
 });
