@@ -20,6 +20,11 @@ interface ChatStore {
 		images?: ImageData[],
 	) => Message;
 	updateMessage: (chatId: string, messageId: string, content: string, thinking?: string) => void;
+	updateMessageArtifacts: (
+		chatId: string,
+		messageId: string,
+		artifacts: { sources?: Message["sources"]; images?: ImageData[] },
+	) => void;
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
 	renameChat: (chatId: string, title: string) => void;
@@ -130,6 +135,26 @@ export const useChatStore = create<ChatStore>()(
 							[chatId]: {
 								...chat,
 								messages: chat.messages.map((msg) => (msg.id === messageId ? { ...msg, content, thinking } : msg)),
+								updatedAt: new Date().toISOString(),
+							},
+						},
+					};
+				});
+			},
+
+			updateMessageArtifacts: (chatId, messageId, artifacts) => {
+				set((state) => {
+					const chat = state.chats[chatId];
+					if (!chat) return state;
+
+					return {
+						chats: {
+							...state.chats,
+							[chatId]: {
+								...chat,
+								messages: chat.messages.map((msg) =>
+									msg.id === messageId ? { ...msg, ...artifacts } : msg,
+								),
 								updatedAt: new Date().toISOString(),
 							},
 						},
