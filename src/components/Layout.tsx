@@ -1,8 +1,7 @@
-import { ReactNode, useEffect, useState } from "react";
-import { Link, useRouter } from "@tanstack/react-router";
+import { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
-import { Button } from "@/components/ui/button";
-import { Edit, ImageIcon } from "lucide-react";
+import { ImageIcon, Plus } from "lucide-react";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
 import { ChatSearch } from "@/components/ChatSearch";
@@ -46,6 +45,26 @@ function SidebarLogoLink() {
 	);
 }
 
+// New conversation link in sidebar
+function SidebarNewConversationLink() {
+	const { isMobile, setOpenMobile } = useSidebar();
+
+	return (
+		<div className="px-2 py-1">
+			<Link
+				to="/"
+				onClick={() => {
+					if (isMobile) setOpenMobile(false);
+				}}
+				className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-primary hover:bg-muted transition-colors"
+			>
+				<Plus className="h-4 w-4" />
+				New conversation
+			</Link>
+		</div>
+	);
+}
+
 // Images link in sidebar
 function SidebarImagesLink() {
 	const { isMobile, setOpenMobile } = useSidebar();
@@ -67,7 +86,7 @@ function SidebarImagesLink() {
 }
 
 // Desktop header that adapts its width when the sidebar is open
-function DesktopHeader({ isOnChatPage }: { isOnChatPage: boolean }) {
+function DesktopHeader() {
 	const { open } = useSidebar();
 	const sidebarWidth = "16rem";
 
@@ -83,13 +102,6 @@ function DesktopHeader({ isOnChatPage }: { isOnChatPage: boolean }) {
 		>
 			<SidebarTrigger />
 			<div className="flex items-center gap-4">
-				{isOnChatPage && (
-					<Link to="/">
-						<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-							<Edit className="h-4 w-4" />
-						</Button>
-					</Link>
-				)}
 				<ConnectButton />
 			</div>
 		</header>
@@ -97,29 +109,7 @@ function DesktopHeader({ isOnChatPage }: { isOnChatPage: boolean }) {
 }
 
 export function Layout({ children }: Readonly<{ children: ReactNode }>) {
-	const router = useRouter();
-	const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
-
 	const defaultOpen = getSidebarStateFromCookie();
-
-	// Check if we're on a chat page
-	const isOnChatPage = currentPath.startsWith("/chat/");
-
-	// Update the current path whenever the route changes
-	useEffect(() => {
-		// Initial state
-		setCurrentPath(router.state.location.pathname);
-
-		// Subscribe to route changes
-		const unsubscribe = router.subscribe("onResolved", () => {
-			setCurrentPath(router.state.location.pathname);
-		});
-
-		// Cleanup subscription on unmount
-		return () => {
-			unsubscribe();
-		};
-	}, [router]);
 
 	return (
 		<SidebarProvider defaultOpen={defaultOpen}>
@@ -134,13 +124,6 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 						<LibertaiLogo className="h-4 w-auto text-foreground" />
 					</Link>
 					<div className="flex items-center gap-2">
-						{isOnChatPage && (
-							<Link to="/">
-								<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-									<Edit className="h-4 w-4" />
-								</Button>
-							</Link>
-						)}
 						<ConnectButton />
 					</div>
 				</header>
@@ -152,6 +135,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 					</SidebarHeader>
 
 					<SidebarContent>
+						<SidebarNewConversationLink />
 						<ChatSearch />
 						<SidebarImagesLink />
 						<ChatList />
@@ -164,7 +148,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 				<SidebarInset className="w-full">
 					{/* Desktop Header */}
-					<DesktopHeader isOnChatPage={isOnChatPage} />
+					<DesktopHeader />
 
 					{/* Main content */}
 					<main
