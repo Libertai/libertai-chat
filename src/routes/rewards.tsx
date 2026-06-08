@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useRewards } from "@/hooks/data/use-rewards";
 import { useAccountStore } from "@libertai/auth";
 import { formatAddress } from "@/lib/utils";
@@ -14,22 +15,23 @@ function Rewards() {
 	const account = useAccountStore((state) => state.account);
 	const ltaiBalance = useAccountStore((state) => state.ltaiBalance);
 	const { pendingTokens, estimated3YrTokens, isLoading } = useRewards();
+	const navigate = useNavigate();
 
 	const handlePurchaseTokens = () => {
 		window.open("https://libertai.io/tokenomics", "_blank");
 	};
 
-	// LTAI rewards are on-chain and keyed by wallet address — they only exist for a connected wallet.
-	// Email/OAuth sessions have no wallet, so prompt to connect one instead of rendering empty stats.
+	// LTAI rewards are on-chain and keyed by wallet address — they don't exist without a connected
+	// wallet. Non-wallet (email/OAuth) sessions can't use this page, and the menu entry is hidden for
+	// them, so a direct visit just bounces home.
+	useEffect(() => {
+		if (!account?.address) {
+			navigate({ to: "/" });
+		}
+	}, [account?.address, navigate]);
+
 	if (!account?.address) {
-		return (
-			<div className="container mx-auto px-4 py-8 max-w-4xl">
-				<div className="text-center py-16">
-					<h1 className="text-3xl font-bold mb-2">Earn LTAI Tokens</h1>
-					<p className="text-muted-foreground">Connect a wallet to view and earn your LTAI rewards.</p>
-				</div>
-			</div>
-		);
+		return null;
 	}
 
 	return (

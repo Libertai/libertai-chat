@@ -131,17 +131,19 @@ export function ConnectedAccountFooter() {
 						Settings
 					</Link>
 				</DropdownMenuItem>
-				<DropdownMenuItem asChild className="cursor-pointer gap-2">
-					<Link
-						to="/rewards"
-						onClick={() => {
-							if (isMobile) setOpenMobile(false);
-						}}
-					>
-						<Trophy className="h-4 w-4" />
-						Rewards
-					</Link>
-				</DropdownMenuItem>
+				{isWallet && (
+					<DropdownMenuItem asChild className="cursor-pointer gap-2">
+						<Link
+							to="/rewards"
+							onClick={() => {
+								if (isMobile) setOpenMobile(false);
+							}}
+						>
+							<Trophy className="h-4 w-4" />
+							Rewards
+						</Link>
+					</DropdownMenuItem>
+				)}
 				<DropdownMenuItem onClick={handleSignOut} className="cursor-pointer gap-2 text-destructive">
 					<LogOut className="h-4 w-4" />
 					Sign out
