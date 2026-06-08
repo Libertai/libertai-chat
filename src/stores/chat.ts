@@ -27,7 +27,7 @@ interface ChatStore {
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
-const CHAT_VERSION = 3;
+const CHAT_VERSION = 4;
 
 export const useChatStore = create<ChatStore>()(
 	persist(
