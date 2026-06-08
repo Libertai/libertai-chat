@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
-import { ImageIcon, Plus } from "lucide-react";
+import { ImageIcon, Plus, SquareTerminal } from "lucide-react";
+import { ClawIcon } from "@/components/ClawIcon";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
 import { ChatSearch } from "@/components/ChatSearch";
@@ -65,22 +66,43 @@ function SidebarNewConversationLink() {
 	);
 }
 
-// Images link in sidebar
-function SidebarImagesLink() {
+// Products section in the sidebar
+function SidebarProducts() {
 	const { isMobile, setOpenMobile } = useSidebar();
+	const closeOnMobile = () => {
+		if (isMobile) setOpenMobile(false);
+	};
+	const itemClass = "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors";
 
 	return (
-		<div className="px-2 py-1">
-			<Link
-				to="/images"
-				onClick={() => {
-					if (isMobile) setOpenMobile(false);
-				}}
-				className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
-			>
-				<ImageIcon className="h-4 w-4" />
-				Images
-			</Link>
+		<div className="px-2 py-2">
+			<h3 className="px-3 mb-2 text-sm font-medium text-muted-foreground">Products</h3>
+			<div className="space-y-0.5">
+				<Link to="/images" onClick={closeOnMobile} className={itemClass}>
+					<ImageIcon className="h-4 w-4" />
+					Images
+				</Link>
+				<a
+					href="https://console.libertai.io"
+					target="_blank"
+					rel="noopener noreferrer"
+					onClick={closeOnMobile}
+					className={itemClass}
+				>
+					<SquareTerminal className="h-4 w-4" />
+					Console
+				</a>
+				<a
+					href="https://liberclaw.ai"
+					target="_blank"
+					rel="noopener noreferrer"
+					onClick={closeOnMobile}
+					className={itemClass}
+				>
+					<ClawIcon className="h-4 w-4" />
+					LiberClaw
+				</a>
+			</div>
 		</div>
 	);
 }
@@ -137,7 +159,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 					<SidebarContent>
 						<SidebarNewConversationLink />
 						<ChatSearch />
-						<SidebarImagesLink />
+						<SidebarProducts />
 						<ChatList />
 					</SidebarContent>
 

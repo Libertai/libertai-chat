@@ -68,91 +68,92 @@ export function ChatList() {
 		setDropdownOpenChatId(null);
 	};
 
+	// Hide the whole section until the user has at least one conversation.
+	if (chats.length === 0) {
+		return null;
+	}
+
 	return (
 		<div className="p-3">
 			<h3 className="text-sm font-medium text-muted-foreground mb-3">Chats</h3>
 
-			{chats.length === 0 ? (
-				<p className="text-xs text-muted-foreground">No chats yet</p>
-			) : (
-				<div className="space-y-1">
-					{chats.map((chat) => {
-						const chatTitle = getChatTitle(chat);
+			<div className="space-y-1">
+				{chats.map((chat) => {
+					const chatTitle = getChatTitle(chat);
 
-						return (
-							<div
-								key={chat.id}
-								className="relative hover:bg-muted/50 rounded-md"
-								onMouseEnter={() => setActiveChat(chat.id)}
-								onMouseLeave={() => {
-									if (dropdownOpenChatId !== chat.id) setActiveChat(null);
+					return (
+						<div
+							key={chat.id}
+							className="relative hover:bg-muted/50 rounded-md"
+							onMouseEnter={() => setActiveChat(chat.id)}
+							onMouseLeave={() => {
+								if (dropdownOpenChatId !== chat.id) setActiveChat(null);
+							}}
+						>
+							<Link
+								to="/chat/$chatId"
+								params={{ chatId: chat.id }}
+								className="block p-2 transition-colors"
+								onClick={() => {
+									if (isMobile) setOpenMobile(false);
 								}}
 							>
-								<Link
-									to="/chat/$chatId"
-									params={{ chatId: chat.id }}
-									className="block p-2 transition-colors"
-									onClick={() => {
-										if (isMobile) setOpenMobile(false);
+								<p className="text-sm text-foreground leading-snug">{truncateText(chatTitle)}</p>
+							</Link>
+
+							<div
+								className={`absolute top-1 right-1 transition-opacity ${
+									activeChat === chat.id ? "opacity-100" : "opacity-0"
+								}`}
+							>
+								<DropdownMenu
+									open={dropdownOpenChatId === chat.id}
+									onOpenChange={(open) => {
+										setDropdownOpenChatId(open ? chat.id : null);
+										if (open) {
+											setActiveChat(chat.id);
+										} else {
+											setActiveChat(null);
+										}
 									}}
 								>
-									<p className="text-sm text-foreground leading-snug">{truncateText(chatTitle)}</p>
-								</Link>
-
-								<div
-									className={`absolute top-1 right-1 transition-opacity ${
-										activeChat === chat.id ? "opacity-100" : "opacity-0"
-									}`}
-								>
-									<DropdownMenu
-										open={dropdownOpenChatId === chat.id}
-										onOpenChange={(open) => {
-											setDropdownOpenChatId(open ? chat.id : null);
-											if (open) {
-												setActiveChat(chat.id);
-											} else {
-												setActiveChat(null);
-											}
-										}}
-									>
-										<DropdownMenuTrigger asChild>
-											<Button
-												variant="ghost"
-												size="icon"
-												className="h-6 w-6 bg-background hover:bg-background"
-												onClick={(e) => e.preventDefault()}
-											>
-												<MoreHorizontal className="h-3 w-3" />
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent align="end">
-											<DropdownMenuItem
-												onClick={(e) => {
-													e.preventDefault();
-													handleRenameClick(chat);
-												}}
-											>
-												<Pencil className="h-3 w-3 mr-2" />
-												Rename
-											</DropdownMenuItem>
-											<DropdownMenuItem
-												className="text-destructive focus:text-destructive"
-												onClick={(e) => {
-													e.preventDefault();
-													handleDeleteChat(chat.id);
-												}}
-											>
-												<Trash2 className="h-3 w-3 mr-2" />
-												Delete
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
-								</div>
+									<DropdownMenuTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6 bg-background hover:bg-background"
+											onClick={(e) => e.preventDefault()}
+										>
+											<MoreHorizontal className="h-3 w-3" />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuItem
+											onClick={(e) => {
+												e.preventDefault();
+												handleRenameClick(chat);
+											}}
+										>
+											<Pencil className="h-3 w-3 mr-2" />
+											Rename
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											className="text-destructive focus:text-destructive"
+											onClick={(e) => {
+												e.preventDefault();
+												handleDeleteChat(chat.id);
+											}}
+										>
+											<Trash2 className="h-3 w-3 mr-2" />
+											Delete
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
 							</div>
-						);
-					})}
-				</div>
-			)}
+						</div>
+					);
+				})}
+			</div>
 
 			<Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
 				<DialogContent>

@@ -105,15 +105,15 @@ export function ChatSearch() {
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, [allChats.length]);
 
+	// Nothing to search until there's at least one conversation.
+	if (allChats.length === 0) {
+		return null;
+	}
+
 	return (
 		<>
 			<div className="group/search">
-				<Button
-					variant="ghost"
-					className="w-full justify-between"
-					onClick={() => setSearchOpen(true)}
-					disabled={allChats.length === 0}
-				>
+				<Button variant="ghost" className="w-full justify-between" onClick={() => setSearchOpen(true)}>
 					<div className="flex items-center">
 						<Search className="mr-2 h-4 w-4" />
 						Search chats
