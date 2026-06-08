@@ -44,5 +44,8 @@
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/shared/openapi-ts.config.ts"
   ]
 }
