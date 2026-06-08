@@ -172,22 +172,6 @@ export function ChatInput({
 					</div>
 				)}
 
-				{forcedTool && (
-					<div className="px-4 pt-3 flex">
-						<span className="inline-flex items-center gap-1.5 text-xs font-medium bg-primary/10 text-primary rounded-full pl-2.5 pr-1.5 py-1">
-							{forcedTool === "web_search" ? <Globe className="h-3 w-3" /> : <Sparkles className="h-3 w-3" />}
-							{forcedTool === "web_search" ? "Web search" : "Create image"}
-							<button
-								type="button"
-								onClick={() => setForcedTool(null)}
-								className="cursor-pointer rounded-full hover:bg-primary/20 p-0.5"
-							>
-								<X className="h-2.5 w-2.5" />
-							</button>
-						</span>
-					</div>
-				)}
-
 				<Textarea
 					id="chat-input"
 					ref={textareaRef}
@@ -255,6 +239,23 @@ export function ChatInput({
 					<span className="text-sm text-foreground font-medium border border-card dark:border-hover rounded-full px-3 py-1">
 						{assistant.title}
 					</span>
+					{forcedTool && (
+						<span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground border border-card dark:border-hover rounded-full pl-3 pr-1.5 py-1">
+							{forcedTool === "web_search" ? (
+								<Globe className="h-3.5 w-3.5 text-primary" />
+							) : (
+								<Sparkles className="h-3.5 w-3.5 text-primary" />
+							)}
+							{forcedTool === "web_search" ? "Web search" : "Create image"}
+							<button
+								type="button"
+								onClick={() => setForcedTool(null)}
+								className="cursor-pointer rounded-full p-0.5 text-muted-foreground hover:bg-hover hover:text-foreground"
+							>
+								<X className="h-3 w-3" />
+							</button>
+						</span>
+					)}
 				</div>
 				{isGenerating ? (
 					<Button
