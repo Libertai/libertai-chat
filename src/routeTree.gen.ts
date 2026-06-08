@@ -17,6 +17,8 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImagesRouteImport } from './routes/images'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
+import { Route as AuthVerifyRouteImport } from './routes/auth.verify'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
@@ -58,6 +60,16 @@ const ChatChatIdRoute = ChatChatIdRouteImport.update({
   path: '/chat/$chatId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthVerifyRoute = AuthVerifyRouteImport.update({
+  id: '/auth/verify',
+  path: '/auth/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,6 +79,8 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +91,8 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
 }
 export interface FileRoutesById {
@@ -88,6 +104,8 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +118,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/top-up'
     | '/transactions'
+    | '/auth/callback'
+    | '/auth/verify'
     | '/chat/$chatId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +130,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/top-up'
     | '/transactions'
+    | '/auth/callback'
+    | '/auth/verify'
     | '/chat/$chatId'
   id:
     | '__root__'
@@ -120,6 +142,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/top-up'
     | '/transactions'
+    | '/auth/callback'
+    | '/auth/verify'
     | '/chat/$chatId'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +155,8 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TopUpRoute: typeof TopUpRoute
   TransactionsRoute: typeof TransactionsRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthVerifyRoute: typeof AuthVerifyRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
 }
 
@@ -192,6 +218,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/verify': {
+      id: '/auth/verify'
+      path: '/auth/verify'
+      fullPath: '/auth/verify'
+      preLoaderRoute: typeof AuthVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -203,6 +243,8 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TopUpRoute: TopUpRoute,
   TransactionsRoute: TransactionsRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthVerifyRoute: AuthVerifyRoute,
   ChatChatIdRoute: ChatChatIdRoute,
 }
 export const routeTree = rootRouteImport
