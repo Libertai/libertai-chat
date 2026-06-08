@@ -14,3 +14,7 @@ function findModel(model: string, models: Model[]): Model | undefined {
 export function supportsImages(model: string, models: Model[]): boolean {
 	return findModel(model, models)?.capabilities.text?.vision ?? false;
 }
+
+export function supportsTools(model: string, models: Model[]): boolean {
+	return findModel(model, models)?.capabilities.text?.function_calling ?? false;
+}
