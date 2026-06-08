@@ -206,7 +206,10 @@ function Chat() {
 						updateMessageArtifacts(chatId, assistantMessage.id, { sources: collectedSources });
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else if (call.name === "generate_image") {
-						const { image, toolText } = await executeGenerateImage(call.arguments as unknown as GenerateImageArgs, opts);
+						const { image, toolText } = await executeGenerateImage(
+							call.arguments as unknown as GenerateImageArgs,
+							opts,
+						);
 						if (image) {
 							collectedImages.push(image);
 							updateMessageArtifacts(chatId, assistantMessage.id, { images: collectedImages });
@@ -224,10 +227,18 @@ function Chat() {
 			}
 		} catch (error) {
 			if (controller.signal.aborted) {
-				if (!accumulated.content) updateMessage(chatId, assistantMessage.id, accumulated.content || "_(stopped)_");
+				// Keep whatever streamed before the stop (content/thinking already persisted, images kept
+				// via updateMessageArtifacts). Only leave a marker when the turn produced nothing at all.
+				if (!accumulated.content && !accumulated.thinking && collectedImages.length === 0) {
+					updateMessage(chatId, assistantMessage.id, "_(stopped)_");
+				}
 			} else {
 				console.error("Error sending message:", error);
-				updateMessage(chatId, assistantMessage.id, "Sorry, there was an error processing your request. Please try again.");
+				updateMessage(
+					chatId,
+					assistantMessage.id,
+					"Sorry, there was an error processing your request. Please try again.",
+				);
 			}
 		} finally {
 			setIsLoading(false);
@@ -237,7 +248,11 @@ function Chat() {
 		}
 	};
 
-	const handleSendMessage = async (value: string, images?: ImageData[], forcedTool?: "web_search" | "generate_image") => {
+	const handleSendMessage = async (
+		value: string,
+		images?: ImageData[],
+		forcedTool?: "web_search" | "generate_image",
+	) => {
 		if (!value.trim() || isLoading) return;
 		pendingForcedToolRef.current = forcedTool;
 		addMessage(chatId, "user", value.trim(), undefined, images);
