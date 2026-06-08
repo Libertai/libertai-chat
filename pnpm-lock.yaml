@@ -201,6 +201,9 @@ importers:
 
   src/shared:
     dependencies:
+      '@radix-ui/react-dropdown-menu':
+        specifier: '*'
+        version: 2.1.16(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@radix-ui/react-slot':
         specifier: '*'
         version: 1.2.4(@types/react@19.2.14)(react@19.2.4)
@@ -9875,7 +9878,7 @@ snapshots:
       '@ethereumjs/tx': 4.2.0
       '@types/debug': 4.1.13
       debug: 4.4.3
-      semver: 7.8.1
+      semver: 7.8.2
       superstruct: 1.0.4
     transitivePeerDependencies:
       - supports-color
@@ -10464,7 +10467,7 @@ snapshots:
       metro: 0.83.7(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       metro-config: 0.83.7(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       metro-core: 0.83.7
-      semver: 7.8.1
+      semver: 7.8.2
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -17565,7 +17568,7 @@ snapshots:
       react-refresh: 0.14.2
       regenerator-runtime: 0.13.11
       scheduler: 0.26.0
-      semver: 7.8.1
+      semver: 7.8.2
       stacktrace-parser: 0.1.11
       whatwg-fetch: 3.6.20
       ws: 6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
