@@ -7,7 +7,7 @@ import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
-import { useCredits } from "@/hooks/data/use-credits";
+import { resolveChatEndpoint } from "@/utils/chat-endpoint";
 import env from "@/config/env";
 import OpenAI from "openai";
 import type { ParsedMessage } from "@/utils/thinking-parser";
@@ -23,7 +23,6 @@ function Chat() {
 	const { getAssistantOrDefault } = useAssistantStore();
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { chatApiKey } = useChatApiKey();
-	const { credits } = useCredits();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [isStreaming, setIsStreaming] = useState(false);
@@ -32,18 +31,23 @@ function Chat() {
 	const chat = getChat(chatId);
 	const messages = chat?.messages || [];
 
-	// Use the connected (paid) endpoint only when authenticated AND in credit; otherwise fall back
-	// to the free public endpoint. This prevents the trap where logging in with a zero balance
-	// breaks chat that worked while logged out.
-	const useConnected = isAuthenticated && !!chatApiKey && credits > 0;
+	// Authenticated users always use the connected endpoint with their chat API key (chat keys are
+	// free at the gateway — never credit-gated). Logged-out users (or while the key is still being
+	// fetched) use the free public endpoint, so we never hit the connected endpoint with an empty key.
+	const { baseURL, apiKey } = resolveChatEndpoint({
+		isAuthenticated,
+		chatApiKey,
+		connectedApiUrl: env.LTAI_CONNECTED_API_URL,
+		freeApiUrl: env.LTAI_INFERENCE_API_URL,
+	});
 	const openai = useMemo(
 		() =>
 			new OpenAI({
-				baseURL: useConnected ? `${env.LTAI_CONNECTED_API_URL}/v1` : env.LTAI_INFERENCE_API_URL,
-				apiKey: useConnected ? (chatApiKey ?? "") : "",
+				baseURL,
+				apiKey,
 				dangerouslyAllowBrowser: true,
 			}),
-		[useConnected, chatApiKey],
+		[baseURL, apiKey],
 	);
 
 	const scrollToBottom = () => {
@@ -160,14 +164,11 @@ function Chat() {
 			}
 		} catch (error) {
 			console.error("Error sending message:", error);
-			// Surface out-of-credits / rate-limit distinctly so authenticated users know to top up
-			// (rather than a generic failure) — the free endpoint has no key so this only hits paid usage.
-			const status = (error as { status?: number })?.status;
-			const message =
-				status === 402 || status === 429
-					? "You're out of credits, so this request couldn't be completed. Top up your balance to keep using premium models — or sign out to use the free tier."
-					: "Sorry, there was an error processing your request. Please try again.";
-			updateMessage(chatId, assistantMessage.id, message);
+			updateMessage(
+				chatId,
+				assistantMessage.id,
+				"Sorry, there was an error processing your request. Please try again.",
+			);
 		} finally {
 			// Ensure loading and streaming states are properly set at the end
 			setIsLoading(false);

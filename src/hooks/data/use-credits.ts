@@ -5,13 +5,16 @@ import { toast } from "sonner";
 
 export function useCredits() {
 	const queryClient = useQueryClient();
-	const account = useAccountStore((state) => state.account);
+	// Gate on the cookie session, not the wallet `account`. Email/OAuth logins authenticate without
+	// ever connecting a wallet (so `account` stays null), and the balance endpoint is session-based
+	// (`/credits/balance` → get_current_user). Keying on `account` left those users reading 0 credits.
+	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 
 	// Query for credits balance
 	const creditsQuery = useQuery({
-		queryKey: ["credits", account?.address],
+		queryKey: ["credits"],
 		queryFn: async () => {
-			if (!account) {
+			if (!isAuthenticated) {
 				return { balance: 0 };
 			}
 
@@ -23,7 +26,7 @@ export function useCredits() {
 
 			return response.data;
 		},
-		enabled: !!account, // Only run the query when account exists
+		enabled: isAuthenticated, // Only run the query when a session exists
 		staleTime: 5 * 60 * 1000, // 5 minutes
 		refetchOnWindowFocus: false,
 	});
@@ -31,8 +34,8 @@ export function useCredits() {
 	// Mutation to refresh balance
 	const refreshCreditsMutation = useMutation({
 		mutationFn: async () => {
-			if (!account) {
-				throw new Error("No account available");
+			if (!isAuthenticated) {
+				throw new Error("No active session");
 			}
 
 			const response = await getUserBalanceCreditsBalanceGet();
@@ -44,7 +47,7 @@ export function useCredits() {
 			return response.data;
 		},
 		onSuccess: (data) => {
-			queryClient.setQueryData(["credits", account?.address], data);
+			queryClient.setQueryData(["credits"], data);
 		},
 		onError: (error) => {
 			toast.error("Failed to update credits balance", {
