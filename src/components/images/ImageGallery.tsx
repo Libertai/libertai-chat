@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useAccountStore } from "@libertai/auth";
+import { Button } from "@/components/ui/button";
 import { useImageStore, GeneratedImage } from "@/stores/image";
 import { ImageCard } from "./ImageCard";
 import { ImageGenerationForm } from "./ImageGenerationForm";
@@ -21,6 +23,7 @@ export function ImageGallery() {
 	// Image generation uses the (free) chat API key, just like chat — so it works for ANY authenticated
 	// session, including email/OAuth users who have no wallet `account`. Gate on the session, not a wallet.
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
+	const navigate = useNavigate();
 	const images = useImageStore((state) => state.images);
 	const deleteImage = useImageStore((state) => state.deleteImage);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +77,8 @@ export function ImageGallery() {
 							<div className="text-center p-6">
 								<LogIn className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
 								<p className="font-medium mb-1">Sign in to generate images</p>
-								<p className="text-sm text-muted-foreground">Use your email, a social account, or a wallet</p>
+								<p className="text-sm text-muted-foreground mb-4">Use your email, a social account, or a wallet</p>
+								<Button onClick={() => navigate({ to: "/login" })}>Sign in</Button>
 							</div>
 						</div>
 					)}

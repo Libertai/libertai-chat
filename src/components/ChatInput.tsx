@@ -307,7 +307,7 @@ function ToolMenuItem({
 					</DropdownMenuItem>
 				</div>
 			</TooltipTrigger>
-			<TooltipContent side="right">Connect your account to use this</TooltipContent>
+			<TooltipContent side="right">Sign in to use this</TooltipContent>
 		</Tooltip>
 	);
 }
