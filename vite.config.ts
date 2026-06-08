@@ -22,6 +22,7 @@ export default defineConfig({
 		alias: {
 			"@": path.resolve(__dirname, "./src"),
 			"@libertai/auth": path.resolve(__dirname, "./src/shared/auth"),
+			"@libertai/branding": path.resolve(__dirname, "./src/shared/branding"),
 			"@libertai/inference-sdk": path.resolve(__dirname, "./src/shared/inference-sdk"),
 		},
 		// Force a single copy of these React-context packages. pnpm gives the

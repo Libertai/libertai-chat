@@ -20,6 +20,12 @@
       "@libertai/auth/*": [
         "src/shared/auth/*"
       ],
+      "@libertai/branding": [
+        "src/shared/branding"
+      ],
+      "@libertai/branding/*": [
+        "src/shared/branding/*"
+      ],
       "@libertai/inference-sdk": [
         "src/shared/inference-sdk"
       ],

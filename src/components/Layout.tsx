@@ -16,7 +16,7 @@ import {
 	SidebarTrigger,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { LibertaiLogo } from "@/components/LibertaiLogo.tsx";
+import { LibertaiLogo } from "@libertai/branding";
 
 // Helper function to read sidebar state from cookie
 function getSidebarStateFromCookie(): boolean {

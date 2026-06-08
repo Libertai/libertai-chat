@@ -7,7 +7,8 @@ import { useSidebar } from "@/components/ui/sidebar";
 /**
  * Chat's sidebar-footer account menu. Thin adapter over the shared <AccountMenu> — wires in the
  * app-specific bits (ENS resolution via the app's thirdweb client, router navigation, mobile-sidebar
- * close). The dropdown chrome itself is shared with the console so the UIs stay coherent.
+ * close). Sign-in lives in the header (<ConnectButton />), so no `onSignIn` is passed here: the footer
+ * renders the account dropdown when signed in and nothing when signed out.
  */
 export function ConnectedAccountFooter() {
 	const account = useAccountStore((state) => state.account);
@@ -29,7 +30,6 @@ export function ConnectedAccountFooter() {
 					onSelect: () => navigate({ to: "/settings" }),
 				},
 			]}
-			onSignIn={() => navigate({ to: "/login" })}
 			onSignedOut={() => navigate({ to: "/" })}
 			onAction={closeMobile}
 		/>

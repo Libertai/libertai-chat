@@ -3,9 +3,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAccountStore } from "@libertai/auth";
 
 /**
- * Sign-in entry point in the header. When signed out it shows a "Sign in" button that
- * navigates to the full-page /login route (the shared LoginPanel). When signed in it
- * renders nothing; the connected account is shown in the sidebar footer.
+ * Sign-in entry point in the header. When signed out it shows a "Sign in" button that navigates to the
+ * full-page /login route (the shared LoginPanel). When signed in it renders nothing; the connected
+ * account is shown in the sidebar footer.
  *
  * Wallet connection + authentication is driven globally by <WalletSync />.
  */
