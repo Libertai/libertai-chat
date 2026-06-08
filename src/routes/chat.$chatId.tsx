@@ -14,6 +14,7 @@ import { buildRequestMessages } from "@/utils/build-request-messages";
 import { ToolCallAccumulator } from "@/utils/tool-call-accumulator";
 import { TOOL_DEFINITIONS, executeWebSearch, executeGenerateImage } from "@/utils/chat-tools";
 import type { GenerateImageArgs } from "@/utils/chat-tools";
+import { consumePendingForcedTool } from "@/utils/pending-forced-tool";
 import env from "@/config/env";
 import OpenAI from "openai";
 import { toast } from "sonner";
@@ -90,7 +91,9 @@ function Chat() {
 			const lastMessage = messages[messages.length - 1];
 			// Only generate response if last message is from user and there's no pending assistant message
 			if (lastMessage.role === "user") {
-				const forced = pendingForcedToolRef.current;
+				// In-conversation force lives on the ref; a force chosen on the home input before this
+				// chat existed is handed off by chat id and consumed here for the first response.
+				const forced = pendingForcedToolRef.current ?? consumePendingForcedTool(chatId);
 				pendingForcedToolRef.current = undefined;
 				generateAIResponse(forced).then();
 			}
