@@ -56,7 +56,7 @@ function SidebarNewConversationLink() {
 				onClick={() => {
 					if (isMobile) setOpenMobile(false);
 				}}
-				className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-primary hover:bg-muted transition-colors"
+				className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
 			>
 				<Plus className="h-4 w-4" />
 				New conversation
