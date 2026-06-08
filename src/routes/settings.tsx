@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Settings } from "@/components/Settings";
+import { AccountSettings, useAccountStore } from "@libertai/auth";
+import { useENS } from "@/hooks/useENS";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const Route = createFileRoute("/settings")({
-	component: Settings,
+	component: SettingsPage,
 });
+
+function SettingsPage() {
+	const account = useAccountStore((state) => state.account);
+	const ens = useENS(account?.address);
+	return <AccountSettings ens={ens} appearance={<ThemeToggle />} />;
+}
