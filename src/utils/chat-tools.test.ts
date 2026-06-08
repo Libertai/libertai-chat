@@ -47,7 +47,10 @@ describe("executeWebSearch", () => {
 
 		expect(fetchMock).toHaveBeenCalledWith(
 			"https://api.libertai.io/search",
-			expect.objectContaining({ method: "POST", headers: expect.objectContaining({ Authorization: "Bearer sk-chat-1" }) }),
+			expect.objectContaining({
+				method: "POST",
+				headers: expect.objectContaining({ Authorization: "Bearer sk-chat-1" }),
+			}),
 		);
 		const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
 		expect(body).toMatchObject({ query: "rust", max_results: 5, search_type: "web" });
@@ -65,12 +68,17 @@ describe("executeWebSearch", () => {
 
 describe("executeGenerateImage", () => {
 	it("POSTs to /sdapi/v1/txt2img and returns an ImageData", async () => {
-		const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(
-			new Response(JSON.stringify({ images: ["BASE64DATA"], parameters: { seed: 1 } }), { status: 200 }),
-		);
+		const fetchMock = vi
+			.spyOn(global, "fetch")
+			.mockResolvedValue(
+				new Response(JSON.stringify({ images: ["BASE64DATA"], parameters: { seed: 1 } }), { status: 200 }),
+			);
 		const out = await executeGenerateImage({ prompt: "a cat" }, OPTS);
 
-		expect(fetchMock).toHaveBeenCalledWith("https://api.libertai.io/sdapi/v1/txt2img", expect.objectContaining({ method: "POST" }));
+		expect(fetchMock).toHaveBeenCalledWith(
+			"https://api.libertai.io/sdapi/v1/txt2img",
+			expect.objectContaining({ method: "POST" }),
+		);
 		const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
 		expect(body).toMatchObject({ model: "z-image-turbo", prompt: "a cat", width: 1024, height: 1024, steps: 9 });
 		expect(out.image?.data).toBe("data:image/png;base64,BASE64DATA");

@@ -28,7 +28,8 @@ export const TOOL_DEFINITIONS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 		type: "function",
 		function: {
 			name: "generate_image",
-			description: "Generate an image from a text prompt. Use when the user asks to create, draw, or generate a picture.",
+			description:
+				"Generate an image from a text prompt. Use when the user asks to create, draw, or generate a picture.",
 			parameters: {
 				type: "object",
 				properties: {
@@ -126,6 +127,9 @@ export async function executeGenerateImage(
 		};
 		return { image, toolText: "Image generated successfully and shown to the user." };
 	} catch (error) {
-		return { image: null, toolText: `Image generation failed: ${error instanceof Error ? error.message : "unknown error"}.` };
+		return {
+			image: null,
+			toolText: `Image generation failed: ${error instanceof Error ? error.message : "unknown error"}.`,
+		};
 	}
 }

@@ -152,9 +152,7 @@ export const useChatStore = create<ChatStore>()(
 							...state.chats,
 							[chatId]: {
 								...chat,
-								messages: chat.messages.map((msg) =>
-									msg.id === messageId ? { ...msg, ...artifacts } : msg,
-								),
+								messages: chat.messages.map((msg) => (msg.id === messageId ? { ...msg, ...artifacts } : msg)),
 								updatedAt: new Date().toISOString(),
 							},
 						},

@@ -196,10 +196,10 @@ export function Message({
 									{message.sources.length} source{message.sources.length > 1 ? "s" : ""}
 								</span>
 								{isSourcesExpanded ? (
-										<ChevronDown className="w-4 h-4 text-muted-foreground" />
-									) : (
-										<ChevronRight className="w-4 h-4 text-muted-foreground" />
-									)}
+									<ChevronDown className="w-4 h-4 text-muted-foreground" />
+								) : (
+									<ChevronRight className="w-4 h-4 text-muted-foreground" />
+								)}
 							</button>
 							{isSourcesExpanded && (
 								<div className="mt-2 space-y-2">

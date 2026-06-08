@@ -4,8 +4,12 @@ import type { Message } from "@/types/chats";
 import type { Model } from "@/hooks/data/use-models";
 
 const img = (n: string) => ({ data: `data:image/png;base64,${n}`, mimeType: "image/png", filename: `${n}.png` });
-const visionModels = [{ id: "m", name: "m", capabilities: { text: { vision: true, function_calling: true } } }] as unknown as Model[];
-const noVisionModels = [{ id: "m", name: "m", capabilities: { text: { vision: false, function_calling: true } } }] as unknown as Model[];
+const visionModels = [
+	{ id: "m", name: "m", capabilities: { text: { vision: true, function_calling: true } } },
+] as unknown as Model[];
+const noVisionModels = [
+	{ id: "m", name: "m", capabilities: { text: { vision: false, function_calling: true } } },
+] as unknown as Model[];
 
 const msg = (over: Partial<Message>): Message =>
 	({ id: Math.random().toString(), role: "user", content: "", timestamp: new Date(), ...over }) as Message;
