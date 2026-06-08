@@ -6,6 +6,7 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -232,6 +233,7 @@ export function ChatInput({
 									)}
 									{modelSupportsTools && (
 										<>
+											{modelSupportsImages && <DropdownMenuSeparator />}
 											<ToolMenuItem
 												icon={<Sparkles className="mr-2 h-4 w-4" />}
 												label="Create image"
