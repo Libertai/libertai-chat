@@ -61,8 +61,14 @@ export function useReadAloud(): ReadAloudState {
 		abortRef.current?.abort();
 		abortRef.current = null;
 		if (audioRef.current) {
+			// Detach handlers BEFORE clearing src: assigning an empty src fires an `error`
+			// event on the element, which would otherwise trip `onerror` → a spurious
+			// "Failed to play audio" toast on every normal end and manual stop.
+			audioRef.current.onended = null;
+			audioRef.current.onerror = null;
 			audioRef.current.pause();
-			audioRef.current.src = "";
+			audioRef.current.removeAttribute("src");
+			audioRef.current.load();
 			audioRef.current = null;
 		}
 		if (objectUrlRef.current) {
