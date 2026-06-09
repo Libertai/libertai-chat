@@ -1,4 +1,4 @@
-import { CreditCard } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { PaymentMethod, PaymentMethodSelector } from "@/components/payment/PaymentMethodSelector.tsx";
 import { CheckoutWidget } from "thirdweb/react";
@@ -352,124 +352,93 @@ export const PaymentStage = ({ usdAmount, handleGoBackToSelection, handlePayment
 	};
 
 	return (
-		<div className="bg-card/50 backdrop-blur-sm p-6 rounded-xl border border-border">
-			<div className="flex justify-between items-center mb-8">
-				<div className="flex items-center gap-3">
-					<CreditCard className="h-5 w-5 text-primary" />
-					<h2 className="text-xl font-semibold">Payment</h2>
-				</div>
-				<Button variant="outline" size="sm" onClick={handleGoBackToSelection}>
-					Back to selection
+		<div className="max-w-2xl mx-auto space-y-6">
+			{/* Header row: back button + total */}
+			<div className="flex items-center gap-4">
+				<Button variant="ghost" size="sm" onClick={handleGoBackToSelection}>
+					<ChevronLeft className="h-4 w-4 mr-1" />
+					Back
 				</Button>
+				<span className="text-sm text-muted-foreground">
+					Total: <span className="font-semibold text-foreground">${usdAmount.toFixed(2)}</span>
+				</span>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-				<div>
-					<h3 className="text-lg font-medium mb-4">Order Summary</h3>
-					<div className="bg-card p-4 rounded-lg border border-border mb-4">
-						<div className="flex justify-between mb-2">
-							<span className="text-muted-foreground">Credits top-up</span>
-							<span>${usdAmount.toFixed(2)}</span>
-						</div>
-						<div className="border-t border-border my-2"></div>
-						<div className="flex justify-between font-medium">
-							<span>Total</span>
-							<span>${usdAmount.toFixed(2)}</span>
-						</div>
-					</div>
+			{/* Payment method selector */}
+			<PaymentMethodSelector
+				onSelectMethod={setMethod}
+				selectedMethod={method as PaymentMethod}
+				hasLTAI={hasLTAI}
+				chain={account?.chain}
+			/>
 
-					<div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-lg border border-primary/20">
-						<p className="text-sm text-foreground">
-							Your credits will be deposited directly to your connected wallet after payment. Credits do not expire and
-							can be used anytime.
-						</p>
-					</div>
-
-					{/* Payment Method Selector */}
-					<div className="mt-6">
-						<PaymentMethodSelector
-							onSelectMethod={setMethod}
-							selectedMethod={method as PaymentMethod}
-							hasLTAI={hasLTAI}
-							chain={account?.chain}
-						/>
-					</div>
-				</div>
-
-				<div>
-					<h3 className="text-lg font-medium mb-4">Payment Method</h3>
-					<div className="bg-card p-4 rounded-lg border border-border">
-						{method === "crypto" && (
-							/* ThirdWeb CheckoutWidget for crypto payments only */
-							<CheckoutWidget
-								client={thirdwebClient}
-								chain={base}
-								amount={usdAmount.toString()}
-								seller={env.PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS as `0x${string}`}
-								tokenAddress={env.USDC_BASE_ADDRESS as `0x${string}`}
-								name="Checkout"
-								description={`${usdAmount.toFixed(2)}$ of LibertAI credits`}
-								paymentMethods={["crypto"]}
-								purchaseData={{
-									userAddress: account?.address,
-								}}
-								onSuccess={() => {
-									setLastTransactionHash(null);
-									handlePaymentSuccess();
-								}}
-								className="!w-full"
-							/>
-						)}
-						{method === "card" && (
-							/* ThirdWeb CheckoutWidget for card payments only */
-							<CheckoutWidget
-								client={thirdwebClient}
-								chain={base}
-								amount={usdAmount.toString()}
-								seller={env.PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS as `0x${string}`}
-								tokenAddress={env.USDC_BASE_ADDRESS as `0x${string}`}
-								name="Checkout"
-								description={`${usdAmount.toFixed(2)}$ of LibertAI credits`}
-								paymentMethods={["card"]}
-								purchaseData={{
-									userAddress: account?.address,
-								}}
-								onSuccess={() => {
-									setLastTransactionHash(null);
-									handlePaymentSuccess();
-								}}
-								className="!w-full"
-							/>
-						)}
-						{method === "ltai" && (
-							/* LTAI Payment Form */
-							<PaymentForm
-								usdAmount={usdAmount}
-								handlePayment={handleLtaiPayment}
-								ticker="LTAI"
-								tokenPrice={ltaiPrice}
-								tokenAmount={originalLtaiAmount}
-								discountedAmount={discountedLtaiAmount}
-								balance={ltaiBalance}
-								displayedDecimals={2}
-								isLoading={isLtaiPriceLoading}
-							/>
-						)}
-						{method === "solana" && (
-							/* Solana Payment Form */
-							<PaymentForm
-								usdAmount={usdAmount}
-								handlePayment={handleSolPayment}
-								ticker="SOL"
-								tokenPrice={solPrice}
-								tokenAmount={originalSolAmount}
-								balance={solBalance}
-								displayedDecimals={4}
-								isLoading={isSolPriceLoading}
-							/>
-						)}
-					</div>
-				</div>
+			{/* Selected method widget */}
+			<div>
+				{method === "crypto" && (
+					<CheckoutWidget
+						client={thirdwebClient}
+						chain={base}
+						amount={usdAmount.toString()}
+						seller={env.PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS as `0x${string}`}
+						tokenAddress={env.USDC_BASE_ADDRESS as `0x${string}`}
+						name="Checkout"
+						description={`${usdAmount.toFixed(2)}$ of LibertAI credits`}
+						paymentMethods={["crypto"]}
+						purchaseData={{
+							userAddress: account?.address,
+						}}
+						onSuccess={() => {
+							setLastTransactionHash(null);
+							handlePaymentSuccess();
+						}}
+						className="!w-full"
+					/>
+				)}
+				{method === "card" && (
+					<CheckoutWidget
+						client={thirdwebClient}
+						chain={base}
+						amount={usdAmount.toString()}
+						seller={env.PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS as `0x${string}`}
+						tokenAddress={env.USDC_BASE_ADDRESS as `0x${string}`}
+						name="Checkout"
+						description={`${usdAmount.toFixed(2)}$ of LibertAI credits`}
+						paymentMethods={["card"]}
+						purchaseData={{
+							userAddress: account?.address,
+						}}
+						onSuccess={() => {
+							setLastTransactionHash(null);
+							handlePaymentSuccess();
+						}}
+						className="!w-full"
+					/>
+				)}
+				{method === "ltai" && (
+					<PaymentForm
+						usdAmount={usdAmount}
+						handlePayment={handleLtaiPayment}
+						ticker="LTAI"
+						tokenPrice={ltaiPrice}
+						tokenAmount={originalLtaiAmount}
+						discountedAmount={discountedLtaiAmount}
+						balance={ltaiBalance}
+						displayedDecimals={2}
+						isLoading={isLtaiPriceLoading}
+					/>
+				)}
+				{method === "solana" && (
+					<PaymentForm
+						usdAmount={usdAmount}
+						handlePayment={handleSolPayment}
+						ticker="SOL"
+						tokenPrice={solPrice}
+						tokenAmount={originalSolAmount}
+						balance={solBalance}
+						displayedDecimals={4}
+						isLoading={isSolPriceLoading}
+					/>
+				)}
 			</div>
 		</div>
 	);

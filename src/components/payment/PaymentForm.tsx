@@ -24,13 +24,11 @@ interface LTAIPaymentFormProps {
 }
 
 export function PaymentForm({
-	usdAmount,
 	tokenAmount,
 	handlePayment,
 	ticker,
 	balance,
 	displayedDecimals,
-	tokenPrice,
 	discountedAmount,
 	isLoading = false,
 }: Readonly<LTAIPaymentFormProps>) {
@@ -107,86 +105,43 @@ export function PaymentForm({
 
 	if (isLoading) {
 		return (
-			<div className="space-y-6">
-				<div className="bg-card p-4 rounded-lg border border-border">
-					<div className="flex justify-between mb-2">
-						<Skeleton className="h-5 w-24" />
-						<Skeleton className="h-5 w-16" />
-					</div>
-					<div className="flex justify-between mb-2">
-						<Skeleton className="h-5 w-24" />
-						<Skeleton className="h-5 w-32" />
-					</div>
-					<div className="border-t border-border my-2"></div>
-					<div className="flex justify-between font-medium">
-						<Skeleton className="h-5 w-28" />
-						<Skeleton className="h-5 w-20" />
-					</div>
-					<div className="flex justify-between mt-2 text-xs">
-						<Skeleton className="h-4 w-28" />
-						<Skeleton className="h-4 w-20" />
-					</div>
-				</div>
-
-				<div className="space-y-4">
-					<Skeleton className="h-10 w-full" />
-					<Skeleton className="h-10 w-full" />
-				</div>
+			<div className="space-y-4">
+				<Skeleton className="h-5 w-48" />
+				<Skeleton className="h-5 w-32" />
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-10 w-full" />
 			</div>
 		);
 	}
 
 	const hasEnoughBalance = discountedAmount ? balance >= discountedAmount : balance >= tokenAmount;
 
+	const displayAmount = discountedAmount
+		? discountedAmount.toFixed(displayedDecimals)
+		: tokenAmount.toFixed(displayedDecimals);
+
 	return (
-		<div className="space-y-6">
-			<div className="bg-card p-4 rounded-lg border border-border">
-				<div className="flex justify-between mb-2">
-					<span className="text-muted-foreground">USD Amount</span>
-					<span>${usdAmount.toFixed(2)}</span>
-				</div>
-				<div className="flex justify-between mb-2">
-					<span className="text-muted-foreground">${ticker} Price</span>
-					<span>
-						${tokenPrice.toFixed(displayedDecimals)} per ${ticker}
-					</span>
-				</div>
-				<div className="border-t border-border my-2"></div>
-				<div className="flex justify-between font-medium">
-					<span>${ticker} Required</span>
-					<div className="flex flex-col items-end">
-						{discountedAmount && (
-							<span className="line-through text-muted-foreground text-sm">
-								{tokenAmount.toFixed(2)} ${ticker}
-							</span>
-						)}
-						<div className="flex items-center">
-							{/*TODO: pass percentage in param */}
-							{discountedAmount && <span className="text-green-600 mr-1 text-sm">20% OFF</span>}
-							<span className="font-bold">
-								{discountedAmount
-									? discountedAmount.toFixed(displayedDecimals)
-									: tokenAmount.toFixed(displayedDecimals)}{" "}
-								${ticker}
-							</span>
-						</div>
-					</div>
-				</div>
-				<div className="flex justify-between mt-2 text-xs">
-					<span>Your ${ticker} Balance</span>
-					<span className={!tokenAmount ? "text-destructive" : ""}>
-						{balance.toFixed(displayedDecimals)} ${ticker}
-					</span>
-				</div>
+		<div className="space-y-4">
+			{/* Compact amount + balance line */}
+			<div className="flex items-center gap-3 flex-wrap">
+				<span className="font-semibold">
+					≈ {displayAmount} ${ticker}
+				</span>
+				{discountedAmount && (
+					<span className="text-xs font-medium text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded">20% off</span>
+				)}
+				<span className="text-sm text-muted-foreground ml-auto">
+					Balance: {balance.toFixed(displayedDecimals)} ${ticker}
+				</span>
 			</div>
 
 			{!hasEnoughBalance && (
-				<div className="bg-destructive/10 p-4 rounded-lg border border-destructive/30 text-sm">
-					You don't have enough ${ticker} tokens for this payment. Please select another payment method.
-				</div>
+				<p className="text-sm text-destructive">
+					Insufficient ${ticker} balance. Please select another payment method.
+				</p>
 			)}
 
-			<div className="space-y-4">
+			<div className="space-y-3">
 				{account?.chain === "base" && (
 					<Button
 						onClick={handleApprovePayment}
@@ -222,14 +177,6 @@ export function PaymentForm({
 						`${account?.chain === "solana" ? "" : "2. "}Pay with ${ticker}`
 					)}
 				</Button>
-			</div>
-
-			<div className="bg-primary/5 dark:bg-primary/10 p-4 rounded-lg border border-primary/20 text-sm text-foreground">
-				<p>
-					Please note that with price variations, you might not get the exact amount of credits as displayed.
-					<br />
-					If you need an exact amount of credits, use the crypto payment method.
-				</p>
 			</div>
 		</div>
 	);
