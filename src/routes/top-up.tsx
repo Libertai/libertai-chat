@@ -2,8 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryState } from "nuqs";
 import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TopUpAmountInput } from "@/components/payment/TopUpAmountInput";
-import { PaymentStage } from "@/components/payment/stages/PaymentStage";
+import { PaymentStage, TopUpAmountInput, PaymentConfigProvider } from "@libertai/auth";
+import { paymentConfig } from "@/config/payment";
 import { useCredits } from "@/hooks/data/use-credits";
 import { useRequireAuth } from "@/hooks/use-auth";
 
@@ -32,6 +32,7 @@ function TopUp() {
 	if (!isAuthenticated) return null;
 
 	return (
+		<PaymentConfigProvider config={paymentConfig}>
 		<div className="max-w-2xl mx-auto px-4 py-8">
 			<div className="mb-6">
 				<h1 className="text-2xl font-bold">Buy credits</h1>
@@ -70,5 +71,6 @@ function TopUp() {
 				</div>
 			)}
 		</div>
+		</PaymentConfigProvider>
 	);
 }
