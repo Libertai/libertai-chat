@@ -32,6 +32,10 @@ export function ConnectedAccountFooter() {
 			]}
 			onSignedOut={() => navigate({ to: "/" })}
 			onAction={closeMobile}
+			onUpgrade={() => {
+				closeMobile();
+				navigate({ to: "/plans" });
+			}}
 		/>
 	);
 }
