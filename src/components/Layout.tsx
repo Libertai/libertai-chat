@@ -4,7 +4,6 @@ import ConnectButton from "@/components/ConnectButton";
 import { ImageIcon, Plus, SquareTerminal } from "lucide-react";
 import { ClawIcon } from "@/components/ClawIcon";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
-import { SidebarAllowance } from "@/components/SidebarAllowance";
 import { ChatList } from "@/components/ChatList";
 import { ChatSearch } from "@/components/ChatSearch";
 import {
@@ -165,7 +164,6 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 					</SidebarContent>
 
 					<SidebarFooter>
-						<SidebarAllowance />
 						<ConnectedAccountFooter />
 					</SidebarFooter>
 				</Sidebar>
