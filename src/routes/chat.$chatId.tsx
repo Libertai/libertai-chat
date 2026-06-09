@@ -98,6 +98,9 @@ function Chat() {
 		// "can't send a message" bug). When the key resolves, `isChatKeyLoading` flips and this
 		// effect re-runs to generate against the connected endpoint.
 		if (isAuthenticated && isChatKeyLoading) return;
+		// Don't auto-fire a doomed request when walled — otherwise a reload while blocked
+		// re-triggers the 402 and leaves a ghost "_(out of allowance)_" message every time.
+		if (blocked) return;
 		if (messages.length > 0 && !isLoading && !isStreaming && isInitialized) {
 			const lastMessage = messages[messages.length - 1];
 			// Only generate response if last message is from user and there's no pending assistant message
@@ -109,7 +112,7 @@ function Chat() {
 				generateAIResponse(forced).then();
 			}
 		}
-	}, [messages.length, isLoading, isStreaming, isInitialized, isAuthenticated, isChatKeyLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [messages.length, isLoading, isStreaming, isInitialized, isAuthenticated, isChatKeyLoading, blocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const TOOL_LABELS: Record<string, string> = {
 		web_search: "Searching the web…",
@@ -273,7 +276,12 @@ function Chat() {
 				}
 			} else if (isPaywallError(error)) {
 				setHitPaywall(true);
-				void refetchSubscription();
+				// Clear the reactive flag only once a fresh subscription confirms the user is allowed
+				// again — a truly-blocked user (allowed===false) stays walled, while a transient 401/402
+				// auto-recovers without a stale-data unblock/re-402 retry loop.
+				void refetchSubscription().then((res) => {
+					if (!isChatBlocked(res.data)) setHitPaywall(false);
+				});
 				updateMessage(chatId, assistantMessage.id, "_(out of allowance)_");
 			} else {
 				console.error("Error sending message:", error);
@@ -298,9 +306,6 @@ function Chat() {
 	) => {
 		if (blocked) return;
 		if (!value.trim() || isLoading) return;
-		// Clear the reactive paywall flag on a new send attempt — the proactive
-		// isChatBlocked check still guards if the subscription says blocked.
-		if (!isChatBlocked(subscription)) setHitPaywall(false);
 		pendingForcedToolRef.current = forcedTool;
 		addMessage(chatId, "user", value.trim(), undefined, images);
 	};
