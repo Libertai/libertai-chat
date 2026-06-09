@@ -51,6 +51,9 @@ export const PaymentStage = ({ usdAmount, handleGoBackToSelection, handlePayment
 	const solBalance = useAccountStore((state) => state.solBalance);
 	const ltaiBalance = useAccountStore((state) => state.ltaiBalance);
 	const account = useAccountStore((state) => state.account);
+	// The session user id (present for wallet AND email/OAuth users) — credits the right account
+	// even when the payment wallet isn't the user's own (email users pay via a just-connected wallet).
+	const me = useAccountStore((state) => state.me) as { id?: string } | null;
 	const setLastTransactionHash = useAccountStore((state) => state.setLastTransactionHash);
 	const getLTAIBalance = useAccountStore((state) => state.getLTAIBalance);
 	const getSOLBalance = useAccountStore((state) => state.getSOLBalance);
@@ -62,17 +65,19 @@ export const PaymentStage = ({ usdAmount, handleGoBackToSelection, handlePayment
 	const originalSolAmount = getRequiredSOL(usdAmount);
 	const discountedLtaiAmount = getRequiredLTAI(usdAmount, true);
 
+	// Default to the wallet's native LTAI option; non-wallet (email/OAuth) users default to crypto.
+	const defaultMethod: PaymentMethod =
+		account?.chain === "base" ? "ltai" : account?.chain === "solana" ? "solana" : "crypto";
 	const [method, setMethod] = useQueryState<PaymentMethod>("method", {
-		defaultValue: "ltai",
+		defaultValue: defaultMethod,
 		parse: (value): PaymentMethod => {
 			switch (value) {
 				case "ltai":
 				case "solana":
 				case "crypto":
-				case "card":
 					return value;
 				default:
-					return "ltai"; // Default to LTAI if invalid
+					return defaultMethod;
 			}
 		},
 	});
@@ -385,27 +390,7 @@ export const PaymentStage = ({ usdAmount, handleGoBackToSelection, handlePayment
 						description={`${usdAmount.toFixed(2)}$ of LibertAI credits`}
 						paymentMethods={["crypto"]}
 						purchaseData={{
-							userAddress: account?.address,
-						}}
-						onSuccess={() => {
-							setLastTransactionHash(null);
-							handlePaymentSuccess();
-						}}
-						className="!w-full"
-					/>
-				)}
-				{method === "card" && (
-					<CheckoutWidget
-						client={thirdwebClient}
-						chain={base}
-						amount={usdAmount.toString()}
-						seller={env.PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS as `0x${string}`}
-						tokenAddress={env.USDC_BASE_ADDRESS as `0x${string}`}
-						name="Checkout"
-						description={`${usdAmount.toFixed(2)}$ of LibertAI credits`}
-						paymentMethods={["card"]}
-						purchaseData={{
-							userAddress: account?.address,
+							userId: me?.id,
 						}}
 						onSuccess={() => {
 							setLastTransactionHash(null);
