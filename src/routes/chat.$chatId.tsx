@@ -120,6 +120,9 @@ function Chat() {
 	};
 
 	const generateAIResponse = async (forcedTool?: "web_search" | "generate_image") => {
+		// Single chokepoint for every generation path (auto-fire effect, regenerate, regenerate-from):
+		// a blocked user must never reach the gateway, or they'd get a 401/402 and a ghost message.
+		if (blocked) return;
 		if (isLoading || isStreaming) return;
 		if (messages.length === 0) return;
 		if (messages[messages.length - 1].role !== "user") return;

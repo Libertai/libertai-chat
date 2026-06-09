@@ -16,13 +16,21 @@ function resetsLabel(resetsAt?: string | null): string {
 export function ChatPaywall() {
 	const navigate = useNavigate();
 	const { data: subscription } = useSubscription();
-	const resets = resetsLabel(subscription?.weekly_resets_at);
+
+	// Surface the limit that actually caused the block. A block needs only ONE window exhausted, so
+	// "weekly resets…" is wrong when it's the 5-hour window that's full. If the weekly window is the
+	// exhausted (binding) one, show that; otherwise the shorter session window is what to wait on.
+	const weeklyExhausted =
+		(subscription?.weekly_limit ?? 0) > 0 && (subscription?.weekly_used ?? 0) >= (subscription?.weekly_limit ?? 0);
+	const useWeekly = weeklyExhausted || !subscription?.window_5h_resets_at;
+	const limitName = useWeekly ? "weekly allowance" : "session limit";
+	const resets = resetsLabel(useWeekly ? subscription?.weekly_resets_at : subscription?.window_5h_resets_at);
 
 	return (
 		<div className="mx-auto mb-3 max-w-3xl rounded-xl border border-border bg-card/60 p-4">
 			<p className="text-sm font-medium">You've used your free allowance.</p>
 			<p className="mt-1 text-sm text-muted-foreground">
-				Your weekly allowance resets {resets}. Upgrade your plan or top up credits to keep chatting now.
+				Your {limitName} resets {resets}. Upgrade your plan or top up credits to keep chatting now.
 			</p>
 			<div className="mt-3 flex gap-2">
 				<Button size="sm" onClick={() => navigate({ to: "/plans" })}>
