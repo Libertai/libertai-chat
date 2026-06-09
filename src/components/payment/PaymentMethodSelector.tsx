@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button.tsx";
-import { Coins, CreditCard, Zap } from "lucide-react";
+import { Coins, Zap } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
 
-export type PaymentMethod = "crypto" | "card" | "ltai" | "solana";
+export type PaymentMethod = "crypto" | "ltai" | "solana";
 
 interface PaymentMethodSelectorProps {
 	onSelectMethod: (method: PaymentMethod) => void;
@@ -26,7 +26,7 @@ export function PaymentMethodSelector({
 			title: "Pay with LTAI",
 			description: hasLTAI ? "Use your LTAI tokens" : "No LTAI tokens available",
 			disabled: !hasLTAI,
-			isVisible: true,
+			isVisible: chain === "base",
 		},
 		{
 			id: "solana",
@@ -43,15 +43,6 @@ export function PaymentMethodSelector({
 			icon: <Coins className="h-5 w-5 text-primary" />,
 			title: `Pay with crypto ${chain === "solana" ? "on EVM" : ""}`,
 			description: "Use USDC, ETH & more",
-			disabled: false,
-			isVisible: true,
-		},
-		{
-			id: "card",
-			method: "card",
-			icon: <CreditCard className="h-5 w-5 text-primary" />,
-			title: "Pay with card",
-			description: "Use credit/debit card",
 			disabled: false,
 			isVisible: true,
 		},
