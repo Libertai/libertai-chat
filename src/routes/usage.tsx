@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useSubscription } from "@libertai/auth";
-import { Button } from "@/components/ui/button";
+import { useSubscription, UsageCreditsCard } from "@libertai/auth";
 
 export const Route = createFileRoute("/usage")({
 	component: Usage,
@@ -58,7 +57,6 @@ function Usage() {
 	}, []);
 
 	const tier = subscription?.tier ?? "free";
-	const balance = subscription?.prepaid_balance ?? 0;
 
 	return (
 		<div className="container mx-auto px-4 py-8">
@@ -90,24 +88,12 @@ function Usage() {
 				</section>
 
 				{/* Usage credits (prepaid overflow) */}
-				<section className="rounded-xl border border-border bg-card/50 p-6">
-					<h2 className="mb-1 text-lg font-semibold">Usage credits</h2>
-					<p className="mb-4 text-sm text-muted-foreground">
-						Used once your plan allowance runs out. Top up to keep chatting after you hit a limit.
-					</p>
-					<div className="flex items-center justify-between border-t border-border pt-4">
-						<div>
-							<div className="text-xl font-bold">${balance.toFixed(2)}</div>
-							<div className="text-sm text-muted-foreground">Current balance</div>
-						</div>
-						<div className="flex gap-2">
-							<Button variant="outline" onClick={() => navigate({ to: "/plans" })}>
-								Upgrade plan
-							</Button>
-							<Button onClick={() => navigate({ to: "/top-up" })}>Buy credits</Button>
-						</div>
-					</div>
-				</section>
+				<UsageCreditsCard
+					balance={subscription?.prepaid_balance ?? 0}
+					description="Used once your plan allowance runs out. Top up to keep chatting after you hit a limit."
+					onUpgrade={() => navigate({ to: "/plans" })}
+					onBuyCredits={() => navigate({ to: "/top-up" })}
+				/>
 			</div>
 		</div>
 	);
