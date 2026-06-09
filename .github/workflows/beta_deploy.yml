@@ -28,7 +28,8 @@ jobs:
       - name: Create .env file
         run: |
           echo "VITE_THIRDWEB_CLIENT_ID=${{ secrets.THIRDWEB_CLIENT_ID }}" >> .env
-          # Beta UI runs against the beta inference backend (subscriptions/metering preview).
+          # Beta UI points its inference API (auth / payments / credits) at the beta backend for the
+          # subscriptions preview. The connected chat endpoint stays the normal gateway.
           echo "VITE_LTAI_INFERENCE_API_URL=https://beta.inference.api.libertai.io" >> .env
           echo "VITE_SOLANA_RPC=${{ secrets.SOLANA_RPC }}" >> .env
           echo "VITE_LTAI_CONNECTED_API_URL=${{ secrets.LTAI_CONNECTED_API_URL }}" >> .env
