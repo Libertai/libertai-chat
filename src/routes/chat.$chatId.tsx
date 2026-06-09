@@ -5,7 +5,9 @@ import { ConversationNotFound } from "@/components/ConversationNotFound";
 import { Message } from "@/components/Message";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
-import { useAccountStore } from "@libertai/auth";
+import { useAccountStore, useSubscription } from "@libertai/auth";
+import { isChatBlocked, isPaywallError } from "@/utils/paywall";
+import { ChatPaywall } from "@/components/ChatPaywall";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { resolveChatEndpoint } from "@/utils/chat-endpoint";
 import { useModels } from "@/hooks/data/use-models";
@@ -31,6 +33,9 @@ function Chat() {
 		useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
+	const { data: subscription, refetch: refetchSubscription } = useSubscription();
+	const [hitPaywall, setHitPaywall] = useState(false);
+	const blocked = isAuthenticated && (isChatBlocked(subscription) || hitPaywall);
 	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
 	const { data: models } = useModels();
 	const [isLoading, setIsLoading] = useState(false);
@@ -248,6 +253,10 @@ function Chat() {
 				if (!accumulated.content && !accumulated.thinking && collectedImages.length === 0) {
 					updateMessage(chatId, assistantMessage.id, "_(stopped)_");
 				}
+			} else if (isPaywallError(error)) {
+				setHitPaywall(true);
+				void refetchSubscription();
+				updateMessage(chatId, assistantMessage.id, "_(out of allowance)_");
 			} else {
 				console.error("Error sending message:", error);
 				updateMessage(
@@ -269,7 +278,11 @@ function Chat() {
 		images?: ImageData[],
 		forcedTool?: "web_search" | "generate_image",
 	) => {
+		if (blocked) return;
 		if (!value.trim() || isLoading) return;
+		// Clear the reactive paywall flag on a new send attempt — the proactive
+		// isChatBlocked check still guards if the subscription says blocked.
+		if (!isChatBlocked(subscription)) setHitPaywall(false);
 		pendingForcedToolRef.current = forcedTool;
 		addMessage(chatId, "user", value.trim(), undefined, images);
 	};
@@ -351,10 +364,11 @@ function Chat() {
 			<div className="p-4">
 				<div className="max-w-4xl mx-auto">
 					<div className="max-w-2xl mx-auto">
+						{blocked && <ChatPaywall />}
 						<ChatInput
 							onSubmit={handleSendMessage}
 							placeholder="Continue private conversation..."
-							disabled={isLoading}
+							disabled={isLoading || blocked}
 							assistant={getAssistantOrDefault(chat?.assistantId)}
 							autoFocus
 							isConnected={useConnected}
