@@ -22,9 +22,13 @@ export function ChatPaywall() {
 	// exhausted (binding) one, show that; otherwise the shorter session window is what to wait on.
 	const weeklyExhausted =
 		(subscription?.weekly_limit ?? 0) > 0 && (subscription?.weekly_used ?? 0) >= (subscription?.weekly_limit ?? 0);
-	const useWeekly = weeklyExhausted || !subscription?.window_5h_resets_at;
-	const limitName = useWeekly ? "weekly allowance" : "session limit";
-	const resets = resetsLabel(useWeekly ? subscription?.weekly_resets_at : subscription?.window_5h_resets_at);
+	// The window to wait on is the weekly one when it's exhausted, or when there's no active 5h
+	// window to report against (fall back to weekly rather than show a bogus session countdown).
+	const bindingWindowIsWeekly = weeklyExhausted || !subscription?.window_5h_resets_at;
+	const limitName = bindingWindowIsWeekly ? "weekly allowance" : "session limit";
+	const resets = resetsLabel(
+		bindingWindowIsWeekly ? subscription?.weekly_resets_at : subscription?.window_5h_resets_at,
+	);
 
 	return (
 		<div className="mx-auto mb-3 max-w-3xl rounded-xl border border-border bg-card/60 p-4">
