@@ -34,16 +34,9 @@ function Chat() {
 	const { getAssistantOrDefault } = useAssistantStore();
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { data: subscription, refetch: refetchSubscription } = useSubscription();
-	const [hitPaywall, setHitPaywall] = useState(false);
-	const blocked = isAuthenticated && (isChatBlocked(subscription) || hitPaywall);
-	// Guards async setState (the post-refetch unblock) from firing after the route unmounts.
-	const mountedRef = useRef(true);
-	useEffect(() => {
-		mountedRef.current = true;
-		return () => {
-			mountedRef.current = false;
-		};
-	}, []);
+	// Blocked is derived solely from the live subscription's `allowed` flag — no optimistic local
+	// flag (that flashed the wall + left a ghost message on a bare 401 for users who aren't blocked).
+	const blocked = isAuthenticated && isChatBlocked(subscription);
 	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
 	const { data: models } = useModels();
 	const [isLoading, setIsLoading] = useState(false);
@@ -106,8 +99,7 @@ function Chat() {
 		// "can't send a message" bug). When the key resolves, `isChatKeyLoading` flips and this
 		// effect re-runs to generate against the connected endpoint.
 		if (isAuthenticated && isChatKeyLoading) return;
-		// Don't auto-fire a doomed request when walled — otherwise a reload while blocked
-		// re-triggers the 402 and leaves a ghost "_(out of allowance)_" message every time.
+		// Don't auto-fire a doomed request when the subscription says the user is out of allowance.
 		if (blocked) return;
 		if (messages.length > 0 && !isLoading && !isStreaming && isInitialized) {
 			const lastMessage = messages[messages.length - 1];
@@ -286,14 +278,20 @@ function Chat() {
 					updateMessage(chatId, assistantMessage.id, "_(stopped)_");
 				}
 			} else if (isPaywallError(error)) {
-				setHitPaywall(true);
-				// Clear the reactive flag only once a fresh subscription confirms the user is allowed
-				// again — a truly-blocked user (allowed===false) stays walled, while a transient 401/402
-				// auto-recovers without a stale-data unblock/re-402 retry loop.
-				void refetchSubscription().then((res) => {
-					if (mountedRef.current && !isChatBlocked(res.data)) setHitPaywall(false);
-				});
-				updateMessage(chatId, assistantMessage.id, "_(out of allowance)_");
+				// A 401/402 only means "out of allowance" if the subscription confirms it. Bare 401s
+				// also come from transient auth/whitelist issues — so re-fetch the subscription and
+				// only wall the composer (via the derived `blocked`) when it reports allowed===false.
+				const res = await refetchSubscription();
+				if (isChatBlocked(res.data)) {
+					// The ChatPaywall panel is the only signal — drop the empty turn (no ghost text).
+					deleteMessage(chatId, assistantMessage.id);
+				} else {
+					updateMessage(
+						chatId,
+						assistantMessage.id,
+						"Sorry, there was an error processing your request. Please try again.",
+					);
+				}
 			} else {
 				console.error("Error sending message:", error);
 				updateMessage(
