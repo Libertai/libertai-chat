@@ -36,6 +36,14 @@ function Chat() {
 	const { data: subscription, refetch: refetchSubscription } = useSubscription();
 	const [hitPaywall, setHitPaywall] = useState(false);
 	const blocked = isAuthenticated && (isChatBlocked(subscription) || hitPaywall);
+	// Guards async setState (the post-refetch unblock) from firing after the route unmounts.
+	const mountedRef = useRef(true);
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+		};
+	}, []);
 	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
 	const { data: models } = useModels();
 	const [isLoading, setIsLoading] = useState(false);
@@ -283,7 +291,7 @@ function Chat() {
 				// again — a truly-blocked user (allowed===false) stays walled, while a transient 401/402
 				// auto-recovers without a stale-data unblock/re-402 retry loop.
 				void refetchSubscription().then((res) => {
-					if (!isChatBlocked(res.data)) setHitPaywall(false);
+					if (mountedRef.current && !isChatBlocked(res.data)) setHitPaywall(false);
 				});
 				updateMessage(chatId, assistantMessage.id, "_(out of allowance)_");
 			} else {
