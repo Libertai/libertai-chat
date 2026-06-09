@@ -13,6 +13,7 @@ import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TopUpRouteImport } from './routes/top-up'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RewardsRouteImport } from './routes/rewards'
+import { Route as PlansRouteImport } from './routes/plans'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImagesRouteImport } from './routes/images'
 import { Route as IndexRouteImport } from './routes/index'
@@ -38,6 +39,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const RewardsRoute = RewardsRouteImport.update({
   id: '/rewards',
   path: '/rewards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlansRoute = PlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
+  '/plans': typeof PlansRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
+  '/plans': typeof PlansRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
+  '/plans': typeof PlansRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/images'
     | '/login'
+    | '/plans'
     | '/rewards'
     | '/settings'
     | '/top-up'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/images'
     | '/login'
+    | '/plans'
     | '/rewards'
     | '/settings'
     | '/top-up'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/images'
     | '/login'
+    | '/plans'
     | '/rewards'
     | '/settings'
     | '/top-up'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ImagesRoute: typeof ImagesRoute
   LoginRoute: typeof LoginRoute
+  PlansRoute: typeof PlansRoute
   RewardsRoute: typeof RewardsRoute
   SettingsRoute: typeof SettingsRoute
   TopUpRoute: typeof TopUpRoute
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/rewards'
       fullPath: '/rewards'
       preLoaderRoute: typeof RewardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ImagesRoute: ImagesRoute,
   LoginRoute: LoginRoute,
+  PlansRoute: PlansRoute,
   RewardsRoute: RewardsRoute,
   SettingsRoute: SettingsRoute,
   TopUpRoute: TopUpRoute,
