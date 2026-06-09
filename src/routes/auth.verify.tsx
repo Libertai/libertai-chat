@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useAccountStore } from "@libertai/auth";
 import { Button } from "@/components/ui/button";
+import { usePostLoginRedirect } from "@/hooks/use-post-login-redirect";
 
 export const Route = createFileRoute("/auth/verify")({
 	component: AuthVerify,
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/auth/verify")({
 function AuthVerify() {
 	const verifyMagicLinkToken = useAccountStore((state) => state.verifyMagicLinkToken);
 	const navigate = useNavigate();
+	const redirectAfterLogin = usePostLoginRedirect();
 	const [failed, setFailed] = useState(false);
 
 	useEffect(() => {
@@ -21,12 +23,12 @@ function AuthVerify() {
 		}
 		verifyMagicLinkToken(token).then((ok) => {
 			if (ok) {
-				navigate({ to: "/" });
+				void redirectAfterLogin();
 			} else {
 				setFailed(true);
 			}
 		});
-	}, [verifyMagicLinkToken, navigate]);
+	}, [verifyMagicLinkToken, redirectAfterLogin]);
 
 	return (
 		<div className="container mx-auto flex flex-col items-center justify-center px-4 py-24 text-center">

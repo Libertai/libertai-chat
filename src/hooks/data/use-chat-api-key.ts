@@ -11,17 +11,26 @@ import { useAccountStore } from "@libertai/auth";
  * not expose `chatApiKey`/`getChatApiKey`; we fetch it from the SDK once the cookie
  * session is established.
  */
+/**
+ * Shared query config for the chat API key. Exported so the login flow can prefetch
+ * the key into the cache before redirecting off /login (see `usePostLoginRedirect`),
+ * while this hook reads the very same cache entry — same `queryKey`, same `queryFn`.
+ */
+export const chatApiKeyQueryOptions = {
+	queryKey: ["chatApiKey"] as const,
+	queryFn: async (): Promise<string | null> => {
+		const response = await getChatApiKeyApiKeysChatGet();
+		return response.data?.key ?? null;
+	},
+	staleTime: 5 * 60 * 1000,
+};
+
 export function useChatApiKey() {
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 
 	const query = useQuery({
-		queryKey: ["chatApiKey"],
-		queryFn: async (): Promise<string | null> => {
-			const response = await getChatApiKeyApiKeysChatGet();
-			return response.data?.key ?? null;
-		},
+		...chatApiKeyQueryOptions,
 		enabled: isAuthenticated,
-		staleTime: 5 * 60 * 1000,
 	});
 
 	// Gate on isAuthenticated: React Query keeps the last cached data when `enabled`

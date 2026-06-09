@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAccountStore, LoginPanel } from "@libertai/auth";
+import { usePostLoginRedirect } from "@/hooks/use-post-login-redirect";
 
 export const Route = createFileRoute("/login")({
 	component: LoginPage,
@@ -8,11 +9,11 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
-	const navigate = useNavigate();
+	const redirectAfterLogin = usePostLoginRedirect();
 
 	useEffect(() => {
-		if (isAuthenticated) navigate({ to: "/" });
-	}, [isAuthenticated, navigate]);
+		if (isAuthenticated) void redirectAfterLogin();
+	}, [isAuthenticated, redirectAfterLogin]);
 
 	return (
 		<div className="container mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-12">
@@ -22,7 +23,7 @@ function LoginPage() {
 					<h1 className="text-2xl font-bold">Sign in to LibertAI</h1>
 					<p className="text-sm text-muted-foreground">Use your email, a social account, or a wallet.</p>
 				</div>
-				<LoginPanel onSuccess={() => navigate({ to: "/" })} />
+				<LoginPanel onSuccess={() => void redirectAfterLogin()} />
 			</div>
 		</div>
 	);

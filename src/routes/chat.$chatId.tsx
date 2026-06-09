@@ -31,7 +31,7 @@ function Chat() {
 		useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
-	const { chatApiKey } = useChatApiKey();
+	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
 	const { data: models } = useModels();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
@@ -87,6 +87,12 @@ function Chat() {
 
 	// Check if last message is from user and generate AI response
 	useEffect(() => {
+		// Hold the first send until the per-user chat key has loaded. On a cold reload
+		// `checkSession()` restores auth before `useChatApiKey` finishes fetching; firing now
+		// would read the user as not-connected and downgrade to the free endpoint (the post-login
+		// "can't send a message" bug). When the key resolves, `isChatKeyLoading` flips and this
+		// effect re-runs to generate against the connected endpoint.
+		if (isAuthenticated && isChatKeyLoading) return;
 		if (messages.length > 0 && !isLoading && !isStreaming && isInitialized) {
 			const lastMessage = messages[messages.length - 1];
 			// Only generate response if last message is from user and there's no pending assistant message
@@ -98,7 +104,7 @@ function Chat() {
 				generateAIResponse(forced).then();
 			}
 		}
-	}, [messages.length, isLoading, isStreaming, isInitialized]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [messages.length, isLoading, isStreaming, isInitialized, isAuthenticated, isChatKeyLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const TOOL_LABELS: Record<string, string> = {
 		web_search: "Searching the web…",
