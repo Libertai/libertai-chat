@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UsageRouteImport } from './routes/usage'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TopUpRouteImport } from './routes/top-up'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -21,6 +22,11 @@ import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 import { Route as AuthVerifyRouteImport } from './routes/auth.verify'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
+const UsageRoute = UsageRouteImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
+  '/usage': typeof UsageRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
+  '/usage': typeof UsageRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
   '/transactions': typeof TransactionsRoute
+  '/usage': typeof UsageRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/top-up'
     | '/transactions'
+    | '/usage'
     | '/auth/callback'
     | '/auth/verify'
     | '/chat/$chatId'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/top-up'
     | '/transactions'
+    | '/usage'
     | '/auth/callback'
     | '/auth/verify'
     | '/chat/$chatId'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/top-up'
     | '/transactions'
+    | '/usage'
     | '/auth/callback'
     | '/auth/verify'
     | '/chat/$chatId'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TopUpRoute: typeof TopUpRoute
   TransactionsRoute: typeof TransactionsRoute
+  UsageRoute: typeof UsageRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   AuthVerifyRoute: typeof AuthVerifyRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
@@ -175,6 +188,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/usage': {
+      id: '/usage'
+      path: '/usage'
+      fullPath: '/usage'
+      preLoaderRoute: typeof UsageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transactions': {
       id: '/transactions'
       path: '/transactions'
@@ -264,6 +284,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TopUpRoute: TopUpRoute,
   TransactionsRoute: TransactionsRoute,
+  UsageRoute: UsageRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   AuthVerifyRoute: AuthVerifyRoute,
   ChatChatIdRoute: ChatChatIdRoute,
