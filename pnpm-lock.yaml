@@ -210,6 +210,9 @@ importers:
       '@solana/wallet-adapter-react':
         specifier: '*'
         version: 0.15.39(@solana/web3.js@1.98.4(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10))(bs58@6.0.0)(react-native@0.81.1(@babel/core@7.29.0)(@types/react@19.2.14)(bufferutil@4.0.9)(react@19.2.4)(utf-8-validate@5.0.10))(react@19.2.4)
+      '@tanstack/react-query':
+        specifier: '*'
+        version: 5.90.21(react@19.2.4)
       class-variance-authority:
         specifier: '*'
         version: 0.7.1
