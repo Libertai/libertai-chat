@@ -78,9 +78,8 @@ function Usage() {
 						used={subscription?.window_5h_used ?? 0}
 						limit={subscription?.window_5h_limit ?? 0}
 					/>
-					<div className="mt-4 mb-1 text-sm font-semibold">Weekly limit</div>
 					<UsageRow
-						label="All usage"
+						label="Weekly limit"
 						sublabel={resetsAtLabel(subscription?.weekly_resets_at)}
 						used={subscription?.weekly_used ?? 0}
 						limit={subscription?.weekly_limit ?? 0}
