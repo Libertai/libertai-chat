@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useAccountStore } from "@libertai/auth";
 
 /**
@@ -13,6 +13,7 @@ export default function ConnectButton() {
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const account = useAccountStore((state) => state.account);
 	const navigate = useNavigate();
+	const router = useRouter();
 
 	// Already signed in (email/OAuth session or connected wallet) — footer handles display.
 	if (isAuthenticated || account?.address) {
@@ -23,7 +24,11 @@ export default function ConnectButton() {
 		<Button
 			variant="outline"
 			className="flex items-center gap-2 px-3 h-9 border-border"
-			onClick={() => navigate({ to: "/login" })}
+			onClick={() => {
+				// Send the user back to where they were after signing in (home is the default).
+				const { href } = router.state.location;
+				void navigate({ to: "/login", search: { redirect: href === "/" ? undefined : href } });
+			}}
 		>
 			Sign in
 		</Button>
