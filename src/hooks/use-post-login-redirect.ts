@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { queryClient } from "@/lib/query-client";
 import { chatApiKeyQueryOptions } from "@/hooks/data/use-chat-api-key";
 
@@ -10,6 +10,29 @@ import { chatApiKeyQueryOptions } from "@/hooks/data/use-chat-api-key";
  * one slow sign-in.
  */
 const KEY_WARMUP_TIMEOUT_MS = 4000;
+
+/**
+ * Where to send the user after login. Persisted in sessionStorage (not just the /login
+ * `redirect` search param) because OAuth and magic-link flows leave the site entirely and
+ * come back on /auth/callback or /auth/verify — the param wouldn't survive the round-trip.
+ */
+const REDIRECT_STORAGE_KEY = "libertai-post-login-redirect";
+
+/** Internal app paths only — full URLs and protocol-relative ("//host") values are discarded. */
+function sanitizeRedirect(path: string | null | undefined): string | null {
+	return path && path.startsWith("/") && !path.startsWith("//") ? path : null;
+}
+
+/**
+ * Remember (or clear, when undefined) the post-login destination. Called by the /login page
+ * with its `redirect` search param; clearing on a plain /login visit prevents a stale target
+ * from a previous abandoned sign-in from leaking into this one.
+ */
+export function rememberPostLoginRedirect(path: string | undefined) {
+	const safe = sanitizeRedirect(path);
+	if (safe) sessionStorage.setItem(REDIRECT_STORAGE_KEY, safe);
+	else sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
+}
 
 /**
  * Redirect out of the login flow ONLY after the per-user chat API key is warm in the
@@ -23,7 +46,7 @@ const KEY_WARMUP_TIMEOUT_MS = 4000;
  * key here, before leaving /login, closes that window for every login path.
  */
 export function usePostLoginRedirect() {
-	const navigate = useNavigate();
+	const router = useRouter();
 
 	return useCallback(async () => {
 		// `prefetchQuery` never throws and dedupes with the hook's in-flight fetch.
@@ -32,6 +55,10 @@ export function usePostLoginRedirect() {
 			queryClient.prefetchQuery({ ...chatApiKeyQueryOptions, retry: 1 }),
 			new Promise((resolve) => setTimeout(resolve, KEY_WARMUP_TIMEOUT_MS)),
 		]);
-		await navigate({ to: "/" });
-	}, [navigate]);
+		const target = sanitizeRedirect(sessionStorage.getItem(REDIRECT_STORAGE_KEY)) ?? "/";
+		sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
+		// history.push (not navigate) — the target is a dynamic href (may include a search
+		// string), which the typed `to` option doesn't accept.
+		router.history.push(target);
+	}, [router]);
 }

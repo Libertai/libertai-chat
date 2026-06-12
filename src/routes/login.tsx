@@ -1,15 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAccountStore, LoginPanel } from "@libertai/auth";
-import { usePostLoginRedirect } from "@/hooks/use-post-login-redirect";
+import { rememberPostLoginRedirect, usePostLoginRedirect } from "@/hooks/use-post-login-redirect";
 
 export const Route = createFileRoute("/login")({
+	validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+		redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+	}),
 	component: LoginPage,
 });
 
 function LoginPage() {
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const redirectAfterLogin = usePostLoginRedirect();
+	const { redirect } = Route.useSearch();
+
+	// Persist (or clear) the destination before any login flow starts — OAuth/magic-link
+	// leave the site, so the search param alone wouldn't survive.
+	useEffect(() => {
+		rememberPostLoginRedirect(redirect);
+	}, [redirect]);
 
 	useEffect(() => {
 		if (isAuthenticated) void redirectAfterLogin();
