@@ -1,4 +1,4 @@
-import { Settings } from "lucide-react";
+import { ChartColumn, Coins, Settings } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { AccountMenu, useAccountStore } from "@libertai/auth";
 import { useENS } from "@/hooks/useENS";
@@ -25,13 +25,34 @@ export function ConnectedAccountFooter() {
 			ens={ens}
 			items={[
 				{
+					label: "Usage",
+					icon: <ChartColumn className="h-4 w-4" />,
+					onSelect: () => navigate({ to: "/usage" }),
+				},
+				{
 					label: "Settings",
 					icon: <Settings className="h-4 w-4" />,
 					onSelect: () => navigate({ to: "/settings" }),
 				},
+				...(account
+					? [
+							{
+								label: "Buy credits",
+								icon: <Coins className="h-4 w-4" />,
+								onSelect: () => {
+									closeMobile();
+									navigate({ to: "/top-up" });
+								},
+							},
+					  ]
+					: []),
 			]}
 			onSignedOut={() => navigate({ to: "/" })}
 			onAction={closeMobile}
+			onUpgrade={() => {
+				closeMobile();
+				navigate({ to: "/plans" });
+			}}
 		/>
 	);
 }

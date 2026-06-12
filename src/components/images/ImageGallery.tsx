@@ -78,7 +78,7 @@ export function ImageGallery() {
 								<LogIn className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
 								<p className="font-medium mb-1">Sign in to generate images</p>
 								<p className="text-sm text-muted-foreground mb-4">Use your email, a social account, or a wallet</p>
-								<Button onClick={() => navigate({ to: "/login" })}>Sign in</Button>
+								<Button onClick={() => navigate({ to: "/login", search: { redirect: "/images" } })}>Sign in</Button>
 							</div>
 						</div>
 					)}
