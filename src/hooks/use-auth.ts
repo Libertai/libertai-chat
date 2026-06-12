@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAccountStore } from "@libertai/auth";
 
@@ -7,6 +7,7 @@ export function useRequireAuth() {
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const isInitialLoad = useAccountStore((state) => state.isInitialLoad);
 	const navigate = useNavigate();
+	const router = useRouter();
 	const [hasWaited, setHasWaited] = useState(false);
 
 	useEffect(() => {
@@ -31,9 +32,11 @@ export function useRequireAuth() {
 					duration: 5000,
 				});
 			}
-			navigate({ to: "/login" });
+			// Bounce to login, then come back to the page that required auth.
+			const { href } = router.state.location;
+			navigate({ to: "/login", search: { redirect: href === "/" ? undefined : href } });
 		}
-	}, [isAuthenticated, navigate, isInitialLoad, hasWaited]);
+	}, [isAuthenticated, navigate, router, isInitialLoad, hasWaited]);
 
 	return { isAuthenticated };
 }
