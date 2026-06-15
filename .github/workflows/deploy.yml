@@ -38,6 +38,7 @@ jobs:
         uses: aleph-im/web3-hosting-action@v2.0.0
         with:
           path: 'dist'
-          private-key: ${{ secrets.ALEPH_CLOUD_LTAI_CHAT_PROD }}
+          private-key: ${{ secrets.ALEPH_PRIVATE_KEY }}
+          owner-address: ${{ vars.ALEPH_OWNER_ADDRESS }}
           domain: chat.libertai.io
           retention_days: 1
