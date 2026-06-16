@@ -6,10 +6,12 @@ import { Message } from "@/components/Message";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore, useSubscription } from "@libertai/auth";
-import { isChatBlocked, isPaywallError } from "@/utils/paywall";
+import { isChatBlocked, isPaywallError, isAnonLimitError } from "@/utils/paywall";
 import { ChatPaywall } from "@/components/ChatPaywall";
 import { ChatUsageWarning } from "@/components/ChatUsageWarning";
+import { AnonChatNotice } from "@/components/AnonChatNotice";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
+import { useAnonUsage } from "@/hooks/data/use-anon-usage";
 import { resolveChatEndpoint } from "@/utils/chat-endpoint";
 import { useModels } from "@/hooks/data/use-models";
 import { supportsTools } from "@/config/model-capabilities";
@@ -38,6 +40,9 @@ function Chat() {
 	// Blocked is derived solely from the live subscription's `allowed` flag — no optimistic local
 	// flag (that flashed the wall + left a ghost message on a bare 401 for users who aren't blocked).
 	const blocked = isAuthenticated && isChatBlocked(subscription);
+	// Logged-out users get a per-IP free-message limit (enforced by the chat proxy).
+	const { data: anonUsage, refetch: refetchAnonUsage } = useAnonUsage();
+	const anonBlocked = !isAuthenticated && anonUsage?.allowed === false;
 	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
 	const { data: models } = useModels();
 	const [isLoading, setIsLoading] = useState(false);
@@ -101,7 +106,7 @@ function Chat() {
 		// effect re-runs to generate against the connected endpoint.
 		if (isAuthenticated && isChatKeyLoading) return;
 		// Don't auto-fire a doomed request when the subscription says the user is out of allowance.
-		if (blocked) return;
+		if (blocked || anonBlocked) return;
 		if (messages.length > 0 && !isLoading && !isStreaming && isInitialized) {
 			const lastMessage = messages[messages.length - 1];
 			// Only generate response if last message is from user and there's no pending assistant message
@@ -113,7 +118,7 @@ function Chat() {
 				generateAIResponse(forced).then();
 			}
 		}
-	}, [messages.length, isLoading, isStreaming, isInitialized, isAuthenticated, isChatKeyLoading, blocked]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [messages.length, isLoading, isStreaming, isInitialized, isAuthenticated, isChatKeyLoading, blocked, anonBlocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const TOOL_LABELS: Record<string, string> = {
 		web_search: "Searching the web…",
@@ -123,7 +128,7 @@ function Chat() {
 	const generateAIResponse = async (forcedTool?: "web_search" | "generate_image") => {
 		// Single chokepoint for every generation path (auto-fire effect, regenerate, regenerate-from):
 		// a blocked user must never reach the gateway, or they'd get a 401/402 and a ghost message.
-		if (blocked) return;
+		if (blocked || anonBlocked) return;
 		if (isLoading || isStreaming) return;
 		if (messages.length === 0) return;
 		if (messages[messages.length - 1].role !== "user") return;
@@ -278,6 +283,11 @@ function Chat() {
 				if (!accumulated.content && !accumulated.thinking && collectedImages.length === 0) {
 					updateMessage(chatId, assistantMessage.id, "_(stopped)_");
 				}
+			} else if (!isAuthenticated && isAnonLimitError(error)) {
+				// Logged-out user hit the per-IP free limit (proxy 429). Refresh the meter so the
+				// sign-in wall shows + the composer disables, and drop the empty turn (no ghost text).
+				await refetchAnonUsage();
+				deleteMessage(chatId, assistantMessage.id);
 			} else if (isPaywallError(error)) {
 				// A 401/402 only means "out of allowance" if the subscription confirms it. Bare 401s
 				// also come from transient auth/whitelist issues — so re-fetch the subscription and
@@ -314,7 +324,7 @@ function Chat() {
 		images?: ImageData[],
 		forcedTool?: "web_search" | "generate_image",
 	) => {
-		if (blocked) return;
+		if (blocked || anonBlocked) return;
 		if (!value.trim() || isLoading) return;
 		pendingForcedToolRef.current = forcedTool;
 		addMessage(chatId, "user", value.trim(), undefined, images);
@@ -397,11 +407,11 @@ function Chat() {
 			<div className="p-4">
 				<div className="max-w-4xl mx-auto">
 					<div className="max-w-2xl mx-auto">
-						{blocked ? <ChatPaywall /> : <ChatUsageWarning />}
+						{isAuthenticated ? blocked ? <ChatPaywall /> : <ChatUsageWarning /> : <AnonChatNotice />}
 						<ChatInput
 							onSubmit={handleSendMessage}
 							placeholder="Continue private conversation..."
-							disabled={isLoading || blocked}
+							disabled={isLoading || blocked || anonBlocked}
 							assistant={getAssistantOrDefault(chat?.assistantId)}
 							autoFocus
 							isConnected={useConnected}
