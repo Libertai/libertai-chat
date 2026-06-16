@@ -13,6 +13,11 @@ const envSchema = z.object({
 		.string()
 		.startsWith("0x")
 		.default("0x48E5A3e497D0C092D5B0Ba22B5A86ADA94227DFa"),
+	MOBILE_BETA: z
+		.string()
+		.optional()
+		.default("false")
+		.transform((value) => ["1", "true", "yes", "on"].includes(value.toLowerCase())),
 });
 
 const env = envSchema.parse({
@@ -25,5 +30,6 @@ const env = envSchema.parse({
 	THIRDWEB_CLIENT_ID: import.meta.env.VITE_THIRDWEB_CLIENT_ID,
 	USDC_BASE_ADDRESS: import.meta.env.VITE_USDC_BASE_ADDRESS,
 	PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS: import.meta.env.VITE_PAYMENT_PROCESSOR_CONTRACT_BASE_ADDRESS,
+	MOBILE_BETA: import.meta.env.VITE_MOBILE_BETA,
 });
 export default env;

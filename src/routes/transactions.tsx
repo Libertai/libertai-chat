@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { MobileBetaUnavailable } from "@/components/MobileBetaUnavailable";
+import { isMobileBetaApp } from "@/lib/mobile-runtime";
 
 export const Route = createFileRoute("/transactions")({
 	component: Transactions,
@@ -250,6 +252,19 @@ const FilterModal = ({
 };
 
 function Transactions() {
+	if (isMobileBetaApp()) {
+		return (
+			<MobileBetaUnavailable
+				title="Transactions are web-only"
+				description="Credit transaction history is hidden in the mobile beta because purchases and API billing remain on the web."
+			/>
+		);
+	}
+
+	return <TransactionsContent />;
+}
+
+function TransactionsContent() {
 	const [showFilterModal, setShowFilterModal] = useState<boolean>(false);
 	const [filters, setFilters] = useState<FilterState>({
 		statuses: [],

@@ -1,5 +1,6 @@
 import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Globe, Paperclip, Plus, Sparkles, Square, X } from "lucide-react";
+import { ArrowUp, Camera, FileImage, Globe, Images, Mic, Paperclip, Plus, Sparkles, Square, X } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -14,6 +15,15 @@ import { ImageData } from "@/types/chats";
 import { supportsImages, supportsTools } from "@/config/model-capabilities";
 import { useModels } from "@/hooks/data/use-models";
 import { isMobileDevice } from "@/lib/utils";
+import {
+	getNativeErrorMessage,
+	isUserCancelledNativePicker,
+	pickMobileCameraImage,
+	pickMobileImageFile,
+	startMobileSpeechRecognition,
+	type MobileImageSource,
+} from "@/lib/mobile-media";
+import { isMobileBetaApp } from "@/lib/mobile-runtime";
 import type { Assistant } from "@/stores/assistant";
 import type React from "react";
 
@@ -50,8 +60,10 @@ export function ChatInput({
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [value, setValue] = useState("");
 	const [images, setImages] = useState<ImageData[]>([]);
+	const [isListening, setIsListening] = useState(false);
 
 	const hasContent = value.trim().length > 0;
+	const mobileBeta = isMobileBetaApp();
 	const { data: models } = useModels();
 	const modelSupportsImages = useMemo(() => supportsImages(assistant.model, models ?? []), [assistant, models]);
 	const modelSupportsTools = useMemo(() => supportsTools(assistant.model, models ?? []), [assistant, models]);
@@ -108,6 +120,50 @@ export function ChatInput({
 		// Reset input
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
+		}
+	};
+
+	const handleNativeImage = async (source: MobileImageSource) => {
+		try {
+			const image = await pickMobileCameraImage(source);
+			setImages((prev) => [...prev, image]);
+		} catch (error) {
+			if (!isUserCancelledNativePicker(error)) {
+				toast.error(getNativeErrorMessage(error, "Unable to add image."));
+			}
+		}
+	};
+
+	const handleNativeFile = async () => {
+		try {
+			const image = await pickMobileImageFile();
+			setImages((prev) => [...prev, image]);
+		} catch (error) {
+			if (!isUserCancelledNativePicker(error)) {
+				toast.error(getNativeErrorMessage(error, "Unable to add file."));
+			}
+		}
+	};
+
+	const handleVoiceInput = async () => {
+		if (disabled || isSubmitting || isListening) return;
+
+		setIsListening(true);
+		try {
+			const transcript = await startMobileSpeechRecognition();
+			if (!transcript) {
+				toast.info("No speech detected.");
+				return;
+			}
+
+			setValue((prev) => {
+				const separator = prev.trim().length > 0 ? " " : "";
+				return `${prev.trimEnd()}${separator}${transcript}`;
+			});
+		} catch (error) {
+			toast.error(getNativeErrorMessage(error, "Unable to start voice input."));
+		} finally {
+			setIsListening(false);
 		}
 	};
 
@@ -209,11 +265,27 @@ export function ChatInput({
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="start">
-									{modelSupportsImages && (
+									{modelSupportsImages && !mobileBeta && (
 										<DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
 											<Paperclip className="mr-2 h-4 w-4" />
 											<span>Add photos & files</span>
 										</DropdownMenuItem>
+									)}
+									{modelSupportsImages && mobileBeta && (
+										<>
+											<DropdownMenuItem onClick={() => void handleNativeImage("camera")}>
+												<Camera className="mr-2 h-4 w-4" />
+												<span>Take photo</span>
+											</DropdownMenuItem>
+											<DropdownMenuItem onClick={() => void handleNativeImage("photos")}>
+												<Images className="mr-2 h-4 w-4" />
+												<span>Choose photo</span>
+											</DropdownMenuItem>
+											<DropdownMenuItem onClick={() => void handleNativeFile()}>
+												<FileImage className="mr-2 h-4 w-4" />
+												<span>Add image file</span>
+											</DropdownMenuItem>
+										</>
 									)}
 									{modelSupportsTools && (
 										<>
@@ -257,26 +329,40 @@ export function ChatInput({
 						</span>
 					)}
 				</div>
-				{isGenerating ? (
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={onStop}
-						className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
-					>
-						<Square className="h-4 w-4" />
-					</Button>
-				) : (
-					<Button
-						variant="ghost"
-						size="icon"
-						disabled={!hasContent || disabled || isSubmitting}
-						onClick={handleSubmit}
-						className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
-					>
-						<ArrowUp className="h-4 w-4" />
-					</Button>
-				)}
+				<div className="flex items-center gap-2">
+					{mobileBeta && (
+						<Button
+							variant="ghost"
+							size="icon"
+							disabled={disabled || isSubmitting || isListening}
+							onClick={() => void handleVoiceInput()}
+							className="h-8 w-8 rounded-full border border-card dark:border-hover text-foreground"
+							aria-label="Voice input"
+						>
+							<Mic className={isListening ? "h-4 w-4 animate-pulse text-primary" : "h-4 w-4"} />
+						</Button>
+					)}
+					{isGenerating ? (
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={onStop}
+							className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
+						>
+							<Square className="h-4 w-4" />
+						</Button>
+					) : (
+						<Button
+							variant="ghost"
+							size="icon"
+							disabled={!hasContent || disabled || isSubmitting}
+							onClick={handleSubmit}
+							className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
+						>
+							<ArrowUp className="h-4 w-4" />
+						</Button>
+					)}
+				</div>
 			</div>
 		</div>
 	);

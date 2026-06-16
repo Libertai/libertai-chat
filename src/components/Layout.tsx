@@ -6,6 +6,7 @@ import { ClawIcon } from "@/components/ClawIcon";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
 import { ChatSearch } from "@/components/ChatSearch";
+import { MobileShareButton } from "@/components/MobileShareButton";
 import {
 	Sidebar,
 	SidebarContent,
@@ -17,6 +18,7 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { LibertaiLogo } from "@libertai/branding";
+import { isMobileBetaApp } from "@/lib/mobile-runtime";
 
 // Helper function to read sidebar state from cookie
 function getSidebarStateFromCookie(): boolean {
@@ -69,6 +71,7 @@ function SidebarNewConversationLink() {
 // Products section in the sidebar
 function SidebarProducts() {
 	const { isMobile, setOpenMobile } = useSidebar();
+	const mobileBeta = isMobileBetaApp();
 	const closeOnMobile = () => {
 		if (isMobile) setOpenMobile(false);
 	};
@@ -82,26 +85,30 @@ function SidebarProducts() {
 					<ImageIcon className="h-4 w-4" />
 					Images
 				</Link>
-				<a
-					href="https://console.libertai.io"
-					target="_blank"
-					rel="noopener noreferrer"
-					onClick={closeOnMobile}
-					className={itemClass}
-				>
-					<SquareTerminal className="h-4 w-4" />
-					Console
-				</a>
-				<a
-					href="https://liberclaw.ai"
-					target="_blank"
-					rel="noopener noreferrer"
-					onClick={closeOnMobile}
-					className={itemClass}
-				>
-					<ClawIcon className="h-4 w-4" />
-					LiberClaw
-				</a>
+				{!mobileBeta && (
+					<>
+						<a
+							href="https://console.libertai.io"
+							target="_blank"
+							rel="noopener noreferrer"
+							onClick={closeOnMobile}
+							className={itemClass}
+						>
+							<SquareTerminal className="h-4 w-4" />
+							Console
+						</a>
+						<a
+							href="https://liberclaw.ai"
+							target="_blank"
+							rel="noopener noreferrer"
+							onClick={closeOnMobile}
+							className={itemClass}
+						>
+							<ClawIcon className="h-4 w-4" />
+							LiberClaw
+						</a>
+					</>
+				)}
 			</div>
 		</div>
 	);
@@ -124,6 +131,7 @@ function DesktopHeader() {
 		>
 			<SidebarTrigger />
 			<div className="flex items-center gap-4">
+				<MobileShareButton />
 				<ConnectButton />
 			</div>
 		</header>
@@ -146,6 +154,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 						<LibertaiLogo className="h-4 w-auto text-foreground" />
 					</Link>
 					<div className="flex items-center gap-2">
+						<MobileShareButton />
 						<ConnectButton />
 					</div>
 				</header>

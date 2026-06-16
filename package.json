@@ -14,9 +14,17 @@
     "format": "prettier --write '**/*.{ts,tsx}'"
   },
   "dependencies": {
+    "@aparajita/capacitor-biometric-auth": "^9.1.2",
+    "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/android": "^7.4.4",
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/camera": "^7.0.5",
     "@capacitor/core": "^7.4.4",
     "@capacitor/ios": "^7.4.4",
+    "@capacitor/preferences": "^7.0.4",
+    "@capacitor/push-notifications": "^7.0.6",
+    "@capacitor/share": "^7.0.4",
+    "@capawesome/capacitor-file-picker": "^7.2.0",
     "@coral-xyz/anchor": "^0.31.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",

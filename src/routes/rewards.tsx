@@ -6,12 +6,27 @@ import { formatAddress } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink } from "lucide-react";
+import { MobileBetaUnavailable } from "@/components/MobileBetaUnavailable";
+import { isMobileBetaApp } from "@/lib/mobile-runtime";
 
 export const Route = createFileRoute("/rewards")({
 	component: Rewards,
 });
 
 function Rewards() {
+	if (isMobileBetaApp()) {
+		return (
+			<MobileBetaUnavailable
+				title="Rewards are web-only"
+				description="LTAI reward and token purchase flows are not part of the mobile beta. Use the web app for wallet and token actions."
+			/>
+		);
+	}
+
+	return <RewardsContent />;
+}
+
+function RewardsContent() {
 	const account = useAccountStore((state) => state.account);
 	const ltaiBalance = useAccountStore((state) => state.ltaiBalance);
 	const { pendingTokens, estimated3YrTokens, isLoading } = useRewards();
