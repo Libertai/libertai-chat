@@ -9,6 +9,7 @@
     "build:mobile": "pnpm build && npx cap sync && npx capacitor-assets generate",
     "preview": "vite preview",
     "test": "vitest run",
+    "e2e": "playwright test",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write '**/*.{ts,tsx}'"
@@ -63,6 +64,7 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^7.4.4",
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.61.0",
     "@tanstack/router-plugin": "^1.157.16",
     "@types/node": "^24.10.9",
     "@types/react": "^19.2.10",
