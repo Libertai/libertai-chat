@@ -10,14 +10,15 @@ export default defineConfig({
 	reporter: [["list"], ["json", { outputFile: "test-results/results.json" }]],
 	outputDir: "test-results/artifacts",
 	use: {
-		baseURL: "http://localhost:5173",
+		// Dedicated port: 5173 is often taken by sibling apps (e.g. libertai-console).
+		baseURL: "http://localhost:5273",
 		screenshot: "only-on-failure",
 		trace: "retain-on-failure",
 		viewport: { width: 1440, height: 900 },
 	},
 	webServer: {
-		command: "pnpm dev",
-		url: "http://localhost:5173",
+		command: "pnpm dev --port 5273 --strictPort",
+		url: "http://localhost:5273",
 		reuseExistingServer: true,
 		timeout: 120_000,
 	},
