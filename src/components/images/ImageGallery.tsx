@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useAccountStore } from "@libertai/auth";
+import { useAccountStore, useSubscription } from "@libertai/auth";
 import { Button } from "@/components/ui/button";
 import { useImageStore, GeneratedImage } from "@/stores/image";
 import { ImageCard } from "./ImageCard";
@@ -9,6 +9,9 @@ import { ImagePreviewDialog } from "./ImagePreviewDialog";
 import { Input } from "@/components/ui/input";
 import { Search, ImageIcon, LogIn } from "lucide-react";
 import { toast } from "sonner";
+import { isChatBlocked } from "@/utils/paywall";
+import { ChatPaywall } from "@/components/ChatPaywall";
+import { ChatUsageWarning } from "@/components/ChatUsageWarning";
 
 export interface ImageSettings {
 	prompt: string;
@@ -23,6 +26,10 @@ export function ImageGallery() {
 	// Image generation uses the (free) chat API key, just like chat — so it works for ANY authenticated
 	// session, including email/OAuth users who have no wallet `account`. Gate on the session, not a wallet.
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
+	// Image generation shares the chat allowance windows, so mirror the chat gating: soft warning
+	// at 80%, hard paywall at 100% (out of allowance + prepaid).
+	const { data: subscription } = useSubscription();
+	const blocked = isAuthenticated && isChatBlocked(subscription);
 	const navigate = useNavigate();
 	const images = useImageStore((state) => state.images);
 	const deleteImage = useImageStore((state) => state.deleteImage);
@@ -68,10 +75,14 @@ export function ImageGallery() {
 				{/* Generation Form Card */}
 				<div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border p-5 md:p-6 relative">
 					{isConnected ? (
-						<ImageGenerationForm
-							key={formSettings ? JSON.stringify(formSettings) : "default"}
-							initialSettings={formSettings ?? undefined}
-						/>
+						<>
+							{blocked ? <ChatPaywall /> : <ChatUsageWarning />}
+							<ImageGenerationForm
+								key={formSettings ? JSON.stringify(formSettings) : "default"}
+								initialSettings={formSettings ?? undefined}
+								disabled={blocked}
+							/>
+						</>
 					) : (
 						<div className="flex items-center justify-center py-8">
 							<div className="text-center p-6">

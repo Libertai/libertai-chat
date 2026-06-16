@@ -23,6 +23,8 @@ const DEFAULT_MODEL = "z-image-turbo";
 interface ImageGenerationFormProps {
 	initialSettings?: ImageSettings;
 	onGenerated?: (image: GeneratedImage) => void;
+	/** Out of allowance (+ no prepaid) — block generation; the paywall above explains why. */
+	disabled?: boolean;
 }
 
 function findSizePresetIndex(width: number, height: number): number {
@@ -30,7 +32,7 @@ function findSizePresetIndex(width: number, height: number): number {
 	return index >= 0 ? index : 0;
 }
 
-export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGenerationFormProps) {
+export function ImageGenerationForm({ initialSettings, onGenerated, disabled = false }: ImageGenerationFormProps) {
 	const [prompt, setPrompt] = useState(initialSettings?.prompt ?? "");
 	const [sizePreset, setSizePreset] = useState(
 		initialSettings ? findSizePresetIndex(initialSettings.width, initialSettings.height) : 0,
@@ -46,7 +48,7 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 	const imageCount = Object.keys(images).length;
 
 	const handleGenerate = async () => {
-		if (!prompt.trim() || isGenerating) return;
+		if (!prompt.trim() || isGenerating || disabled) return;
 
 		if (imageCount >= MAX_IMAGES) {
 			toast.error(`Image limit reached (${MAX_IMAGES})`, {
@@ -140,7 +142,7 @@ export function ImageGenerationForm({ initialSettings, onGenerated }: ImageGener
 					<Button
 						size="icon"
 						className="h-8 w-8 rounded-full shrink-0"
-						disabled={isGenerating || !prompt.trim()}
+						disabled={isGenerating || !prompt.trim() || disabled}
 						onClick={handleGenerate}
 					>
 						{isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
