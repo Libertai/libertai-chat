@@ -18,3 +18,10 @@ export function isPaywallError(error: unknown): boolean {
 	const status = e.status ?? e.response?.status;
 	return status === 401 || status === 402;
 }
+
+/** A 429 from the anonymous chat proxy — the logged-out free message limit is exhausted. */
+export function isAnonLimitError(error: unknown): boolean {
+	if (!error || typeof error !== "object") return false;
+	const e = error as { status?: number; response?: { status?: number } };
+	return (e.status ?? e.response?.status) === 429;
+}
