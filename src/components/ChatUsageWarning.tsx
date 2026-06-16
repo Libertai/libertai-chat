@@ -62,7 +62,7 @@ export function ChatUsageWarning() {
 			</div>
 			<div className="mt-3">
 				<AllowanceBar
-					label={binding.name}
+					label={binding.name.charAt(0).toUpperCase() + binding.name.slice(1)}
 					used={binding.used}
 					limit={binding.limit}
 					resetsAt={binding.resetsAt}
@@ -70,7 +70,7 @@ export function ChatUsageWarning() {
 				/>
 			</div>
 			<p className="mt-2 text-xs text-muted-foreground">
-				Once it's used up, messages draw from your prepaid credits — or pause until the window resets.
+				Once it's used up, messages draw from your prepaid credits, or pause until the window resets.
 			</p>
 			<div className="mt-3 flex gap-2">
 				<Button size="sm" onClick={() => navigate({ to: "/plans" })}>
