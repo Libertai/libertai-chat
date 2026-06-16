@@ -8,6 +8,7 @@ import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore, useSubscription } from "@libertai/auth";
 import { isChatBlocked, isPaywallError } from "@/utils/paywall";
 import { ChatPaywall } from "@/components/ChatPaywall";
+import { ChatUsageWarning } from "@/components/ChatUsageWarning";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { resolveChatEndpoint } from "@/utils/chat-endpoint";
 import { useModels } from "@/hooks/data/use-models";
@@ -396,7 +397,7 @@ function Chat() {
 			<div className="p-4">
 				<div className="max-w-4xl mx-auto">
 					<div className="max-w-2xl mx-auto">
-						{blocked && <ChatPaywall />}
+						{blocked ? <ChatPaywall /> : <ChatUsageWarning />}
 						<ChatInput
 							onSubmit={handleSendMessage}
 							placeholder="Continue private conversation..."
