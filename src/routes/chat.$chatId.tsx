@@ -13,7 +13,7 @@ import { supportsTools, resolveChatModel } from "@/config/model-capabilities";
 import { buildRequestMessages } from "@/utils/build-request-messages";
 import { ToolCallAccumulator } from "@/utils/tool-call-accumulator";
 import { TOOL_DEFINITIONS, executeWebSearch, executeGenerateImage } from "@/utils/chat-tools";
-import type { GenerateImageArgs } from "@/utils/chat-tools";
+import type { GenerateImageArgs, SearchType } from "@/utils/chat-tools";
 import { consumePendingForcedTool } from "@/utils/pending-forced-tool";
 import env from "@/config/env";
 import OpenAI from "openai";
@@ -38,6 +38,7 @@ function Chat() {
 	const [isStreaming, setIsStreaming] = useState(false);
 	const [toolStatus, setToolStatus] = useState<string | null>(null);
 	const pendingForcedToolRef = useRef<"web_search" | "generate_image" | undefined>(undefined);
+	const pendingSearchTypeRef = useRef<SearchType | undefined>(undefined);
 	const abortRef = useRef<AbortController | null>(null);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -101,11 +102,18 @@ function Chat() {
 			const lastMessage = messages[messages.length - 1];
 			// Only generate response if last message is from user and there's no pending assistant message
 			if (lastMessage.role === "user") {
-				// In-conversation force lives on the ref; a force chosen on the home input before this
+				// In-conversation force lives on the refs; a force chosen on the home input before this
 				// chat existed is handed off by chat id and consumed here for the first response.
-				const forced = pendingForcedToolRef.current ?? consumePendingForcedTool(chatId);
+				let forced = pendingForcedToolRef.current;
+				let searchType = pendingSearchTypeRef.current;
+				if (forced === undefined) {
+					const handoff = consumePendingForcedTool(chatId);
+					forced = handoff?.tool;
+					searchType = handoff?.searchType;
+				}
 				pendingForcedToolRef.current = undefined;
-				generateAIResponse(forced).then();
+				pendingSearchTypeRef.current = undefined;
+				generateAIResponse(forced, searchType).then();
 			}
 		}
 	}, [messages.length, isLoading, isStreaming, isInitialized, isAuthenticated, isChatKeyLoading]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -115,7 +123,7 @@ function Chat() {
 		generate_image: "Generating image…",
 	};
 
-	const generateAIResponse = async (forcedTool?: "web_search" | "generate_image") => {
+	const generateAIResponse = async (forcedTool?: "web_search" | "generate_image", searchType?: SearchType) => {
 		if (isLoading || isStreaming) return;
 		if (messages.length === 0) return;
 		if (messages[messages.length - 1].role !== "user") return;
@@ -209,6 +217,7 @@ function Chat() {
 					const opts = {
 						connectedApiUrl: env.LTAI_CONNECTED_API_URL,
 						chatApiKey: chatApiKey ?? "",
+						searchType,
 						signal: controller.signal,
 					};
 
@@ -272,9 +281,11 @@ function Chat() {
 		value: string,
 		images?: ImageData[],
 		forcedTool?: "web_search" | "generate_image",
+		searchType?: SearchType,
 	) => {
 		if (!value.trim() || isLoading) return;
 		pendingForcedToolRef.current = forcedTool;
+		pendingSearchTypeRef.current = searchType;
 		addMessage(chatId, "user", value.trim(), undefined, images);
 	};
 

@@ -6,6 +6,7 @@ import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { setPendingForcedTool } from "@/utils/pending-forced-tool";
+import type { SearchType } from "@/utils/chat-tools";
 import type { ImageData } from "@/types/chats";
 
 export const Route = createFileRoute("/")({
@@ -23,7 +24,12 @@ function Index() {
 	const [hasContent, setHasContent] = useState(false);
 	const shouldShowCentered = isFocused || hasContent;
 
-	const handleSubmit = (value: string, images?: ImageData[], forcedTool?: "web_search" | "generate_image") => {
+	const handleSubmit = (
+		value: string,
+		images?: ImageData[],
+		forcedTool?: "web_search" | "generate_image",
+		searchType?: SearchType,
+	) => {
 		if (!value.trim() || isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -35,9 +41,10 @@ function Index() {
 		// Create chat with the first message and images
 		createChat(chatId, firstMessage, selectedAssistant, images);
 
-		// Carry a forced tool across navigation so the new chat's first response honors it
+		// Carry a forced tool (and its search mode) across navigation so the new chat's first
+		// response honors it.
 		if (forcedTool) {
-			setPendingForcedTool(chatId, forcedTool);
+			setPendingForcedTool(chatId, forcedTool, searchType);
 		}
 
 		// Small delay to show the animation before navigating

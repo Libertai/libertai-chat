@@ -1,6 +1,14 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import type OpenAI from "openai";
-import { formatSearchResults, executeWebSearch, executeGenerateImage, TOOL_DEFINITIONS } from "@/utils/chat-tools";
+import {
+	formatSearchResults,
+	executeWebSearch,
+	executeGenerateImage,
+	TOOL_DEFINITIONS,
+	SEARCH_TYPES,
+	DEFAULT_SEARCH_TYPE,
+} from "@/utils/chat-tools";
+import type { SearchType } from "@/utils/chat-tools";
 
 const OPTS = { connectedApiUrl: "https://api.libertai.io", chatApiKey: "sk-chat-1" };
 
@@ -57,6 +65,28 @@ describe("executeWebSearch", () => {
 		expect(body.engines).toEqual(["google", "bing", "duckduckgo"]);
 		expect(out.sources[0].title).toBe("A");
 	});
+
+	it("defaults search_type to 'web' when none is supplied", () => {
+		expect(DEFAULT_SEARCH_TYPE).toBe("web");
+	});
+
+	it("exposes exactly the backend-supported search modes", () => {
+		expect([...SEARCH_TYPES].sort()).toEqual(["academic", "images", "news", "web"]);
+	});
+
+	it.each<SearchType>(["web", "news", "academic", "images"])(
+		"passes the chosen search_type=%s through to the request body",
+		async (searchType) => {
+			const fetchMock = vi
+				.spyOn(global, "fetch")
+				.mockResolvedValue(new Response(JSON.stringify({ results: [] }), { status: 200 }));
+
+			await executeWebSearch("rust", { ...OPTS, searchType });
+
+			const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+			expect(body.search_type).toBe(searchType);
+		},
+	);
 
 	it("returns an error toolText (no throw) on HTTP failure", async () => {
 		vi.spyOn(global, "fetch").mockResolvedValue(new Response("boom", { status: 500 }));

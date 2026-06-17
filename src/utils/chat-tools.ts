@@ -3,10 +3,19 @@ import type { ImageData, SearchSource } from "@/types/chats";
 
 export type ToolName = "web_search" | "generate_image";
 
+/** Backend-supported web-search modes (search-service `SearchType`, serialized lowercase). */
+export type SearchType = "web" | "news" | "academic" | "images";
+
+export const SEARCH_TYPES: SearchType[] = ["web", "news", "academic", "images"];
+
+export const DEFAULT_SEARCH_TYPE: SearchType = "web";
+
 export interface ToolExecOptions {
 	/** Connected API base WITHOUT trailing /v1, e.g. https://api.libertai.io */
 	connectedApiUrl: string;
 	chatApiKey: string;
+	/** Which search mode to request from the /search endpoint. Defaults to "web". */
+	searchType?: SearchType;
 	signal?: AbortSignal;
 }
 
@@ -69,7 +78,7 @@ export async function executeWebSearch(
 				query,
 				engines: ["google", "bing", "duckduckgo"],
 				max_results: 5,
-				search_type: "web",
+				search_type: opts.searchType ?? DEFAULT_SEARCH_TYPE,
 			}),
 			signal: opts.signal,
 		});

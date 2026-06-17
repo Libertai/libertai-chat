@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ImageData } from "@/types/chats";
+import { DEFAULT_SEARCH_TYPE, SEARCH_TYPES, type SearchType } from "@/utils/chat-tools";
 import { supportsImages, supportsTools, resolveChatModel } from "@/config/model-capabilities";
 import { useModels } from "@/hooks/data/use-models";
 import { isMobileDevice } from "@/lib/utils";
@@ -18,8 +19,20 @@ import { ModelPicker } from "@/components/ModelPicker";
 import type { Assistant } from "@/stores/assistant";
 import type React from "react";
 
+const SEARCH_TYPE_LABELS: Record<SearchType, string> = {
+	web: "Web",
+	news: "News",
+	academic: "Academic",
+	images: "Images",
+};
+
 interface ChatInputProps {
-	onSubmit: (value: string, images?: ImageData[], forcedTool?: "web_search" | "generate_image") => void;
+	onSubmit: (
+		value: string,
+		images?: ImageData[],
+		forcedTool?: "web_search" | "generate_image",
+		searchType?: SearchType,
+	) => void;
 	onChange?: (hasContent: boolean) => void;
 	onFocus?: () => void;
 	onBlur?: (e: FocusEvent<HTMLTextAreaElement>) => void;
@@ -65,6 +78,7 @@ export function ChatInput({
 	const modelSupportsImages = useMemo(() => supportsImages(effectiveModel, models ?? []), [effectiveModel, models]);
 	const modelSupportsTools = useMemo(() => supportsTools(effectiveModel, models ?? []), [effectiveModel, models]);
 	const [forcedTool, setForcedTool] = useState<"web_search" | "generate_image" | null>(null);
+	const [searchType, setSearchType] = useState<SearchType>(DEFAULT_SEARCH_TYPE);
 
 	// Clear a stale forced tool if the user switches to a model that can't use tools.
 	useEffect(() => {
@@ -126,10 +140,16 @@ export function ChatInput({
 
 	const handleSubmit = () => {
 		if (!hasContent || disabled || isSubmitting) return;
-		onSubmit(value, modelSupportsImages && images.length > 0 ? images : undefined, forcedTool ?? undefined);
+		onSubmit(
+			value,
+			modelSupportsImages && images.length > 0 ? images : undefined,
+			forcedTool ?? undefined,
+			forcedTool === "web_search" ? searchType : undefined,
+		);
 		setValue("");
 		setImages([]);
 		setForcedTool(null);
+		setSearchType(DEFAULT_SEARCH_TYPE);
 	};
 
 	const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -268,6 +288,35 @@ export function ChatInput({
 								<X className="h-3 w-3" />
 							</button>
 						</span>
+					)}
+					{forcedTool === "web_search" && (
+						<div
+							role="radiogroup"
+							aria-label="Search type"
+							className="inline-flex items-center gap-0.5 rounded-full border border-card dark:border-hover p-0.5"
+						>
+							{SEARCH_TYPES.map((type) => {
+								const active = searchType === type;
+								return (
+									<button
+										key={type}
+										type="button"
+										role="radio"
+										aria-checked={active}
+										data-search-type={type}
+										onMouseDown={(e) => e.preventDefault()}
+										onClick={() => setSearchType(type)}
+										className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+											active
+												? "bg-primary text-white"
+												: "text-muted-foreground hover:bg-hover hover:text-foreground"
+										}`}
+									>
+										{SEARCH_TYPE_LABELS[type]}
+									</button>
+								);
+							})}
+						</div>
 					)}
 				</div>
 				{isGenerating ? (

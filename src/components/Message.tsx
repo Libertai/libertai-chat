@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Children, cloneElement, isValidElement, useEffect, useState, type ReactElement, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -11,6 +11,7 @@ import { MessageEditInput } from "@/components/MessageEditInput";
 import { CodeBlock } from "@/components/CodeBlock";
 import { useReadAloud } from "@/hooks/use-read-aloud";
 import { extractLanguageFromClassName, hastText, normalizeCodeSource } from "@/utils/markdown";
+import { citationAnchorId, parseCitations } from "@/utils/citations";
 import type { Message as MessageType } from "@/types/chats";
 
 function faviconDomain(url: string): string {
@@ -47,6 +48,59 @@ export function Message({
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedContent, setEditedContent] = useState(message.content);
 	const { isPlaying, isPreparing, toggle: toggleReadAloud } = useReadAloud();
+
+	const sourceCount = message.role === "assistant" && message.sources ? message.sources.length : 0;
+
+	// Clicking an inline [n] marker opens the sources panel and scrolls the matching entry into
+	// view. The panel mounts on expand, so defer the scroll until after it has rendered.
+	const handleCitationClick = (n: number) => {
+		setIsSourcesExpanded(true);
+		const id = citationAnchorId(message.id, n);
+		requestAnimationFrame(() => {
+			const el = document.getElementById(id);
+			el?.scrollIntoView({ behavior: "smooth", block: "center" });
+			el?.classList.add("citation-flash");
+			window.setTimeout(() => el?.classList.remove("citation-flash"), 1200);
+		});
+	};
+
+	// Walk react-markdown's rendered children and turn `[n]` markers in string nodes into
+	// clickable citation anchors. Recurses into nested element children (e.g. bold/links) so a
+	// marker inside emphasis still becomes clickable; never touches non-string leaves we can't parse.
+	const renderWithCitations = (children: ReactNode): ReactNode => {
+		if (sourceCount <= 0) return children;
+		return Children.map(children, (child) => {
+			if (typeof child === "string") {
+				const segments = parseCitations(child, sourceCount);
+				if (segments.length === 1 && segments[0].type === "text") return child;
+				return segments.map((seg, i) =>
+					seg.type === "text" ? (
+						seg.value
+					) : (
+						<a
+							key={`cite-${i}-${seg.n}`}
+							href={`#${citationAnchorId(message.id, seg.n)}`}
+							data-citation={seg.n}
+							onClick={(e) => {
+								e.preventDefault();
+								handleCitationClick(seg.n);
+							}}
+							className="citation-marker cursor-pointer align-baseline text-primary font-medium no-underline hover:underline"
+						>
+							[{seg.n}]
+						</a>
+					),
+				);
+			}
+			if (isValidElement(child)) {
+				const el = child as ReactElement<{ children?: ReactNode }>;
+				if (el.props && "children" in el.props) {
+					return cloneElement(el, undefined, renderWithCitations(el.props.children));
+				}
+			}
+			return child;
+		});
+	};
 
 	useEffect(() => {
 		const hasOnlyThinking = message.role === "assistant" && message.thinking && !message.content;
@@ -170,12 +224,12 @@ export function Message({
 								remarkPlugins={[remarkGfm, remarkMath]}
 								rehypePlugins={[rehypeKatex]}
 								components={{
-									h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
-									h2: ({ children }) => <h2 className="text-base font-bold mb-2">{children}</h2>,
-									h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{children}</h3>,
-									p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-									strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-									em: ({ children }) => <em className="italic">{children}</em>,
+									h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{renderWithCitations(children)}</h1>,
+									h2: ({ children }) => <h2 className="text-base font-bold mb-2">{renderWithCitations(children)}</h2>,
+									h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{renderWithCitations(children)}</h3>,
+									p: ({ children }) => <p className="mb-2 last:mb-0">{renderWithCitations(children)}</p>,
+									strong: ({ children }) => <strong className="font-bold">{renderWithCitations(children)}</strong>,
+									em: ({ children }) => <em className="italic">{renderWithCitations(children)}</em>,
 									del: ({ children }) => <del className="line-through opacity-70">{children}</del>,
 									a: ({ children, href }) => (
 										<a
@@ -210,7 +264,9 @@ export function Message({
 									},
 									ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
 									ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-									li: ({ children }) => <li className="text-sm [&>p]:inline [&>p]:m-0">{children}</li>,
+									li: ({ children }) => (
+										<li className="text-sm [&>p]:inline [&>p]:m-0">{renderWithCitations(children)}</li>
+									),
 									input: ({ checked, type }) =>
 										type === "checkbox" ? (
 											<input
@@ -229,9 +285,13 @@ export function Message({
 									th: ({ children }) => (
 										<th className="border border-border px-3 py-1.5 text-left font-semibold">{children}</th>
 									),
-									td: ({ children }) => <td className="border border-border px-3 py-1.5">{children}</td>,
+									td: ({ children }) => (
+										<td className="border border-border px-3 py-1.5">{renderWithCitations(children)}</td>
+									),
 									blockquote: ({ children }) => (
-										<blockquote className="border-l-2 border-primary/50 pl-3 italic">{children}</blockquote>
+										<blockquote className="border-l-2 border-primary/50 pl-3 italic">
+											{renderWithCitations(children)}
+										</blockquote>
 									),
 								}}
 							>
@@ -258,14 +318,18 @@ export function Message({
 							</button>
 							{isSourcesExpanded && (
 								<div className="mt-2 space-y-2">
-									{message.sources.map((s) => (
+									{message.sources.map((s, index) => (
 										<a
 											key={s.url}
+											id={citationAnchorId(message.id, index + 1)}
 											href={s.url}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="flex items-start gap-2 px-3 py-2 rounded-lg hover:bg-muted/20 transition-colors"
+											className="flex items-start gap-2 px-3 py-2 rounded-lg hover:bg-muted/20 transition-colors scroll-mt-4 [&.citation-flash]:bg-primary/10 [&.citation-flash]:ring-1 [&.citation-flash]:ring-primary/40"
 										>
+											<span className="mt-0.5 flex h-4 w-4 flex-none items-center justify-center rounded bg-primary/15 text-tiny font-semibold text-primary">
+												{index + 1}
+											</span>
 											<img
 												src={`https://www.google.com/s2/favicons?domain=${faviconDomain(s.url)}&sz=32`}
 												alt=""
