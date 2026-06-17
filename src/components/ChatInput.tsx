@@ -1,5 +1,16 @@
-import { ChangeEvent, FocusEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Globe, Paperclip, Plus, Sparkles, Square, X } from "lucide-react";
+import {
+	ChangeEvent,
+	ClipboardEvent,
+	DragEvent,
+	FocusEvent,
+	FormEvent,
+	KeyboardEvent,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import { ArrowUp, FileText, Globe, Loader2, Paperclip, Plus, Sparkles, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -10,12 +21,14 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ImageData } from "@/types/chats";
+import { ImageData, FileAttachment } from "@/types/chats";
 import { DEFAULT_SEARCH_TYPE, SEARCH_TYPES, type SearchType } from "@/utils/chat-tools";
 import { supportsImages, supportsTools, resolveChatModel } from "@/config/model-capabilities";
 import { useModels } from "@/hooks/data/use-models";
 import { isMobileDevice } from "@/lib/utils";
 import { ModelPicker } from "@/components/ModelPicker";
+import { extractFile, isImageFile, classifyFile, IMAGE_ACCEPT, FILE_ACCEPT } from "@/utils/file-extract";
+import { toast } from "sonner";
 import type { Assistant } from "@/stores/assistant";
 import type React from "react";
 
@@ -32,6 +45,7 @@ interface ChatInputProps {
 		images?: ImageData[],
 		forcedTool?: "web_search" | "generate_image",
 		searchType?: SearchType,
+		attachments?: FileAttachment[],
 	) => void;
 	onChange?: (hasContent: boolean) => void;
 	onFocus?: () => void;
@@ -70,6 +84,10 @@ export function ChatInput({
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [value, setValue] = useState("");
 	const [images, setImages] = useState<ImageData[]>([]);
+	const [attachments, setAttachments] = useState<FileAttachment[]>([]);
+	// Count of files currently being read/parsed client-side (PDF/CSV/text). Blocks send until 0.
+	const [extracting, setExtracting] = useState(0);
+	const [isDragging, setIsDragging] = useState(false);
 
 	const hasContent = value.trim().length > 0;
 	const { data: models } = useModels();
@@ -108,46 +126,108 @@ export function ChatInput({
 		}
 	}, [disabled, autoFocus]);
 
-	const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
-		const files = e.target.files;
-		if (!files || files.length === 0) return;
-
-		const file = files[0];
+	// Read an image file into an inline base64 ImageData (only for vision-capable models).
+	const addImage = (file: File) => {
 		const reader = new FileReader();
-
 		reader.onload = () => {
 			const base64 = reader.result as string;
-			const newImage: ImageData = {
-				data: base64,
-				mimeType: file.type,
-				filename: file.name,
-			};
-
-			setImages((prev) => [...prev, newImage]);
+			setImages((prev) => [...prev, { data: base64, mimeType: file.type, filename: file.name }]);
 		};
-
 		reader.readAsDataURL(file);
+	};
 
-		// Reset input
-		if (fileInputRef.current) {
-			fileInputRef.current.value = "";
+	// Extract a non-image file (PDF/CSV/text) to a labelled text attachment, fully client-side.
+	const addAttachment = async (file: File) => {
+		setExtracting((n) => n + 1);
+		try {
+			const attachment = await extractFile(file);
+			if (attachment) setAttachments((prev) => [...prev, attachment]);
+		} catch (err) {
+			toast.error(err instanceof Error ? err.message : `Could not read ${file.name}.`);
+		} finally {
+			setExtracting((n) => n - 1);
 		}
+	};
+
+	// Route a batch of incoming files (picker / drop / paste) to the right pipeline. Images go to the
+	// vision path only when the model supports them; everything else is text-extracted. Unsupported
+	// files are reported once.
+	const handleFiles = (files: FileList | File[]) => {
+		const list = Array.from(files);
+		if (list.length === 0) return;
+		const rejected: string[] = [];
+		for (const file of list) {
+			if (isImageFile(file)) {
+				if (modelSupportsImages) addImage(file);
+				else rejected.push(file.name);
+			} else if (classifyFile(file) !== null) {
+				void addAttachment(file);
+			} else {
+				rejected.push(file.name);
+			}
+		}
+		if (rejected.length > 0) {
+			toast.error(`Unsupported file type: ${rejected.join(", ")}`);
+		}
+	};
+
+	const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files) handleFiles(e.target.files);
+		// Reset so picking the same file again re-fires onChange.
+		if (fileInputRef.current) fileInputRef.current.value = "";
 	};
 
 	const removeImage = (index: number) => {
 		setImages((prev) => prev.filter((_, i) => i !== index));
 	};
 
+	const removeAttachment = (index: number) => {
+		setAttachments((prev) => prev.filter((_, i) => i !== index));
+	};
+
+	const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		setIsDragging(false);
+		if (disabled) return;
+		if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
+	};
+
+	const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+		if (disabled) return;
+		// Only show the overlay when files (not selected text) are being dragged in.
+		if (Array.from(e.dataTransfer?.types ?? []).includes("Files")) {
+			e.preventDefault();
+			setIsDragging(true);
+		}
+	};
+
+	const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+		// Ignore leaves bubbling up from children — only clear when leaving the drop zone itself.
+		if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+		setIsDragging(false);
+	};
+
+	const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+		const files = Array.from(e.clipboardData?.files ?? []);
+		if (files.length === 0) return;
+		// A pasted file (image or document) becomes an attachment; let normal text paste through.
+		e.preventDefault();
+		handleFiles(files);
+	};
+
 	const handleSubmit = () => {
-		if (!hasContent || disabled || isSubmitting) return;
+		// Block while files are still being parsed so we never drop a half-extracted attachment.
+		if (!hasContent || disabled || isSubmitting || extracting > 0) return;
 		onSubmit(
 			value,
 			modelSupportsImages && images.length > 0 ? images : undefined,
 			forcedTool ?? undefined,
 			forcedTool === "web_search" ? searchType : undefined,
+			attachments.length > 0 ? attachments : undefined,
 		);
 		setValue("");
 		setImages([]);
+		setAttachments([]);
 		setForcedTool(null);
 		setSearchType(DEFAULT_SEARCH_TYPE);
 	};
@@ -177,7 +257,18 @@ export function ChatInput({
 	}, [textareaRef, value]);
 
 	return (
-		<div className="relative">
+		<div className="relative" onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}>
+			{/* Drag-and-drop overlay: shown while files are dragged over the composer. */}
+			{isDragging && (
+				<div
+					data-testid="drop-overlay"
+					className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary bg-input/90 pointer-events-none"
+				>
+					<span className="text-sm font-medium text-primary inline-flex items-center gap-2">
+						<Paperclip className="h-4 w-4" /> Drop files to attach
+					</span>
+				</div>
+			)}
 			<div className="relative rounded-2xl border border-input bg-input overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
 				{/* Image preview inside input */}
 				{modelSupportsImages && images.length > 0 && (
@@ -201,6 +292,45 @@ export function ChatInput({
 					</div>
 				)}
 
+				{/* File attachment chips (PDF / CSV / text) + extraction spinner. */}
+				{(attachments.length > 0 || extracting > 0) && (
+					<div className="px-4 pt-3 pb-2 flex flex-wrap gap-2" data-testid="attachment-list">
+						{attachments.map((attachment, index) => (
+							<div
+								key={`${attachment.filename}-${index}`}
+								data-testid="attachment-chip"
+								className="group relative flex items-center gap-2 rounded-lg border border-card dark:border-hover bg-background px-2.5 py-1.5 max-w-[14rem]"
+							>
+								<FileText className="h-4 w-4 shrink-0 text-primary" />
+								<div className="min-w-0">
+									<div className="truncate text-xs font-medium text-foreground" title={attachment.filename}>
+										{attachment.filename}
+									</div>
+									<div className="text-tiny uppercase text-muted-foreground">
+										{attachment.kind}
+										{attachment.truncated ? " · truncated" : ""}
+									</div>
+								</div>
+								<button
+									type="button"
+									aria-label={`Remove ${attachment.filename}`}
+									onClick={() => removeAttachment(index)}
+									onMouseDown={(e) => e.preventDefault()}
+									className="cursor-pointer absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+								>
+									<X className="h-2.5 w-2.5" />
+								</button>
+							</div>
+						))}
+						{extracting > 0 && (
+							<div className="flex items-center gap-2 rounded-lg border border-card dark:border-hover bg-background px-2.5 py-1.5 text-xs text-muted-foreground">
+								<Loader2 className="h-4 w-4 animate-spin text-primary" />
+								Reading file...
+							</div>
+						)}
+					</div>
+				)}
+
 				<Textarea
 					id="chat-input"
 					ref={textareaRef}
@@ -211,6 +341,7 @@ export function ChatInput({
 					onFocus={onFocus}
 					onBlur={onBlur}
 					onKeyDown={handleKeyDown}
+					onPaste={handlePaste}
 					disabled={disabled}
 					rows={1}
 					onInput={handleInput}
@@ -218,53 +349,50 @@ export function ChatInput({
 			</div>
 			<div className="absolute bottom-4 left-0 right-0 flex items-center justify-between px-3">
 				<div className="flex items-center space-x-3">
-					{(modelSupportsTools || modelSupportsImages) && (
-						<>
-							<input
-								type="file"
-								ref={fileInputRef}
-								className="hidden"
-								accept="image/jpeg,image/jpg,image/png"
-								onChange={handleImageUpload}
-							/>
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-8 w-8 rounded-full border border-card dark:border-hover text-foreground"
-									>
-										<Plus className="h-4 w-4" />
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="start">
-									{modelSupportsImages && (
-										<DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-											<Paperclip className="mr-2 h-4 w-4" />
-											<span>Add photos & files</span>
-										</DropdownMenuItem>
-									)}
-									{modelSupportsTools && (
-										<>
-											{modelSupportsImages && <DropdownMenuSeparator />}
-											<ToolMenuItem
-												icon={<Sparkles className="mr-2 h-4 w-4" />}
-												label="Create image"
-												isConnected={isConnected}
-												onSelect={() => setForcedTool("generate_image")}
-											/>
-											<ToolMenuItem
-												icon={<Globe className="mr-2 h-4 w-4" />}
-												label="Web search"
-												isConnected={isConnected}
-												onSelect={() => setForcedTool("web_search")}
-											/>
-										</>
-									)}
-								</DropdownMenuContent>
-							</DropdownMenu>
-						</>
-					)}
+					{/* File extraction (PDF/CSV/text) works for every model, so the picker always renders.
+					    Vision-only image types are added to `accept` only when the model supports images. */}
+					<input
+						type="file"
+						ref={fileInputRef}
+						className="hidden"
+						multiple
+						accept={modelSupportsImages ? `${IMAGE_ACCEPT},${FILE_ACCEPT}` : FILE_ACCEPT}
+						onChange={handleFileInput}
+					/>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8 rounded-full border border-card dark:border-hover text-foreground"
+							>
+								<Plus className="h-4 w-4" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="start">
+							<DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+								<Paperclip className="mr-2 h-4 w-4" />
+								<span>{modelSupportsImages ? "Add photos & files" : "Add files"}</span>
+							</DropdownMenuItem>
+							{modelSupportsTools && (
+								<>
+									<DropdownMenuSeparator />
+									<ToolMenuItem
+										icon={<Sparkles className="mr-2 h-4 w-4" />}
+										label="Create image"
+										isConnected={isConnected}
+										onSelect={() => setForcedTool("generate_image")}
+									/>
+									<ToolMenuItem
+										icon={<Globe className="mr-2 h-4 w-4" />}
+										label="Web search"
+										isConnected={isConnected}
+										onSelect={() => setForcedTool("web_search")}
+									/>
+								</>
+							)}
+						</DropdownMenuContent>
+					</DropdownMenu>
 					{onModelSelect ? (
 						<ModelPicker value={effectiveModel} onSelect={onModelSelect} disabled={disabled} />
 					) : (
@@ -332,7 +460,7 @@ export function ChatInput({
 					<Button
 						variant="ghost"
 						size="icon"
-						disabled={!hasContent || disabled || isSubmitting}
+						disabled={!hasContent || disabled || isSubmitting || extracting > 0}
 						onClick={handleSubmit}
 						className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
 					>

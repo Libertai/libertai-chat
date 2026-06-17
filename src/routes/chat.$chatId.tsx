@@ -21,7 +21,7 @@ import env from "@/config/env";
 import OpenAI from "openai";
 import { toast } from "sonner";
 import type { ParsedMessage } from "@/utils/thinking-parser";
-import type { ImageData } from "@/types/chats";
+import type { ImageData, FileAttachment } from "@/types/chats";
 
 export const Route = createFileRoute("/chat/$chatId")({
 	component: Chat,
@@ -335,11 +335,12 @@ function Chat() {
 		images?: ImageData[],
 		forcedTool?: "web_search" | "generate_image",
 		searchType?: SearchType,
+		attachments?: FileAttachment[],
 	) => {
 		if (!value.trim() || isLoading) return;
 		pendingForcedToolRef.current = forcedTool;
 		pendingSearchTypeRef.current = searchType;
-		addMessage(chatId, "user", value.trim(), undefined, images);
+		addMessage(chatId, "user", value.trim(), undefined, images, attachments);
 	};
 
 	const handleRegenerateMessage = async () => {

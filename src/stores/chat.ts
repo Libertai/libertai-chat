@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { runMigrations } from "@/types/chats/migrations";
-import { Chat, Message, ImageData, CanvasArtifact } from "@/types/chats";
+import { Chat, Message, ImageData, CanvasArtifact, FileAttachment } from "@/types/chats";
 import { useAssistantStore } from "./assistant";
 import { migrateLegacyChats } from "@/utils/legacy-chat-migration";
 import { detectArtifacts, artifactSlotKey, type DetectedArtifact } from "@/utils/artifacts";
@@ -12,13 +12,20 @@ interface ChatStore {
 
 	getChat: (chatId: string) => Chat | undefined;
 	getAllChats: () => Chat[];
-	createChat: (chatId: string, firstMessage: string, assistantId: string, images?: ImageData[]) => void;
+	createChat: (
+		chatId: string,
+		firstMessage: string,
+		assistantId: string,
+		images?: ImageData[],
+		attachments?: FileAttachment[],
+	) => void;
 	addMessage: (
 		chatId: string,
 		role: "user" | "assistant",
 		content: string,
 		thinking?: string,
 		images?: ImageData[],
+		attachments?: FileAttachment[],
 	) => Message;
 	updateMessage: (chatId: string, messageId: string, content: string, thinking?: string) => void;
 	// Attaches tool-call metadata (web_search sources / generated images / interpreter runs) onto a
@@ -41,7 +48,7 @@ interface ChatStore {
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
-const CHAT_VERSION = 7;
+const CHAT_VERSION = 8;
 
 // Reconcile freshly detected artifacts against any already persisted on the message. Same slot
 // (kind + position) => append a new VERSION only when the source actually changed, so streaming
@@ -96,13 +103,20 @@ export const useChatStore = create<ChatStore>()(
 				return chats.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 			},
 
-			createChat: (chatId: string, firstMessage: string, assistantId: string, images?: ImageData[]) => {
+			createChat: (
+				chatId: string,
+				firstMessage: string,
+				assistantId: string,
+				images?: ImageData[],
+				attachments?: FileAttachment[],
+			) => {
 				const now = new Date().toISOString();
 				const userMessage: Message = {
 					id: crypto.randomUUID(),
 					role: "user",
 					content: firstMessage,
 					images,
+					attachments,
 					timestamp: new Date(),
 				};
 
@@ -126,6 +140,7 @@ export const useChatStore = create<ChatStore>()(
 				content: string,
 				thinking?: string,
 				images?: ImageData[],
+				attachments?: FileAttachment[],
 			) => {
 				const message: Message = {
 					id: crypto.randomUUID(),
@@ -133,6 +148,7 @@ export const useChatStore = create<ChatStore>()(
 					content,
 					thinking,
 					images,
+					attachments,
 					timestamp: new Date(),
 				};
 

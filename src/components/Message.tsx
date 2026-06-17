@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import { ChevronDown, ChevronRight, Copy, Globe, Lightbulb, Loader2, RotateCcw, Pencil, Square, Volume2, LayoutPanelLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, FileText, Globe, Lightbulb, Loader2, RotateCcw, Pencil, Square, Volume2, LayoutPanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MessageEditInput } from "@/components/MessageEditInput";
@@ -196,6 +196,30 @@ export function Message({
 										alt={image.filename}
 										className="max-w-xs max-h-48 object-cover rounded-lg border border-card dark:border-hover"
 									/>
+								</div>
+							))}
+						</div>
+					)}
+
+					{/* Extracted file attachments (PDF / CSV / text) for user messages */}
+					{message.role === "user" && message.attachments && message.attachments.length > 0 && (
+						<div className="mb-3 flex flex-wrap gap-2" data-testid="message-attachments">
+							{message.attachments.map((attachment, index) => (
+								<div
+									key={`${attachment.filename}-${index}`}
+									data-testid="message-attachment"
+									className="flex items-center gap-2 rounded-lg border border-card dark:border-hover bg-background px-2.5 py-1.5 max-w-[16rem]"
+								>
+									<FileText className="h-4 w-4 shrink-0 text-primary" />
+									<div className="min-w-0">
+										<div className="truncate text-xs font-medium text-foreground" title={attachment.filename}>
+											{attachment.filename}
+										</div>
+										<div className="text-tiny uppercase text-muted-foreground">
+											{attachment.kind}
+											{attachment.truncated ? " · truncated" : ""}
+										</div>
+									</div>
 								</div>
 							))}
 						</div>

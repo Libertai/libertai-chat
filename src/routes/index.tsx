@@ -7,7 +7,7 @@ import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { setPendingForcedTool } from "@/utils/pending-forced-tool";
 import type { SearchType } from "@/utils/chat-tools";
-import type { ImageData } from "@/types/chats";
+import type { ImageData, FileAttachment } from "@/types/chats";
 
 export const Route = createFileRoute("/")({
 	component: Index,
@@ -29,6 +29,7 @@ function Index() {
 		images?: ImageData[],
 		forcedTool?: "web_search" | "generate_image",
 		searchType?: SearchType,
+		attachments?: FileAttachment[],
 	) => {
 		if (!value.trim() || isSubmitting) return;
 
@@ -38,8 +39,8 @@ function Index() {
 		const chatId = crypto.randomUUID();
 		const firstMessage = value.trim();
 
-		// Create chat with the first message and images
-		createChat(chatId, firstMessage, selectedAssistant, images);
+		// Create chat with the first message, images and extracted file attachments
+		createChat(chatId, firstMessage, selectedAssistant, images, attachments);
 
 		// Carry a forced tool (and its search mode) across navigation so the new chat's first
 		// response honors it.
