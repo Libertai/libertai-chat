@@ -41,8 +41,10 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.19",
+    "docx": "^9.7.1",
     "ethers": "^6.16.0",
     "idb-keyval": "^6.2.2",
+    "jspdf": "^4.2.1",
     "katex": "^0.17.0",
     "lucide-react": "^0.544.0",
     "mermaid": "^11.15.0",
@@ -67,6 +69,7 @@
     "tailwindcss-animate": "^1.0.7",
     "thirdweb": "5.120.0",
     "viem": "^2.45.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6",
     "zustand": "^5.0.10"
   },

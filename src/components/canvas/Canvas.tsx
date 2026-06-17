@@ -3,6 +3,7 @@ import { Check, Code2, Copy, Eye, History, X } from "lucide-react";
 import { useCanvasStore } from "@/stores/canvas";
 import { useChatStore } from "@/stores/chat";
 import { ArtifactPreview } from "@/components/canvas/ArtifactPreview";
+import { ExportMenu } from "@/components/canvas/ExportMenu";
 import { CodeBlock } from "@/components/CodeBlock";
 import { cn } from "@/lib/utils";
 import type { CanvasArtifact } from "@/types/chats";
@@ -67,15 +68,18 @@ export function Canvas() {
 						{artifact.title}
 					</span>
 				</div>
-				<button
-					type="button"
-					onClick={close}
-					aria-label="Close canvas"
-					data-canvas-close
-					className="flex h-7 w-7 flex-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-				>
-					<X className="h-4 w-4" />
-				</button>
+				<div className="flex flex-none items-center gap-2">
+					<ExportMenu kind={artifact.kind} code={activeVersion.code} title={artifact.title} />
+					<button
+						type="button"
+						onClick={close}
+						aria-label="Close canvas"
+						data-canvas-close
+						className="flex h-7 w-7 flex-none items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+					>
+						<X className="h-4 w-4" />
+					</button>
+				</div>
 			</div>
 
 			{/* Toolbar: tabs + version history */}
