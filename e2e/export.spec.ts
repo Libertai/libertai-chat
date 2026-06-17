@@ -130,8 +130,12 @@ test.describe("client-side document export (m7)", () => {
 
 		// --- XLSX download: assert a real download event + filename + that the bytes are a real .xlsx
 		// (ZIP archives start with the "PK" magic). This exercises the full SheetJS generator path.
+		// Wait for the menu to fully close after the markdown export before reopening, otherwise the
+		// reopen click can race the Radix close transition and toggle the menu shut.
+		await expect(menu).toBeHidden();
 		await panel.locator("[data-canvas-export]").click();
 		await expect(menu).toBeVisible();
+		await expect(menu.locator('[data-export-format="xlsx"]')).toBeVisible();
 		const xlsxDownloadPromise = page.waitForEvent("download");
 		await menu.locator('[data-export-format="xlsx"]').click();
 		const xlsxDownload = await xlsxDownloadPromise;
