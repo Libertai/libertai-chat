@@ -7,6 +7,8 @@ import { Canvas } from "@/components/canvas/Canvas";
 import { useCanvasStore } from "@/stores/canvas";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
+import { useProjectStore } from "@/stores/project";
+import { buildSystemPrompt } from "@/utils/build-system-prompt";
 import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { resolveChatEndpoint } from "@/utils/chat-endpoint";
@@ -40,6 +42,7 @@ function Chat() {
 		setChatModel,
 	} = useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
+	const getProject = useProjectStore((s) => s.getProject);
 	const isCanvasOpen = useCanvasStore((s) => s.openChatId === chatId);
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
@@ -166,8 +169,13 @@ function Chat() {
 
 		const toolsEnabled = useConnected && modelSupportsTools;
 
+		// Prepend the chat's project instructions (if any) to the persona prompt so a folder's
+		// guidance frames every conversation inside it.
+		const project = getProject(chat?.projectId);
+		const systemPrompt = buildSystemPrompt(assistant.systemPrompt, project?.instructions);
+
 		const requestMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-			{ role: "system", content: assistant.systemPrompt },
+			{ role: "system", content: systemPrompt },
 			...buildRequestMessages(messages, effectiveModel, models ?? []),
 		];
 

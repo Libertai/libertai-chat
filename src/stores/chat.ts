@@ -44,11 +44,16 @@ interface ChatStore {
 	deleteChat: (chatId: string) => void;
 	renameChat: (chatId: string, title: string) => void;
 	setChatModel: (chatId: string, model: string) => void;
+	// Move a chat into a project (folder), or back to the ungrouped section (projectId undefined).
+	setChatProject: (chatId: string, projectId: string | undefined) => void;
+	// Detach every chat from a project so deleting that project leaves its chats ungrouped (we never
+	// cascade-delete conversations). Called by the project store when a project is removed.
+	clearProjectFromChats: (projectId: string) => void;
 	truncateMessagesAfter: (chatId: string, messageId: string) => void;
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
-const CHAT_VERSION = 8;
+const CHAT_VERSION = 9;
 
 // Reconcile freshly detected artifacts against any already persisted on the message. Same slot
 // (kind + position) => append a new VERSION only when the source actually changed, so streaming
@@ -314,6 +319,43 @@ export const useChatStore = create<ChatStore>()(
 							},
 						},
 					};
+				});
+			},
+
+			setChatProject: (chatId: string, projectId: string | undefined) => {
+				set((state) => {
+					const chat = state.chats[chatId];
+					if (!chat) return state;
+
+					return {
+						chats: {
+							...state.chats,
+							[chatId]: {
+								...chat,
+								// Undefined removes the chat from any project (ungrouped section).
+								projectId,
+								updatedAt: new Date().toISOString(),
+							},
+						},
+					};
+				});
+			},
+
+			clearProjectFromChats: (projectId: string) => {
+				set((state) => {
+					let touched = false;
+					const chats: Record<string, Chat> = {};
+					for (const [id, chat] of Object.entries(state.chats)) {
+						if (chat.projectId === projectId) {
+							touched = true;
+							const { projectId: _removed, ...rest } = chat;
+							chats[id] = rest;
+						} else {
+							chats[id] = chat;
+						}
+					}
+					if (!touched) return state;
+					return { chats };
 				});
 			},
 

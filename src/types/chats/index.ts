@@ -1,11 +1,11 @@
 export type {
-	MessageV8 as Message,
-	ChatV8 as Chat,
-	SearchSourceV8 as SearchSource,
-	InterpreterRunV8 as InterpreterRun,
-	CanvasArtifactV8 as CanvasArtifact,
-	ArtifactVersionV8 as ArtifactVersion,
-	ArtifactKindV8 as ArtifactKind,
-	FileAttachmentV8 as FileAttachment,
-} from "./v8";
+	MessageV9 as Message,
+	ChatV9 as Chat,
+	SearchSourceV9 as SearchSource,
+	InterpreterRunV9 as InterpreterRun,
+	CanvasArtifactV9 as CanvasArtifact,
+	ArtifactVersionV9 as ArtifactVersion,
+	ArtifactKindV9 as ArtifactKind,
+	FileAttachmentV9 as FileAttachment,
+} from "./v9";
 export type { ImageDataV3 as ImageData } from "./v3";
