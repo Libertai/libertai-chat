@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ImageData } from "@/types/chats";
-import { supportsImages, supportsTools } from "@/config/model-capabilities";
+import { supportsImages, supportsTools, resolveChatModel } from "@/config/model-capabilities";
 import { useModels } from "@/hooks/data/use-models";
 import { isMobileDevice } from "@/lib/utils";
+import { ModelPicker } from "@/components/ModelPicker";
 import type { Assistant } from "@/stores/assistant";
 import type React from "react";
 
@@ -26,6 +27,10 @@ interface ChatInputProps {
 	disabled?: boolean;
 	isSubmitting?: boolean;
 	assistant: Assistant;
+	/** Explicit per-chat model override (set via the picker). Falls back to the persona model. */
+	model?: string;
+	/** Persist an explicit model choice; when omitted the picker is read-only on the persona model. */
+	onModelSelect?: (model: string) => void;
 	autoFocus?: boolean;
 	isConnected: boolean;
 	isGenerating?: boolean;
@@ -41,6 +46,8 @@ export function ChatInput({
 	disabled = false,
 	isSubmitting = false,
 	assistant,
+	model,
+	onModelSelect,
 	autoFocus = false,
 	isConnected,
 	isGenerating = false,
@@ -53,8 +60,10 @@ export function ChatInput({
 
 	const hasContent = value.trim().length > 0;
 	const { data: models } = useModels();
-	const modelSupportsImages = useMemo(() => supportsImages(assistant.model, models ?? []), [assistant, models]);
-	const modelSupportsTools = useMemo(() => supportsTools(assistant.model, models ?? []), [assistant, models]);
+	// Effective model = explicit per-chat choice (picker) overriding the persona's pinned model.
+	const effectiveModel = resolveChatModel(model, assistant.model);
+	const modelSupportsImages = useMemo(() => supportsImages(effectiveModel, models ?? []), [effectiveModel, models]);
+	const modelSupportsTools = useMemo(() => supportsTools(effectiveModel, models ?? []), [effectiveModel, models]);
 	const [forcedTool, setForcedTool] = useState<"web_search" | "generate_image" | null>(null);
 
 	// Clear a stale forced tool if the user switches to a model that can't use tools.
@@ -236,9 +245,13 @@ export function ChatInput({
 							</DropdownMenu>
 						</>
 					)}
-					<span className="text-sm text-foreground font-medium border border-card dark:border-hover rounded-full px-3 py-1">
-						{assistant.title}
-					</span>
+					{onModelSelect ? (
+						<ModelPicker value={effectiveModel} onSelect={onModelSelect} disabled={disabled} />
+					) : (
+						<span className="text-sm text-foreground font-medium border border-card dark:border-hover rounded-full px-3 py-1">
+							{assistant.title}
+						</span>
+					)}
 					{forcedTool && (
 						<span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground border border-card dark:border-hover rounded-full pl-3 pr-1.5 py-1">
 							{forcedTool === "web_search" ? (

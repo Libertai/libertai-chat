@@ -23,3 +23,35 @@ describe("updateMessageArtifacts", () => {
 		expect(msg.images).toHaveLength(1);
 	});
 });
+
+describe("setChatModel", () => {
+	beforeEach(() => {
+		useChatStore.setState({ chats: {}, legacyMigrated: true });
+	});
+
+	it("persists an explicit per-chat model override", () => {
+		const store = useChatStore.getState();
+		store.createChat("c1", "hello", "asst-1");
+		expect(useChatStore.getState().getChat("c1")!.model).toBeUndefined();
+
+		store.setChatModel("c1", "hermes-3-8b-tee");
+
+		expect(useChatStore.getState().getChat("c1")!.model).toBe("hermes-3-8b-tee");
+	});
+
+	it("can be changed again and keeps the assistant pin intact", () => {
+		const store = useChatStore.getState();
+		store.createChat("c1", "hello", "asst-1");
+		store.setChatModel("c1", "hermes-3-8b-tee");
+		store.setChatModel("c1", "qwen3.6-35b-a3b");
+
+		const chat = useChatStore.getState().getChat("c1")!;
+		expect(chat.model).toBe("qwen3.6-35b-a3b");
+		expect(chat.assistantId).toBe("asst-1");
+	});
+
+	it("is a no-op for an unknown chat id", () => {
+		useChatStore.getState().setChatModel("missing", "hermes-3-8b-tee");
+		expect(useChatStore.getState().getChat("missing")).toBeUndefined();
+	});
+});

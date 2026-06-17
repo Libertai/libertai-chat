@@ -9,7 +9,7 @@ import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { resolveChatEndpoint } from "@/utils/chat-endpoint";
 import { useModels } from "@/hooks/data/use-models";
-import { supportsTools } from "@/config/model-capabilities";
+import { supportsTools, resolveChatModel } from "@/config/model-capabilities";
 import { buildRequestMessages } from "@/utils/build-request-messages";
 import { ToolCallAccumulator } from "@/utils/tool-call-accumulator";
 import { TOOL_DEFINITIONS, executeWebSearch, executeGenerateImage } from "@/utils/chat-tools";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/chat/$chatId")({
 
 function Chat() {
 	const { chatId } = Route.useParams();
-	const { getChat, addMessage, updateMessage, updateMessageArtifacts, deleteMessage, truncateMessagesAfter } =
+	const { getChat, addMessage, updateMessage, updateMessageArtifacts, deleteMessage, truncateMessagesAfter, setChatModel } =
 		useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
@@ -44,10 +44,14 @@ function Chat() {
 	const chat = getChat(chatId);
 	const messages = chat?.messages || [];
 
+	// Effective model = explicit per-chat override (set via the ModelPicker) overriding the persona's
+	// pinned model. Personas still work when no explicit choice has been made.
+	const effectiveModel = resolveChatModel(chat?.model, getAssistantOrDefault(chat?.assistantId).model);
+
 	const useConnected = isAuthenticated && !!chatApiKey;
 	const modelSupportsTools = useMemo(
-		() => supportsTools(getAssistantOrDefault(chat?.assistantId).model, models ?? []),
-		[chat?.assistantId, models], // eslint-disable-line react-hooks/exhaustive-deps
+		() => supportsTools(effectiveModel, models ?? []),
+		[effectiveModel, models],
 	);
 
 	// Authenticated users always use the connected endpoint with their chat API key (chat keys are
@@ -130,7 +134,7 @@ function Chat() {
 
 		const requestMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
 			{ role: "system", content: assistant.systemPrompt },
-			...buildRequestMessages(messages, assistant.model, models ?? []),
+			...buildRequestMessages(messages, effectiveModel, models ?? []),
 		];
 
 		const accumulated: ParsedMessage = { thinking: "", content: "" };
@@ -145,7 +149,7 @@ function Chat() {
 
 				const stream = await openai.chat.completions.create(
 					{
-						model: assistant.model,
+						model: effectiveModel,
 						messages: requestMessages,
 						stream: true,
 						...(toolsEnabled ? { tools: TOOL_DEFINITIONS } : {}),
@@ -356,6 +360,8 @@ function Chat() {
 							placeholder="Continue private conversation..."
 							disabled={isLoading}
 							assistant={getAssistantOrDefault(chat?.assistantId)}
+							model={chat?.model}
+							onModelSelect={(m) => setChatModel(chatId, m)}
 							autoFocus
 							isConnected={useConnected}
 							isGenerating={isLoading || isStreaming}

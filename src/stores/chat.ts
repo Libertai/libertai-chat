@@ -28,11 +28,12 @@ interface ChatStore {
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
 	renameChat: (chatId: string, title: string) => void;
+	setChatModel: (chatId: string, model: string) => void;
 	truncateMessagesAfter: (chatId: string, messageId: string) => void;
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
-const CHAT_VERSION = 4;
+const CHAT_VERSION = 5;
 
 export const useChatStore = create<ChatStore>()(
 	persist(
@@ -196,6 +197,25 @@ export const useChatStore = create<ChatStore>()(
 							[chatId]: {
 								...chat,
 								title,
+							},
+						},
+					};
+				});
+			},
+
+			setChatModel: (chatId: string, model: string) => {
+				set((state) => {
+					const chat = state.chats[chatId];
+					if (!chat) return state;
+
+					return {
+						chats: {
+							...state.chats,
+							[chatId]: {
+								...chat,
+								// Explicit per-chat model override; takes precedence over the persona's pinned model.
+								model,
+								updatedAt: new Date().toISOString(),
 							},
 						},
 					};
