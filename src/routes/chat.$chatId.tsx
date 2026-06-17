@@ -137,6 +137,20 @@ function Chat() {
 		const collectedSources: { title: string; url: string; snippet: string }[] = [];
 		const collectedImages: ImageData[] = [];
 
+		// Coalesce streaming writes. The route subscribes to the whole chat store, so every
+		// updateMessage re-renders it. Thinking models (e.g. Mega Mind) emit thousands of tiny
+		// reasoning deltas that can arrive in a burst — writing per-delta floods React and trips its
+		// max-update-depth guard (#185), which surfaced as a generic "error processing your request".
+		// Flush at most once per frame and force a final flush per turn so nothing is dropped.
+		const FLUSH_INTERVAL_MS = 50;
+		let lastFlush = 0;
+		const flushStreamedMessage = (force = false) => {
+			const now = Date.now();
+			if (!force && now - lastFlush < FLUSH_INTERVAL_MS) return;
+			lastFlush = now;
+			updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
+		};
+
 		try {
 			for (let iteration = 0; iteration < 5; iteration++) {
 				const toolAcc = new ToolCallAccumulator();
@@ -176,9 +190,13 @@ function Chat() {
 							setIsLoading(false);
 						}
 						setToolStatus(null);
-						updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
+						flushStreamedMessage();
 					}
 				}
+
+				// Force the trailing tokens since the last throttled flush to land before we either
+				// break or reset `accumulated` for the next tool iteration.
+				flushStreamedMessage(true);
 
 				if (!toolAcc.hasCalls()) break;
 
