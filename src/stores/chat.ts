@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { runMigrations } from "@/types/chats/migrations";
-import { Chat, Message, ImageData } from "@/types/chats";
+import { Chat, Message, ImageData, CanvasArtifact } from "@/types/chats";
 import { useAssistantStore } from "./assistant";
 import { migrateLegacyChats } from "@/utils/legacy-chat-migration";
+import { detectArtifacts, artifactSlotKey, type DetectedArtifact } from "@/utils/artifacts";
 
 interface ChatStore {
 	chats: Record<string, Chat>;
@@ -20,11 +21,18 @@ interface ChatStore {
 		images?: ImageData[],
 	) => Message;
 	updateMessage: (chatId: string, messageId: string, content: string, thinking?: string) => void;
-	updateMessageArtifacts: (
+	// Attaches tool-call metadata (web_search sources / generated images / interpreter runs) onto a
+	// message without touching its content/thinking. This is the artifact-METADATA patch; the real
+	// canvas artifact model lives in `syncMessageArtifacts` below.
+	attachMessageMeta: (
 		chatId: string,
 		messageId: string,
-		artifacts: { sources?: Message["sources"]; images?: ImageData[]; interpreter?: Message["interpreter"] },
+		meta: { sources?: Message["sources"]; images?: ImageData[]; interpreter?: Message["interpreter"] },
 	) => void;
+	// Detects self-contained canvas artifacts (html / react / svg / mermaid / markdown) in an
+	// assistant message's content and reconciles them onto the message's `artifacts`, preserving a
+	// version history per artifact slot across regenerations. Returns the reconciled artifacts.
+	syncMessageArtifacts: (chatId: string, messageId: string, content: string) => CanvasArtifact[];
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
 	renameChat: (chatId: string, title: string) => void;
@@ -33,7 +41,45 @@ interface ChatStore {
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
-const CHAT_VERSION = 6;
+const CHAT_VERSION = 7;
+
+// Reconcile freshly detected artifacts against any already persisted on the message. Same slot
+// (kind + position) => append a new VERSION only when the source actually changed, so streaming
+// updates don't spam the history. New slot => a new artifact. Slots no longer present are dropped.
+function reconcileArtifacts(existing: CanvasArtifact[] | undefined, detected: DetectedArtifact[]): CanvasArtifact[] {
+	const now = new Date().toISOString();
+	const prevBySlot = new Map<string, CanvasArtifact>();
+	for (const a of existing ?? []) prevBySlot.set(a.slot, a);
+
+	return detected.map((d) => {
+		const slot = artifactSlotKey(d.kind, d.index);
+		const prev = prevBySlot.get(slot);
+		if (prev && prev.kind === d.kind) {
+			const last = prev.versions[prev.versions.length - 1];
+			if (last.code === d.code && last.language === d.language) {
+				// Unchanged: keep the existing artifact (and its full history) as-is.
+				return { ...prev, title: d.title };
+			}
+			// Changed: append a new version, keeping prior versions for the history switcher.
+			return {
+				...prev,
+				title: d.title,
+				versions: [
+					...prev.versions,
+					{ version: prev.versions.length + 1, code: d.code, language: d.language, createdAt: now },
+				],
+			};
+		}
+		// Brand-new artifact slot.
+		return {
+			id: crypto.randomUUID(),
+			kind: d.kind,
+			title: d.title,
+			slot,
+			versions: [{ version: 1, code: d.code, language: d.language, createdAt: now }],
+		};
+	});
+}
 
 export const useChatStore = create<ChatStore>()(
 	persist(
@@ -143,7 +189,7 @@ export const useChatStore = create<ChatStore>()(
 				});
 			},
 
-			updateMessageArtifacts: (chatId, messageId, artifacts) => {
+			attachMessageMeta: (chatId, messageId, meta) => {
 				set((state) => {
 					const chat = state.chats[chatId];
 					if (!chat) return state;
@@ -153,12 +199,45 @@ export const useChatStore = create<ChatStore>()(
 							...state.chats,
 							[chatId]: {
 								...chat,
-								messages: chat.messages.map((msg) => (msg.id === messageId ? { ...msg, ...artifacts } : msg)),
+								messages: chat.messages.map((msg) => (msg.id === messageId ? { ...msg, ...meta } : msg)),
 								updatedAt: new Date().toISOString(),
 							},
 						},
 					};
 				});
+			},
+
+			syncMessageArtifacts: (chatId, messageId, content) => {
+				const detected = detectArtifacts(content);
+				let reconciled: CanvasArtifact[] = [];
+				set((state) => {
+					const chat = state.chats[chatId];
+					if (!chat) return state;
+					const target = chat.messages.find((m) => m.id === messageId);
+					if (!target) return state;
+
+					reconciled = reconcileArtifacts(target.artifacts, detected);
+					// No artifacts now and none before: leave the message untouched (don't add an empty key).
+					if (reconciled.length === 0 && (!target.artifacts || target.artifacts.length === 0)) {
+						return state;
+					}
+
+					return {
+						chats: {
+							...state.chats,
+							[chatId]: {
+								...chat,
+								messages: chat.messages.map((msg) =>
+									msg.id === messageId
+										? { ...msg, artifacts: reconciled.length > 0 ? reconciled : undefined }
+										: msg,
+								),
+								updatedAt: new Date().toISOString(),
+							},
+						},
+					};
+				});
+				return reconciled;
 			},
 
 			deleteMessage: (chatId: string, messageId: string) => {

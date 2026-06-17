@@ -4,12 +4,13 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import { ChevronDown, ChevronRight, Copy, Globe, Lightbulb, Loader2, RotateCcw, Pencil, Square, Volume2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Copy, Globe, Lightbulb, Loader2, RotateCcw, Pencil, Square, Volume2, LayoutPanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MessageEditInput } from "@/components/MessageEditInput";
 import { CodeBlock } from "@/components/CodeBlock";
 import { InterpreterOutput } from "@/components/InterpreterOutput";
+import { useCanvasStore } from "@/stores/canvas";
 import { useReadAloud } from "@/hooks/use-read-aloud";
 import { extractLanguageFromClassName, hastText, normalizeCodeSource } from "@/utils/markdown";
 import { citationAnchorId, parseCitations } from "@/utils/citations";
@@ -25,6 +26,7 @@ function faviconDomain(url: string): string {
 
 interface MessageProps {
 	message: MessageType;
+	chatId: string;
 	isLastMessage: boolean;
 	isLoading: boolean;
 	isStreaming: boolean;
@@ -36,6 +38,7 @@ interface MessageProps {
 
 export function Message({
 	message,
+	chatId,
 	isLastMessage,
 	isLoading,
 	isStreaming,
@@ -44,6 +47,8 @@ export function Message({
 	onEditMessage,
 	onRegenerateFromMessage,
 }: MessageProps) {
+	const openCanvas = useCanvasStore((s) => s.open);
+	const openArtifactId = useCanvasStore((s) => s.openArtifactId);
 	const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
 	const [isSourcesExpanded, setIsSourcesExpanded] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
@@ -306,6 +311,36 @@ export function Message({
 						<div className="mt-1">
 							{message.interpreter.map((run, index) => (
 								<InterpreterOutput key={index} run={run} />
+							))}
+						</div>
+					)}
+
+					{/* Open in canvas: one chip per detected self-contained artifact (html/react/svg/
+					    mermaid/markdown). Clicking opens the right-hand Canvas panel with this artifact. */}
+					{message.role === "assistant" && message.artifacts && message.artifacts.length > 0 && (
+						<div className="mt-3 flex flex-wrap gap-2" data-message-artifacts>
+							{message.artifacts.map((artifact) => (
+								<button
+									key={artifact.id}
+									type="button"
+									data-open-canvas={artifact.id}
+									aria-pressed={openArtifactId === artifact.id}
+									onClick={() => openCanvas(chatId, message.id, artifact.id)}
+									className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+										openArtifactId === artifact.id
+											? "border-primary/50 bg-primary/10"
+											: "border-border bg-card/40 hover:bg-muted/40"
+									}`}
+								>
+									<LayoutPanelLeft className="h-4 w-4 flex-none text-primary" />
+									<span className="flex min-w-0 flex-col">
+										<span className="truncate font-medium">{artifact.title}</span>
+										<span className="text-xs text-muted-foreground">
+											Open in canvas
+											{artifact.versions.length > 1 ? ` · v${artifact.versions.length}` : ""}
+										</span>
+									</span>
+								</button>
 							))}
 						</div>
 					)}

@@ -4,6 +4,7 @@ import { v2ToV3Migration } from "./v3.ts";
 import { v3ToV4Migration } from "./v4.ts";
 import { v4ToV5Migration } from "./v5.ts";
 import { v5ToV6Migration } from "./v6.ts";
+import { v6ToV7Migration } from "./v7.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -23,6 +24,7 @@ const migrations: Migration[] = [
 	v3ToV4Migration,
 	v4ToV5Migration,
 	v5ToV6Migration,
+	v6ToV7Migration,
 ];
 
 export const runMigrations = (persistedState: any, currentVersion: number): any => {

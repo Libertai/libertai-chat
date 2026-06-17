@@ -15,6 +15,7 @@
     "format": "prettier --write '**/*.{ts,tsx}'"
   },
   "dependencies": {
+    "@babel/standalone": "^8.0.1",
     "@capacitor/android": "^7.4.4",
     "@capacitor/core": "^7.4.4",
     "@capacitor/ios": "^7.4.4",
@@ -73,6 +74,7 @@
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.61.0",
     "@tanstack/router-plugin": "^1.157.16",
+    "@types/babel__standalone": "^7.1.9",
     "@types/node": "^24.10.9",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",

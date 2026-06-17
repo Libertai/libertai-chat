@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatInput } from "@/components/ChatInput";
 import { ConversationNotFound } from "@/components/ConversationNotFound";
 import { Message } from "@/components/Message";
+import { Canvas } from "@/components/canvas/Canvas";
+import { useCanvasStore } from "@/stores/canvas";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore } from "@libertai/auth";
@@ -27,9 +29,18 @@ export const Route = createFileRoute("/chat/$chatId")({
 
 function Chat() {
 	const { chatId } = Route.useParams();
-	const { getChat, addMessage, updateMessage, updateMessageArtifacts, deleteMessage, truncateMessagesAfter, setChatModel } =
-		useChatStore();
+	const {
+		getChat,
+		addMessage,
+		updateMessage,
+		attachMessageMeta,
+		syncMessageArtifacts,
+		deleteMessage,
+		truncateMessagesAfter,
+		setChatModel,
+	} = useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
+	const isCanvasOpen = useCanvasStore((s) => s.openChatId === chatId);
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
 	const { data: models } = useModels();
@@ -84,6 +95,15 @@ function Chat() {
 			scrollToBottom();
 		}
 	}, [isInitialized]);
+
+	// Close the canvas when leaving this conversation so it doesn't bleed into another chat.
+	useEffect(() => {
+		return () => {
+			if (useCanvasStore.getState().openChatId === chatId) {
+				useCanvasStore.getState().close();
+			}
+		};
+	}, [chatId]);
 
 	// Initialize chat
 	useEffect(() => {
@@ -199,6 +219,13 @@ function Chat() {
 					}
 				}
 
+				// Detect self-contained canvas artifacts (html / react / svg / mermaid / markdown) in the
+				// settled content for this iteration and reconcile them onto the message (with version
+				// history). Runs client-side from the message text — no model tool call required.
+				if (accumulated.content) {
+					syncMessageArtifacts(chatId, assistantMessage.id, accumulated.content);
+				}
+
 				if (!toolAcc.hasCalls()) break;
 
 				setIsStreaming(false);
@@ -232,7 +259,7 @@ function Chat() {
 						const query = String(call.arguments.query ?? "");
 						const { sources, toolText } = await executeWebSearch(query, opts);
 						collectedSources.push(...sources);
-						updateMessageArtifacts(chatId, assistantMessage.id, { sources: collectedSources });
+						attachMessageMeta(chatId, assistantMessage.id, { sources: collectedSources });
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else if (call.name === "generate_image") {
 						const { image, toolText } = await executeGenerateImage(
@@ -241,7 +268,7 @@ function Chat() {
 						);
 						if (image) {
 							collectedImages.push(image);
-							updateMessageArtifacts(chatId, assistantMessage.id, { images: collectedImages });
+							attachMessageMeta(chatId, assistantMessage.id, { images: collectedImages });
 						}
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else if (call.name === "run_python" || call.name === "run_javascript") {
@@ -251,7 +278,7 @@ function Chat() {
 							signal: controller.signal,
 						});
 						collectedInterpreter.push(artifact);
-						updateMessageArtifacts(chatId, assistantMessage.id, { interpreter: collectedInterpreter });
+						attachMessageMeta(chatId, assistantMessage.id, { interpreter: collectedInterpreter });
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else {
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: "Unknown tool." });
@@ -278,7 +305,7 @@ function Chat() {
 		} catch (error) {
 			if (controller.signal.aborted) {
 				// Keep whatever streamed before the stop (content/thinking already persisted, images kept
-				// via updateMessageArtifacts). Only leave a marker when the turn produced nothing at all.
+				// via attachMessageMeta). Only leave a marker when the turn produced nothing at all.
 				if (
 					!accumulated.content &&
 					!accumulated.thinking &&
@@ -346,67 +373,74 @@ function Chat() {
 	}
 
 	return (
-		<div className="h-full flex flex-col bg-background text-foreground animate-in slide-in-from-right-8 fade-in duration-500">
-			{/* Messages area */}
-			<div className="flex-1 overflow-y-auto p-4">
-				<div className="max-w-4xl mx-auto space-y-8 md:space-y-11">
-					{messages.map((message, index) => (
-						<Message
-							key={message.id}
-							message={message}
-							isLastMessage={index === messages.length - 1}
-							isLoading={isLoading}
-							isStreaming={isStreaming}
-							toolStatus={index === messages.length - 1 ? toolStatus : null}
-							onRegenerate={handleRegenerateMessage}
-							onEditMessage={handleEditMessage}
-							onRegenerateFromMessage={handleRegenerateFromMessage}
-						/>
-					))}
+		<div className="h-full flex bg-background text-foreground animate-in slide-in-from-right-8 fade-in duration-500">
+			{/* Chat column. Hidden on small screens when the canvas takes over the viewport. */}
+			<div className={`h-full min-w-0 flex-1 flex-col ${isCanvasOpen ? "hidden md:flex" : "flex"}`}>
+				{/* Messages area */}
+				<div className="flex-1 overflow-y-auto p-4">
+					<div className="max-w-4xl mx-auto space-y-8 md:space-y-11">
+						{messages.map((message, index) => (
+							<Message
+								key={message.id}
+								message={message}
+								chatId={chatId}
+								isLastMessage={index === messages.length - 1}
+								isLoading={isLoading}
+								isStreaming={isStreaming}
+								toolStatus={index === messages.length - 1 ? toolStatus : null}
+								onRegenerate={handleRegenerateMessage}
+								onEditMessage={handleEditMessage}
+								onRegenerateFromMessage={handleRegenerateFromMessage}
+							/>
+						))}
 
-					{isLoading && !isStreaming && (
-						<div className="flex justify-start">
-							<div className="bg-white dark:bg-card text-muted-foreground rounded-2xl px-4 py-2">
-								<div className="flex items-center space-x-2">
-									<div className="flex space-x-1">
-										<div className="w-2 h-2 bg-current rounded-full animate-bounce" />
-										<div
-											className="w-2 h-2 bg-current rounded-full animate-bounce"
-											style={{ animationDelay: "0.1s" }}
-										/>
-										<div
-											className="w-2 h-2 bg-current rounded-full animate-bounce"
-											style={{ animationDelay: "0.2s" }}
-										/>
+						{isLoading && !isStreaming && (
+							<div className="flex justify-start">
+								<div className="bg-white dark:bg-card text-muted-foreground rounded-2xl px-4 py-2">
+									<div className="flex items-center space-x-2">
+										<div className="flex space-x-1">
+											<div className="w-2 h-2 bg-current rounded-full animate-bounce" />
+											<div
+												className="w-2 h-2 bg-current rounded-full animate-bounce"
+												style={{ animationDelay: "0.1s" }}
+											/>
+											<div
+												className="w-2 h-2 bg-current rounded-full animate-bounce"
+												style={{ animationDelay: "0.2s" }}
+											/>
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
-					)}
+						)}
+					</div>
+
+					<div ref={messagesEndRef} />
 				</div>
 
-				<div ref={messagesEndRef} />
-			</div>
-
-			{/* Input area */}
-			<div className="p-4">
-				<div className="max-w-4xl mx-auto">
-					<div className="max-w-2xl mx-auto">
-						<ChatInput
-							onSubmit={handleSendMessage}
-							placeholder="Continue private conversation..."
-							disabled={isLoading}
-							assistant={getAssistantOrDefault(chat?.assistantId)}
-							model={chat?.model}
-							onModelSelect={(m) => setChatModel(chatId, m)}
-							autoFocus
-							isConnected={useConnected}
-							isGenerating={isLoading || isStreaming}
-							onStop={() => abortRef.current?.abort()}
-						/>
+				{/* Input area */}
+				<div className="p-4">
+					<div className="max-w-4xl mx-auto">
+						<div className="max-w-2xl mx-auto">
+							<ChatInput
+								onSubmit={handleSendMessage}
+								placeholder="Continue private conversation..."
+								disabled={isLoading}
+								assistant={getAssistantOrDefault(chat?.assistantId)}
+								model={chat?.model}
+								onModelSelect={(m) => setChatModel(chatId, m)}
+								autoFocus
+								isConnected={useConnected}
+								isGenerating={isLoading || isStreaming}
+								onStop={() => abortRef.current?.abort()}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>
+
+			{/* Right-hand Canvas side-panel (only the artifact opened from this chat). */}
+			{isCanvasOpen && <Canvas />}
 		</div>
 	);
 }
