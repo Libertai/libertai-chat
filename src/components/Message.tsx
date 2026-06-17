@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { ChevronDown, ChevronRight, Copy, Globe, Lightbulb, Loader2, RotateCcw, Pencil, Square, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MessageEditInput } from "@/components/MessageEditInput";
+import { CodeBlock } from "@/components/CodeBlock";
 import { useReadAloud } from "@/hooks/use-read-aloud";
+import { extractLanguageFromClassName, hastText, normalizeCodeSource } from "@/utils/markdown";
 import type { Message as MessageType } from "@/types/chats";
 
 function faviconDomain(url: string): string {
@@ -161,6 +167,8 @@ export function Message({
 					{message.role === "assistant" && (
 						<div className="markdown-content message-content">
 							<ReactMarkdown
+								remarkPlugins={[remarkGfm, remarkMath]}
+								rehypePlugins={[rehypeKatex]}
 								components={{
 									h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
 									h2: ({ children }) => <h2 className="text-base font-bold mb-2">{children}</h2>,
@@ -168,15 +176,60 @@ export function Message({
 									p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
 									strong: ({ children }) => <strong className="font-bold">{children}</strong>,
 									em: ({ children }) => <em className="italic">{children}</em>,
+									del: ({ children }) => <del className="line-through opacity-70">{children}</del>,
+									a: ({ children, href }) => (
+										<a
+											href={href}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="text-primary underline underline-offset-2 hover:opacity-80"
+										>
+											{children}
+										</a>
+									),
+									// Inline code only. Fenced blocks are handled by the `pre` override below,
+									// which has reliable access to the language + raw source via the hast node.
 									code: ({ children }) => (
 										<code className="bg-background/50 rounded px-1 py-0.5 text-xs font-mono">{children}</code>
 									),
-									pre: ({ children }) => (
-										<pre className="bg-background/50 rounded p-2 overflow-x-auto text-xs font-mono">{children}</pre>
-									),
+									pre: ({ node, children }) => {
+										// A fenced block is a <pre> wrapping a single <code> element. Read the
+										// language class + raw text off the hast node so Shiki / mermaid get the
+										// exact source. Fall back to the default <pre> if the shape is unexpected.
+										const codeNode = node?.children?.find((c) => c.type === "element" && c.tagName === "code");
+										if (codeNode && codeNode.type === "element") {
+											const className = codeNode.properties?.className;
+											const classStr = Array.isArray(className) ? className.join(" ") : String(className ?? "");
+											const language = extractLanguageFromClassName(classStr);
+											const source = normalizeCodeSource(hastText(codeNode));
+											return <CodeBlock language={language} code={source} />;
+										}
+										return (
+											<pre className="bg-background/50 rounded p-2 overflow-x-auto text-xs font-mono">{children}</pre>
+										);
+									},
 									ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
 									ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
 									li: ({ children }) => <li className="text-sm [&>p]:inline [&>p]:m-0">{children}</li>,
+									input: ({ checked, type }) =>
+										type === "checkbox" ? (
+											<input
+												type="checkbox"
+												checked={!!checked}
+												readOnly
+												className="mr-2 align-middle accent-primary"
+											/>
+										) : null,
+									table: ({ children }) => (
+										<div className="my-2 overflow-x-auto">
+											<table className="w-full border-collapse text-sm">{children}</table>
+										</div>
+									),
+									thead: ({ children }) => <thead className="border-b border-border">{children}</thead>,
+									th: ({ children }) => (
+										<th className="border border-border px-3 py-1.5 text-left font-semibold">{children}</th>
+									),
+									td: ({ children }) => <td className="border border-border px-3 py-1.5">{children}</td>,
 									blockquote: ({ children }) => (
 										<blockquote className="border-l-2 border-primary/50 pl-3 italic">{children}</blockquote>
 									),
