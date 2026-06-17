@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Settings2 } from "lucide-react";
 import { ChatInput } from "@/components/ChatInput";
+import { AssistantManager } from "@/components/AssistantManager";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore } from "@libertai/auth";
@@ -22,6 +24,7 @@ function Index() {
 	const [isFocused, setIsFocused] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasContent, setHasContent] = useState(false);
+	const [managerOpen, setManagerOpen] = useState(false);
 	const shouldShowCentered = isFocused || hasContent;
 
 	const handleSubmit = (
@@ -75,6 +78,19 @@ function Index() {
 					</span>
 				</h1>
 
+				{/* Manage assistants entry point - hidden alongside the cards when typing/focused. */}
+				<button
+					type="button"
+					data-testid="manage-assistants"
+					onClick={() => setManagerOpen(true)}
+					className={`inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover md:transition-all md:duration-500 ${
+						shouldShowCentered ? "md:opacity-0 md:pointer-events-none" : "opacity-100"
+					}`}
+				>
+					<Settings2 className="h-4 w-4" />
+					Manage assistants
+				</button>
+
 				{/* Cards grid - hide when focused or typing */}
 				<div
 					className={`grid grid-cols-2 lg:grid-cols-4 gap-2.5 w-fit mx-auto md:transition-all md:duration-500 md:ease-in-out ${
@@ -108,8 +124,14 @@ function Index() {
 										</div>
 									)}
 									<div className="flex flex-col justify-between h-full">
-										<div className={`rounded-full p-2 md:p-3 w-fit ${isSelected ? "bg-background" : "bg-hover"}`}>
-											{card.icon}
+										<div
+											className={`rounded-full p-2 md:p-3 w-fit ${isSelected ? "bg-background" : "bg-hover"}`}
+										>
+											{card.icon ?? (
+												<span className="flex h-6 w-6 items-center justify-center text-xl" aria-hidden>
+													{card.emoji ?? "🤖"}
+												</span>
+											)}
 										</div>
 										<div className="space-y-1">
 											<h3 className="text-base md:text-lg font-medium text-foreground">{card.title}</h3>
@@ -120,7 +142,10 @@ function Index() {
 							);
 						})}
 				</div>
+
 			</div>
+
+			<AssistantManager open={managerOpen} onOpenChange={setManagerOpen} />
 
 			{/* Single animated input container */}
 			<div
