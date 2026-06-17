@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Brain } from "lucide-react";
 import { ChatInput } from "@/components/ChatInput";
 import { ConversationNotFound } from "@/components/ConversationNotFound";
 import { Message } from "@/components/Message";
@@ -8,7 +9,9 @@ import { useCanvasStore } from "@/stores/canvas";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
 import { useProjectStore } from "@/stores/project";
+import { useMemoryStore } from "@/stores/memory";
 import { buildSystemPrompt } from "@/utils/build-system-prompt";
+import { injectMemories } from "@/utils/memory-injection";
 import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { resolveChatEndpoint } from "@/utils/chat-endpoint";
@@ -43,6 +46,14 @@ function Chat() {
 	} = useChatStore();
 	const { getAssistantOrDefault } = useAssistantStore();
 	const getProject = useProjectStore((s) => s.getProject);
+	// Subscribe to the memory store so the injected-context indicator re-renders when the user adds,
+	// edits, toggles or deletes a memory while this chat is open. The actual injection at send-time
+	// reads getEnabledMemories() so it always uses the freshest set.
+	const memories = useMemoryStore((s) => s.memories);
+	const enabledMemoryCount = useMemo(
+		() => Object.values(memories).filter((m) => m.enabled).length,
+		[memories],
+	);
 	const isCanvasOpen = useCanvasStore((s) => s.openChatId === chatId);
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
@@ -170,9 +181,12 @@ function Chat() {
 		const toolsEnabled = useConnected && modelSupportsTools;
 
 		// Prepend the chat's project instructions (if any) to the persona prompt so a folder's
-		// guidance frames every conversation inside it.
+		// guidance frames every conversation inside it, then prepend the user's saved cross-conversation
+		// memories ahead of everything so the model frames the whole chat with what it knows about the
+		// user. Memories stay device-local until this request; we read them fresh at send-time.
 		const project = getProject(chat?.projectId);
-		const systemPrompt = buildSystemPrompt(assistant.systemPrompt, project?.instructions);
+		const baseSystemPrompt = buildSystemPrompt(assistant.systemPrompt, project?.instructions);
+		const systemPrompt = injectMemories(baseSystemPrompt, useMemoryStore.getState().getEnabledMemories());
 
 		const requestMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
 			{ role: "system", content: systemPrompt },
@@ -430,6 +444,20 @@ function Chat() {
 				{/* Input area */}
 				<div className="p-4">
 					<div className="max-w-4xl mx-auto">
+						{/* Transparency indicator: when the user has saved memories, show how many are folded
+						    into this chat's system context. Doubles as the e2e hook proving injection. */}
+						{enabledMemoryCount > 0 && (
+							<div className="max-w-2xl mx-auto mb-2 flex justify-center">
+								<span
+									data-testid="memory-injected-indicator"
+									data-memory-count={enabledMemoryCount}
+									className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-tiny text-muted-foreground"
+								>
+									<Brain className="h-3 w-3" />
+									{enabledMemoryCount} {enabledMemoryCount === 1 ? "memory" : "memories"} in context
+								</span>
+							</div>
+						)}
 						<div className="max-w-2xl mx-auto">
 							<ChatInput
 								onSubmit={handleSendMessage}

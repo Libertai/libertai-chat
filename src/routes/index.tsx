@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Settings2 } from "lucide-react";
+import { Brain, Settings2 } from "lucide-react";
 import { ChatInput } from "@/components/ChatInput";
 import { AssistantManager } from "@/components/AssistantManager";
+import { MemoryManager } from "@/components/MemoryManager";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
 import { useAccountStore } from "@libertai/auth";
@@ -25,6 +26,7 @@ function Index() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasContent, setHasContent] = useState(false);
 	const [managerOpen, setManagerOpen] = useState(false);
+	const [memoryOpen, setMemoryOpen] = useState(false);
 	const shouldShowCentered = isFocused || hasContent;
 
 	const handleSubmit = (
@@ -78,18 +80,31 @@ function Index() {
 					</span>
 				</h1>
 
-				{/* Manage assistants entry point - hidden alongside the cards when typing/focused. */}
-				<button
-					type="button"
-					data-testid="manage-assistants"
-					onClick={() => setManagerOpen(true)}
-					className={`inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover md:transition-all md:duration-500 ${
+				{/* Manage assistants / Memory entry points - hidden alongside the cards when typing/focused. */}
+				<div
+					className={`flex items-center gap-2 md:transition-all md:duration-500 ${
 						shouldShowCentered ? "md:opacity-0 md:pointer-events-none" : "opacity-100"
 					}`}
 				>
-					<Settings2 className="h-4 w-4" />
-					Manage assistants
-				</button>
+					<button
+						type="button"
+						data-testid="manage-assistants"
+						onClick={() => setManagerOpen(true)}
+						className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+					>
+						<Settings2 className="h-4 w-4" />
+						Manage assistants
+					</button>
+					<button
+						type="button"
+						data-testid="manage-memory"
+						onClick={() => setMemoryOpen(true)}
+						className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hover"
+					>
+						<Brain className="h-4 w-4" />
+						Memory
+					</button>
+				</div>
 
 				{/* Cards grid - hide when focused or typing */}
 				<div
@@ -146,6 +161,7 @@ function Index() {
 			</div>
 
 			<AssistantManager open={managerOpen} onOpenChange={setManagerOpen} />
+			<MemoryManager open={memoryOpen} onOpenChange={setMemoryOpen} />
 
 			{/* Single animated input container */}
 			<div
