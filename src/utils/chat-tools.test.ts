@@ -15,13 +15,13 @@ const OPTS = { connectedApiUrl: "https://api.libertai.io", chatApiKey: "sk-chat-
 afterEach(() => vi.restoreAllMocks());
 
 describe("TOOL_DEFINITIONS", () => {
-	it("declares web_search and generate_image functions", () => {
+	it("declares the search, image and interpreter functions", () => {
 		const names = TOOL_DEFINITIONS.filter(
 			(t): t is OpenAI.Chat.Completions.ChatCompletionFunctionTool => t.type === "function",
 		)
 			.map((t) => t.function.name)
 			.sort();
-		expect(names).toEqual(["generate_image", "web_search"]);
+		expect(names).toEqual(["generate_image", "run_javascript", "run_python", "web_search"]);
 	});
 });
 

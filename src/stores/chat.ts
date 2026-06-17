@@ -23,7 +23,7 @@ interface ChatStore {
 	updateMessageArtifacts: (
 		chatId: string,
 		messageId: string,
-		artifacts: { sources?: Message["sources"]; images?: ImageData[] },
+		artifacts: { sources?: Message["sources"]; images?: ImageData[]; interpreter?: Message["interpreter"] },
 	) => void;
 	deleteMessage: (chatId: string, messageId: string) => void;
 	deleteChat: (chatId: string) => void;
@@ -33,7 +33,7 @@ interface ChatStore {
 	migrateLegacyChatsIfNeeded: () => void;
 }
 
-const CHAT_VERSION = 5;
+const CHAT_VERSION = 6;
 
 export const useChatStore = create<ChatStore>()(
 	persist(

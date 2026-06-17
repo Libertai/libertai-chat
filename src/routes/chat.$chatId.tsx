@@ -12,8 +12,8 @@ import { useModels } from "@/hooks/data/use-models";
 import { supportsTools, resolveChatModel } from "@/config/model-capabilities";
 import { buildRequestMessages } from "@/utils/build-request-messages";
 import { ToolCallAccumulator } from "@/utils/tool-call-accumulator";
-import { TOOL_DEFINITIONS, executeWebSearch, executeGenerateImage } from "@/utils/chat-tools";
-import type { GenerateImageArgs, SearchType } from "@/utils/chat-tools";
+import { TOOL_DEFINITIONS, executeWebSearch, executeGenerateImage, executeRunCode } from "@/utils/chat-tools";
+import type { GenerateImageArgs, SearchType, InterpreterArtifact } from "@/utils/chat-tools";
 import { consumePendingForcedTool } from "@/utils/pending-forced-tool";
 import env from "@/config/env";
 import OpenAI from "openai";
@@ -108,8 +108,12 @@ function Chat() {
 				let searchType = pendingSearchTypeRef.current;
 				if (forced === undefined) {
 					const handoff = consumePendingForcedTool(chatId);
-					forced = handoff?.tool;
-					searchType = handoff?.searchType;
+					// Only web_search / generate_image are user-forceable from the input menu; the
+					// interpreter tools are model-invoked, never force-handed-off, so narrow here.
+					if (handoff?.tool === "web_search" || handoff?.tool === "generate_image") {
+						forced = handoff.tool;
+						searchType = handoff.searchType;
+					}
 				}
 				pendingForcedToolRef.current = undefined;
 				pendingSearchTypeRef.current = undefined;
@@ -121,6 +125,8 @@ function Chat() {
 	const TOOL_LABELS: Record<string, string> = {
 		web_search: "Searching the web…",
 		generate_image: "Generating image…",
+		run_python: "Running Python…",
+		run_javascript: "Running JavaScript…",
 	};
 
 	const generateAIResponse = async (forcedTool?: "web_search" | "generate_image", searchType?: SearchType) => {
@@ -148,6 +154,7 @@ function Chat() {
 		const accumulated: ParsedMessage = { thinking: "", content: "" };
 		const collectedSources: { title: string; url: string; snippet: string }[] = [];
 		const collectedImages: ImageData[] = [];
+		const collectedInterpreter: InterpreterArtifact[] = [];
 
 		try {
 			for (let iteration = 0; iteration < 5; iteration++) {
@@ -237,6 +244,15 @@ function Chat() {
 							updateMessageArtifacts(chatId, assistantMessage.id, { images: collectedImages });
 						}
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
+					} else if (call.name === "run_python" || call.name === "run_javascript") {
+						const language = call.name === "run_python" ? "python" : "javascript";
+						const code = String(call.arguments.code ?? "");
+						const { artifact, toolText } = await executeRunCode(language, code, {
+							signal: controller.signal,
+						});
+						collectedInterpreter.push(artifact);
+						updateMessageArtifacts(chatId, assistantMessage.id, { interpreter: collectedInterpreter });
+						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else {
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: "Unknown tool." });
 					}
@@ -251,14 +267,24 @@ function Chat() {
 				}
 			}
 
-			if (!accumulated.content && !accumulated.thinking && collectedImages.length === 0) {
+			if (
+				!accumulated.content &&
+				!accumulated.thinking &&
+				collectedImages.length === 0 &&
+				collectedInterpreter.length === 0
+			) {
 				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
 			}
 		} catch (error) {
 			if (controller.signal.aborted) {
 				// Keep whatever streamed before the stop (content/thinking already persisted, images kept
 				// via updateMessageArtifacts). Only leave a marker when the turn produced nothing at all.
-				if (!accumulated.content && !accumulated.thinking && collectedImages.length === 0) {
+				if (
+					!accumulated.content &&
+					!accumulated.thinking &&
+					collectedImages.length === 0 &&
+					collectedInterpreter.length === 0
+				) {
 					updateMessage(chatId, assistantMessage.id, "_(stopped)_");
 				}
 			} else {

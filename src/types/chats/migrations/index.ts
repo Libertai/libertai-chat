@@ -3,6 +3,7 @@ import { v1ToV2Migration } from "./v2.ts";
 import { v2ToV3Migration } from "./v3.ts";
 import { v3ToV4Migration } from "./v4.ts";
 import { v4ToV5Migration } from "./v5.ts";
+import { v5ToV6Migration } from "./v6.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -16,7 +17,13 @@ export interface Migration<TInput = any, TOutput = any> {
 	migrate: MigrationFunction<TInput, TOutput>;
 }
 
-const migrations: Migration[] = [v1ToV2Migration, v2ToV3Migration, v3ToV4Migration, v4ToV5Migration];
+const migrations: Migration[] = [
+	v1ToV2Migration,
+	v2ToV3Migration,
+	v3ToV4Migration,
+	v4ToV5Migration,
+	v5ToV6Migration,
+];
 
 export const runMigrations = (persistedState: any, currentVersion: number): any => {
 	if (!persistedState) {

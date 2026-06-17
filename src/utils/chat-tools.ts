@@ -1,7 +1,9 @@
 import type OpenAI from "openai";
 import type { ImageData, SearchSource } from "@/types/chats";
+import { runCode } from "@/lib/interpreter/run";
+import type { InterpreterLanguage, InterpreterResult } from "@/lib/interpreter/types";
 
-export type ToolName = "web_search" | "generate_image";
+export type ToolName = "web_search" | "generate_image" | "run_python" | "run_javascript";
 
 /** Backend-supported web-search modes (search-service `SearchType`, serialized lowercase). */
 export type SearchType = "web" | "news" | "academic" | "images";
@@ -47,6 +49,37 @@ export const TOOL_DEFINITIONS: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 					height: { type: "number", description: "Optional height in pixels (default 1024)." },
 				},
 				required: ["prompt"],
+			},
+		},
+	},
+	{
+		type: "function",
+		function: {
+			name: "run_python",
+			description:
+				"Run Python code in a secure sandboxed environment (Pyodide/WASM) and return its output. " +
+				"numpy, pandas and matplotlib are available. Use print() to show results; the value of the " +
+				"last expression is also captured. A matplotlib figure is returned as an image to the user. " +
+				"Use for calculations, data analysis, plotting, and verifying code.",
+			parameters: {
+				type: "object",
+				properties: { code: { type: "string", description: "The Python source code to execute." } },
+				required: ["code"],
+			},
+		},
+	},
+	{
+		type: "function",
+		function: {
+			name: "run_javascript",
+			description:
+				"Run JavaScript code in a secure sandboxed Web Worker and return its output. console.log output " +
+				"and the returned value are captured. Use for quick calculations, string/JSON manipulation, and " +
+				"verifying logic.",
+			parameters: {
+				type: "object",
+				properties: { code: { type: "string", description: "The JavaScript source code to execute." } },
+				required: ["code"],
 			},
 		},
 	},
@@ -141,4 +174,67 @@ export async function executeGenerateImage(
 			toolText: `Image generation failed: ${error instanceof Error ? error.message : "unknown error"}.`,
 		};
 	}
+}
+
+/** What we persist on the assistant message so a code run renders in the chat. Mirrors the
+ *  interpreter result but only the display-relevant fields (plus the source code we ran). */
+export interface InterpreterArtifact {
+	language: InterpreterLanguage;
+	code: string;
+	stdout: string;
+	stderr: string;
+	result: string | null;
+	imagePng: string | null;
+	error: string | null;
+	timedOut: boolean;
+}
+
+/** Render an interpreter run as the `tool` message text the model reads next turn. Keeps it
+ *  compact but faithful: stdout, last value, errors, and a note that any image was shown. */
+export function formatInterpreterResult(result: InterpreterResult): string {
+	const parts: string[] = [];
+	if (result.stdout.trim()) parts.push(`stdout:\n${result.stdout.trim()}`);
+	if (result.result != null && result.result !== "") parts.push(`result: ${result.result}`);
+	if (result.stderr.trim()) parts.push(`stderr:\n${result.stderr.trim()}`);
+	if (result.imagePng) parts.push("A plot image was produced and shown to the user.");
+	if (result.timedOut) parts.push("The execution was terminated because it exceeded the time limit.");
+	else if (result.error) parts.push(`error: ${result.error}`);
+	if (parts.length === 0) parts.push("The code ran successfully with no output.");
+	return parts.join("\n\n");
+}
+
+export interface RunCodeOptions {
+	/** Execution budget in ms before the sandbox terminates the worker. */
+	timeoutMs?: number;
+	/** Override the Pyodide CDN base (tests/self-host). */
+	pyodideIndexUrl?: string;
+	signal?: AbortSignal;
+}
+
+/**
+ * Execute model-supplied code through the client-side sandbox. NEVER throws — a load failure,
+ * crash, or timeout comes back as an InterpreterArtifact with `error` set, plus a `toolText` the
+ * model can read. The artifact is rendered in the message; the toolText feeds the next loop turn.
+ */
+export async function executeRunCode(
+	language: InterpreterLanguage,
+	code: string,
+	opts: RunCodeOptions = {},
+): Promise<{ artifact: InterpreterArtifact; toolText: string }> {
+	const result = await runCode(language, code, {
+		timeoutMs: opts.timeoutMs,
+		pyodideIndexUrl: opts.pyodideIndexUrl,
+		signal: opts.signal,
+	});
+	const artifact: InterpreterArtifact = {
+		language,
+		code,
+		stdout: result.stdout,
+		stderr: result.stderr,
+		result: result.result,
+		imagePng: result.imagePng,
+		error: result.error,
+		timedOut: result.timedOut,
+	};
+	return { artifact, toolText: formatInterpreterResult(result) };
 }

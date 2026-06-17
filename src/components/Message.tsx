@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MessageEditInput } from "@/components/MessageEditInput";
 import { CodeBlock } from "@/components/CodeBlock";
+import { InterpreterOutput } from "@/components/InterpreterOutput";
 import { useReadAloud } from "@/hooks/use-read-aloud";
 import { extractLanguageFromClassName, hastText, normalizeCodeSource } from "@/utils/markdown";
 import { citationAnchorId, parseCitations } from "@/utils/citations";
@@ -297,6 +298,15 @@ export function Message({
 							>
 								{message.content}
 							</ReactMarkdown>
+						</div>
+					)}
+
+					{/* Client-side code-interpreter runs (run_python / run_javascript) */}
+					{message.role === "assistant" && message.interpreter && message.interpreter.length > 0 && (
+						<div className="mt-1">
+							{message.interpreter.map((run, index) => (
+								<InterpreterOutput key={index} run={run} />
+							))}
 						</div>
 					)}
 
