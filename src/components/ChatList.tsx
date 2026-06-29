@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useChatStore } from "@/stores/chat";
 import { useProjectStore, type Project } from "@/stores/project";
-import { type Chat, type Message } from "@/types/chats";
+import { type Chat } from "@/types/chats";
+import { getChatTitle, truncateText } from "@/utils/chat-title";
 import { ChevronDown, ChevronRight, Folder, FolderPlus, MoreHorizontal, Pencil, Settings, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -20,19 +21,6 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
-
-function getChatTitle(chat: Chat): string {
-	if (chat.title) {
-		return chat.title;
-	}
-	const firstMessage = chat.messages.find((msg: Message) => msg.role === "user");
-	return firstMessage?.content || "New chat";
-}
-
-function truncateText(text: string, maxLength: number = 50): string {
-	if (text.length <= maxLength) return text;
-	return text.substring(0, maxLength).trim() + "...";
-}
 
 export function ChatList() {
 	const { getAllChats, deleteChat, renameChat, setChatProject } = useChatStore();
