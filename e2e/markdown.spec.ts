@@ -34,7 +34,7 @@ const ASSISTANT_MARKDOWN = [
 	"",
 	"```js",
 	"function greet(name) {",
-	'\treturn `hello, ${name}`;',
+	"\treturn `hello, ${name}`;",
 	"}",
 	"```",
 	"",

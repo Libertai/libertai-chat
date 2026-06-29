@@ -150,9 +150,6 @@ export async function runCode(
 		options.signal?.addEventListener("abort", onAbort);
 		window.addEventListener("message", onMessage);
 
-		sandbox.iframe.contentWindow?.postMessage(
-			{ type: "run", id, language, code, timeoutMs, pyodideIndexUrl },
-			"*",
-		);
+		sandbox.iframe.contentWindow?.postMessage({ type: "run", id, language, code, timeoutMs, pyodideIndexUrl }, "*");
 	});
 }

@@ -77,9 +77,7 @@ describe("v6ToV7Migration", () => {
 									kind: "pdf",
 									title: "bad",
 									slot: "pdf:0",
-									versions: [
-										{ version: 1, code: "x", language: "pdf", createdAt: "2026-01-01T00:00:00.000Z" },
-									],
+									versions: [{ version: 1, code: "x", language: "pdf", createdAt: "2026-01-01T00:00:00.000Z" }],
 								},
 							],
 						},

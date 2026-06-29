@@ -6,7 +6,17 @@
 // The browser download wrapper lives in download.ts; the format/menu logic lives in formats.ts.
 
 import { jsPDF } from "jspdf";
-import { Document, Packer, Paragraph, HeadingLevel, TextRun, Table, TableRow as DocxTableRow, TableCell, WidthType } from "docx";
+import {
+	Document,
+	Packer,
+	Paragraph,
+	HeadingLevel,
+	TextRun,
+	Table,
+	TableRow as DocxTableRow,
+	TableCell,
+	WidthType,
+} from "docx";
 import * as XLSX from "xlsx";
 import { parseMarkdownBlocks, type MarkdownBlock } from "@/lib/export/markdown-blocks";
 import type { TableRow } from "@/lib/export/markdown-table";
@@ -94,7 +104,9 @@ function blockToDocx(block: MarkdownBlock): Paragraph | Table | (Paragraph | Tab
 			// Render code as monospace lines so it stays readable in Word.
 			return block.text
 				.split("\n")
-				.map((line) => new Paragraph({ children: [new TextRun({ text: line || " ", font: "Courier New", size: 20 })] }));
+				.map(
+					(line) => new Paragraph({ children: [new TextRun({ text: line || " ", font: "Courier New", size: 20 })] }),
+				);
 		case "hr":
 			return new Paragraph({ text: "", border: { bottom: { style: "single", size: 6, color: "999999", space: 1 } } });
 		case "table":

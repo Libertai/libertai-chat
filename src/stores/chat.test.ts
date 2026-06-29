@@ -16,7 +16,10 @@ describe("attachMessageMeta", () => {
 			images: [{ data: "data:image/png;base64,AAA", mimeType: "image/png", filename: "gen.png" }],
 		});
 
-		const msg = useChatStore.getState().getChat("c1")!.messages.find((m) => m.id === assistant.id)!;
+		const msg = useChatStore
+			.getState()
+			.getChat("c1")!
+			.messages.find((m) => m.id === assistant.id)!;
 		expect(msg.content).toBe("answer");
 		expect(msg.thinking).toBe("reasoning");
 		expect(msg.sources).toHaveLength(1);
@@ -29,8 +32,8 @@ describe("syncMessageArtifacts", () => {
 		useChatStore.setState({ chats: {}, legacyMigrated: true });
 	});
 
-	const HTML = "Here you go:\n\n```html\n<button id=\"b\">Click</button>\n```\n";
-	const HTML_V2 = "Updated:\n\n```html\n<button id=\"b\">Tap</button>\n```\n";
+	const HTML = 'Here you go:\n\n```html\n<button id="b">Click</button>\n```\n';
+	const HTML_V2 = 'Updated:\n\n```html\n<button id="b">Tap</button>\n```\n';
 
 	it("detects an html artifact and stores a first version", () => {
 		const store = useChatStore.getState();
@@ -42,7 +45,10 @@ describe("syncMessageArtifacts", () => {
 		expect(reconciled[0].kind).toBe("html");
 		expect(reconciled[0].versions).toHaveLength(1);
 
-		const msg = useChatStore.getState().getChat("c1")!.messages.find((m) => m.id === assistant.id)!;
+		const msg = useChatStore
+			.getState()
+			.getChat("c1")!
+			.messages.find((m) => m.id === assistant.id)!;
 		expect(msg.artifacts).toHaveLength(1);
 		expect(msg.artifacts![0].versions[0].code).toContain("Click");
 	});
@@ -80,7 +86,10 @@ describe("syncMessageArtifacts", () => {
 
 		const reconciled = store.syncMessageArtifacts("c1", assistant.id, "just text, no fenced blocks");
 		expect(reconciled).toHaveLength(0);
-		const msg = useChatStore.getState().getChat("c1")!.messages.find((m) => m.id === assistant.id)!;
+		const msg = useChatStore
+			.getState()
+			.getChat("c1")!
+			.messages.find((m) => m.id === assistant.id)!;
 		expect(msg.artifacts).toBeUndefined();
 	});
 });

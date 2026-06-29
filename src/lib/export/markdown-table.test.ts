@@ -56,17 +56,9 @@ describe("extractTables", () => {
 	});
 
 	it("extracts multiple tables in document order", () => {
-		const md = [
-			"| A | B |",
-			"| - | - |",
-			"| 1 | 2 |",
-			"",
-			"some text",
-			"",
-			"| X | Y |",
-			"| - | - |",
-			"| 9 | 8 |",
-		].join("\n");
+		const md = ["| A | B |", "| - | - |", "| 1 | 2 |", "", "some text", "", "| X | Y |", "| - | - |", "| 9 | 8 |"].join(
+			"\n",
+		);
 		const tables = extractTables(md);
 		expect(tables).toHaveLength(2);
 		expect(tables[0].header).toEqual(["A", "B"]);

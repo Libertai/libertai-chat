@@ -187,24 +187,22 @@ export function Message({
 					</div>
 				)}
 
-				{message.role === "assistant" &&
-					isLastMessage &&
-					(toolStatus || (toolSteps && toolSteps.length > 0)) && (
-						<div className="mb-3 flex flex-col gap-1 px-3 py-2 text-sm text-muted-foreground">
-							{toolSteps?.map((step, i) => (
-								<div key={i} className="flex items-center gap-2">
-									<Check className="w-3.5 h-3.5 text-primary shrink-0" />
-									<span className="opacity-70">{step}</span>
-								</div>
-							))}
-							{toolStatus && (
-								<div className="flex items-center gap-2">
-									<Loader2 className="w-3.5 h-3.5 text-primary shrink-0 animate-spin" />
-									<span>{toolStatus}</span>
-								</div>
-							)}
-						</div>
-					)}
+				{message.role === "assistant" && isLastMessage && (toolStatus || (toolSteps && toolSteps.length > 0)) && (
+					<div className="mb-3 flex flex-col gap-1 px-3 py-2 text-sm text-muted-foreground">
+						{toolSteps?.map((step, i) => (
+							<div key={i} className="flex items-center gap-2">
+								<Check className="w-3.5 h-3.5 text-primary shrink-0" />
+								<span className="opacity-70">{step}</span>
+							</div>
+						))}
+						{toolStatus && (
+							<div className="flex items-center gap-2">
+								<Loader2 className="w-3.5 h-3.5 text-primary shrink-0 animate-spin" />
+								<span>{toolStatus}</span>
+							</div>
+						)}
+					</div>
+				)}
 
 				{/* Fallback working indicator: the assistant is active (streaming / loading) but no
 				    tool step or interpreter card is visible — e.g. the model is reasoning before emitting
@@ -527,19 +525,14 @@ export function Message({
 				{/* Continue prompt for a turn that hit the tool-loop cap without a final answer. Distinct
 				    from the toolbar above (which only renders when there's content) so it stays a clear
 				    call-to-action after the "ran out of turns" line. */}
-				{message.role === "assistant" &&
-					needsContinue &&
-					isLastMessage &&
-					!isLoading &&
-					!isStreaming &&
-					onContinue && (
-						<div className="mt-2 mx-2">
-							<Button variant="outline" size="sm" onClick={onContinue} className="gap-1.5">
-								<ChevronRight className="w-4 h-4" />
-								Continue
-							</Button>
-						</div>
-					)}
+				{message.role === "assistant" && needsContinue && isLastMessage && !isLoading && !isStreaming && onContinue && (
+					<div className="mt-2 mx-2">
+						<Button variant="outline" size="sm" onClick={onContinue} className="gap-1.5">
+							<ChevronRight className="w-4 h-4" />
+							Continue
+						</Button>
+					</div>
+				)}
 			</div>
 		</div>
 	);

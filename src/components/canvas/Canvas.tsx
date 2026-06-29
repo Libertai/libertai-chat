@@ -85,8 +85,20 @@ export function Canvas() {
 			{/* Toolbar: tabs + version history */}
 			<div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
 				<div className="flex items-center gap-1 rounded-lg bg-muted/40 p-0.5" role="tablist">
-					<TabButton active={tab === "preview"} onClick={() => setTab("preview")} icon={<Eye className="h-3.5 w-3.5" />} label="Preview" testid="canvas-tab-preview" />
-					<TabButton active={tab === "code"} onClick={() => setTab("code")} icon={<Code2 className="h-3.5 w-3.5" />} label="Code" testid="canvas-tab-code" />
+					<TabButton
+						active={tab === "preview"}
+						onClick={() => setTab("preview")}
+						icon={<Eye className="h-3.5 w-3.5" />}
+						label="Preview"
+						testid="canvas-tab-preview"
+					/>
+					<TabButton
+						active={tab === "code"}
+						onClick={() => setTab("code")}
+						icon={<Code2 className="h-3.5 w-3.5" />}
+						label="Code"
+						testid="canvas-tab-code"
+					/>
 				</div>
 
 				{versions.length > 1 && (

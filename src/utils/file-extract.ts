@@ -172,10 +172,7 @@ export interface ExtractDeps {
  * types. Throws on files over the size ceiling or on a parse failure so the caller can surface a
  * toast. All work is client-side.
  */
-export async function extractFile(
-	file: File,
-	deps: ExtractDeps = {},
-): Promise<FileAttachment | null> {
+export async function extractFile(file: File, deps: ExtractDeps = {}): Promise<FileAttachment | null> {
 	const kind = classifyFile(file);
 	if (kind === null) return null;
 

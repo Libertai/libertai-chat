@@ -64,9 +64,7 @@ describe("v7ToV8Migration", () => {
 							role: "user",
 							content: "x",
 							timestamp: new Date("2026-01-01"),
-							attachments: [
-								{ filename: "a.docx", kind: "docx", mimeType: "x", content: "x", truncated: false },
-							],
+							attachments: [{ filename: "a.docx", kind: "docx", mimeType: "x", content: "x", truncated: false }],
 						},
 					],
 				},

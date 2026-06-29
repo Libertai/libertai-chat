@@ -44,8 +44,16 @@ const ASSISTANT_WITH_SOURCES = [
 ].join("\n");
 
 const SOURCES = [
-	{ title: "Announcing Rust 1.85.0", url: "https://blog.rust-lang.org/2025/02/20/Rust-1.85.0.html", snippet: "The Rust team is happy to announce a new version." },
-	{ title: "Async closures stabilization", url: "https://github.com/rust-lang/rust/pull/132706", snippet: "Stabilize async closures." },
+	{
+		title: "Announcing Rust 1.85.0",
+		url: "https://blog.rust-lang.org/2025/02/20/Rust-1.85.0.html",
+		snippet: "The Rust team is happy to announce a new version.",
+	},
+	{
+		title: "Async closures stabilization",
+		url: "https://github.com/rust-lang/rust/pull/132706",
+		snippet: "Stabilize async closures.",
+	},
 ];
 
 function seedCitationsChat(page: Page) {
@@ -60,7 +68,12 @@ function seedCitationsChat(page: Page) {
 					updatedAt: now,
 					title: "Citations smoke",
 					messages: [
-						{ id: "11111111-1111-4111-8111-111111111111", role: "user", content: "what's new in rust?", timestamp: now },
+						{
+							id: "11111111-1111-4111-8111-111111111111",
+							role: "user",
+							content: "what's new in rust?",
+							timestamp: now,
+						},
 						{
 							id: "22222222-2222-4222-8222-222222222222",
 							role: "assistant",

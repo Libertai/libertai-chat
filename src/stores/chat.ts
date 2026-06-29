@@ -249,9 +249,7 @@ export const useChatStore = create<ChatStore>()(
 							[chatId]: {
 								...chat,
 								messages: chat.messages.map((msg) =>
-									msg.id === messageId
-										? { ...msg, artifacts: reconciled.length > 0 ? reconciled : undefined }
-										: msg,
+									msg.id === messageId ? { ...msg, artifacts: reconciled.length > 0 ? reconciled : undefined } : msg,
 								),
 								updatedAt: new Date().toISOString(),
 							},

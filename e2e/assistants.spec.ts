@@ -21,13 +21,17 @@ const REGISTRY = {
 					id: "qwen3.6-35b-a3b",
 					name: "Qwen3.6-35B-A3B",
 					pricing: { text: { price_per_million_input_tokens: 0.2, price_per_million_output_tokens: 0.8 } },
-					capabilities: { text: { tee: false, vision: true, reasoning: false, context_window: 131072, function_calling: true } },
+					capabilities: {
+						text: { tee: false, vision: true, reasoning: false, context_window: 131072, function_calling: true },
+					},
 				},
 				{
 					id: "qwen3.6-27b",
 					name: "Qwen3.6-27B",
 					pricing: { text: { price_per_million_input_tokens: 0.2, price_per_million_output_tokens: 0.8 } },
-					capabilities: { text: { tee: false, vision: false, reasoning: true, context_window: 65536, function_calling: true } },
+					capabilities: {
+						text: { tee: false, vision: false, reasoning: true, context_window: 65536, function_calling: true },
+					},
 				},
 			],
 		},

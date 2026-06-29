@@ -55,10 +55,7 @@ function Chat() {
 	// edits, toggles or deletes a memory while this chat is open. The actual injection at send-time
 	// reads getEnabledMemories() so it always uses the freshest set.
 	const memories = useMemoryStore((s) => s.memories);
-	const enabledMemoryCount = useMemo(
-		() => Object.values(memories).filter((m) => m.enabled).length,
-		[memories],
-	);
+	const enabledMemoryCount = useMemo(() => Object.values(memories).filter((m) => m.enabled).length, [memories]);
 	const isCanvasOpen = useCanvasStore((s) => s.openChatId === chatId);
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { data: subscription, refetch: refetchSubscription } = useSubscription();
@@ -92,10 +89,7 @@ function Chat() {
 	const effectiveModel = resolveChatModel(chat?.model, getAssistantOrDefault(chat?.assistantId).model);
 
 	const useConnected = isAuthenticated && !!chatApiKey;
-	const modelSupportsTools = useMemo(
-		() => supportsTools(effectiveModel, models ?? []),
-		[effectiveModel, models],
-	);
+	const modelSupportsTools = useMemo(() => supportsTools(effectiveModel, models ?? []), [effectiveModel, models]);
 
 	// Authenticated users always use the connected endpoint with their chat API key (chat keys are
 	// free at the gateway — never credit-gated). Logged-out users (or while the key is still being
@@ -613,38 +607,38 @@ function Chat() {
 					<div ref={messagesEndRef} />
 				</div>
 
-			{/* Input area */}
-			<div className="p-4">
-				<div className="max-w-4xl mx-auto">
-					{/* Transparency indicator: when the user has saved memories, show how many are folded
+				{/* Input area */}
+				<div className="p-4">
+					<div className="max-w-4xl mx-auto">
+						{/* Transparency indicator: when the user has saved memories, show how many are folded
 					    into this chat's system context. Doubles as the e2e hook proving injection. */}
-					{enabledMemoryCount > 0 && (
-						<div className="max-w-2xl mx-auto mb-2 flex justify-center">
-							<span
-								data-testid="memory-injected-indicator"
-								data-memory-count={enabledMemoryCount}
-								className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-tiny text-muted-foreground"
-							>
-								<Brain className="h-3 w-3" />
-								{enabledMemoryCount} {enabledMemoryCount === 1 ? "memory" : "memories"} in context
-							</span>
+						{enabledMemoryCount > 0 && (
+							<div className="max-w-2xl mx-auto mb-2 flex justify-center">
+								<span
+									data-testid="memory-injected-indicator"
+									data-memory-count={enabledMemoryCount}
+									className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-tiny text-muted-foreground"
+								>
+									<Brain className="h-3 w-3" />
+									{enabledMemoryCount} {enabledMemoryCount === 1 ? "memory" : "memories"} in context
+								</span>
+							</div>
+						)}
+						<div className="max-w-2xl mx-auto">
+							{isAuthenticated ? blocked ? <ChatPaywall /> : <ChatUsageWarning /> : <AnonChatNotice />}
+							<ChatInput
+								onSubmit={handleSendMessage}
+								placeholder="Continue private conversation..."
+								disabled={isLoading || blocked || anonBlocked}
+								assistant={getAssistantOrDefault(chat?.assistantId)}
+								model={chat?.model}
+								onModelSelect={(m) => setChatModel(chatId, m)}
+								autoFocus
+								isConnected={useConnected}
+								isGenerating={isLoading || isStreaming}
+								onStop={() => abortRef.current?.abort()}
+							/>
 						</div>
-					)}
-					<div className="max-w-2xl mx-auto">
-						{isAuthenticated ? blocked ? <ChatPaywall /> : <ChatUsageWarning /> : <AnonChatNotice />}
-						<ChatInput
-							onSubmit={handleSendMessage}
-							placeholder="Continue private conversation..."
-							disabled={isLoading || blocked || anonBlocked}
-							assistant={getAssistantOrDefault(chat?.assistantId)}
-							model={chat?.model}
-							onModelSelect={(m) => setChatModel(chatId, m)}
-							autoFocus
-							isConnected={useConnected}
-							isGenerating={isLoading || isStreaming}
-							onStop={() => abortRef.current?.abort()}
-						/>
-					</div>
 					</div>
 				</div>
 			</div>

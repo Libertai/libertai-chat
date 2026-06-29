@@ -20,9 +20,11 @@ describe("compileReact", () => {
 	});
 
 	it("strips ES import lines (React is a sandbox global)", async () => {
-		const src = ['import React from "react";', 'import { useState } from "react";', "function App(){ return <i/>; }"].join(
-			"\n",
-		);
+		const src = [
+			'import React from "react";',
+			'import { useState } from "react";',
+			"function App(){ return <i/>; }",
+		].join("\n");
 		const res = await compileReact(src, "jsx");
 		expect(res.error).toBeNull();
 		expect(res.code).not.toContain('from "react"');

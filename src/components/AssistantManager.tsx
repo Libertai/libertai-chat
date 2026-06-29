@@ -12,12 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ModelPicker } from "@/components/ModelPicker";
-import {
-	type Assistant,
-	type AssistantInput,
-	DEFAULT_CUSTOM_MODEL,
-	useAssistantStore,
-} from "@/stores/assistant";
+import { type Assistant, type AssistantInput, DEFAULT_CUSTOM_MODEL, useAssistantStore } from "@/stores/assistant";
 
 interface AssistantManagerProps {
 	open: boolean;
@@ -114,7 +109,9 @@ export function AssistantManager({ open, onOpenChange }: Readonly<AssistantManag
 		<Dialog open={open} onOpenChange={handleClose}>
 			<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl" data-testid="assistant-manager">
 				<DialogHeader>
-					<DialogTitle>{isEditing ? (editingId === "new" ? "New assistant" : "Edit assistant") : "Assistants"}</DialogTitle>
+					<DialogTitle>
+						{isEditing ? (editingId === "new" ? "New assistant" : "Edit assistant") : "Assistants"}
+					</DialogTitle>
 					<DialogDescription>
 						{isEditing
 							? "Set a name, system prompt and model. Custom assistants are stored only in this browser."

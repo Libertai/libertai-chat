@@ -139,9 +139,7 @@ function Index() {
 										</div>
 									)}
 									<div className="flex flex-col justify-between h-full">
-										<div
-											className={`rounded-full p-2 md:p-3 w-fit ${isSelected ? "bg-background" : "bg-hover"}`}
-										>
+										<div className={`rounded-full p-2 md:p-3 w-fit ${isSelected ? "bg-background" : "bg-hover"}`}>
 											{card.icon ?? (
 												<span className="flex h-6 w-6 items-center justify-center text-xl" aria-hidden>
 													{card.emoji ?? "🤖"}
@@ -157,7 +155,6 @@ function Index() {
 							);
 						})}
 				</div>
-
 			</div>
 
 			<AssistantManager open={managerOpen} onOpenChange={setManagerOpen} />

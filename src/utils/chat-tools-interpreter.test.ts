@@ -17,6 +17,7 @@ function makeResult(over: Partial<InterpreterResult> = {}): InterpreterResult {
 		stderr: "",
 		result: null,
 		imagePng: null,
+		files: [],
 		error: null,
 		timedOut: false,
 		...over,
@@ -89,9 +90,7 @@ describe("executeRunCode", () => {
 	});
 
 	it("never throws on a failed run — returns an artifact with the error set", async () => {
-		runCodeMock.mockResolvedValue(
-			makeResult({ language: "javascript", error: "Sandbox worker crashed: x" }),
-		);
+		runCodeMock.mockResolvedValue(makeResult({ language: "javascript", error: "Sandbox worker crashed: x" }));
 		const { artifact, toolText } = await executeRunCode("javascript", "boom()");
 		expect(artifact.error).toContain("crashed");
 		expect(toolText).toContain("error:");

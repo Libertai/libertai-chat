@@ -9,10 +9,7 @@
 // the host. Compilation itself is a pure transform (Babel does not run the code), so a malicious or
 // broken snippet can at worst fail to compile here.
 
-type BabelTransform = (
-	code: string,
-	options: Record<string, unknown>,
-) => { code?: string | null };
+type BabelTransform = (code: string, options: Record<string, unknown>) => { code?: string | null };
 
 let babelPromise: Promise<BabelTransform> | null = null;
 
@@ -59,7 +56,9 @@ export async function compileReact(source: string, language: string): Promise<Co
 		const code = out.code ?? null;
 		if (!code) return { code: null, error: "Compilation produced no output." };
 		// Re-point a default export onto `App` so the sandbox's auto-mount finds it.
-		const withDefault = /__default\s*=/.test(code) ? `${code}\nvar App = typeof App !== 'undefined' ? App : __default;` : code;
+		const withDefault = /__default\s*=/.test(code)
+			? `${code}\nvar App = typeof App !== 'undefined' ? App : __default;`
+			: code;
 		return { code: withDefault, error: null };
 	} catch (err) {
 		return { code: null, error: err instanceof Error ? err.message : String(err) };

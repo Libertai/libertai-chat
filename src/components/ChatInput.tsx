@@ -435,9 +435,7 @@ export function ChatInput({
 										onMouseDown={(e) => e.preventDefault()}
 										onClick={() => setSearchType(type)}
 										className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-											active
-												? "bg-primary text-white"
-												: "text-muted-foreground hover:bg-hover hover:text-foreground"
+											active ? "bg-primary text-white" : "text-muted-foreground hover:bg-hover hover:text-foreground"
 										}`}
 									>
 										{SEARCH_TYPE_LABELS[type]}

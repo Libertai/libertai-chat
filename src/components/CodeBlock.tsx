@@ -146,9 +146,7 @@ function MermaidBlock({ code }: { code: string }) {
 	}
 
 	if (!svg) {
-		return (
-			<div className="my-2 rounded-lg bg-background/50 p-3 text-xs text-muted-foreground">Rendering diagram…</div>
-		);
+		return <div className="my-2 rounded-lg bg-background/50 p-3 text-xs text-muted-foreground">Rendering diagram…</div>;
 	}
 
 	return (

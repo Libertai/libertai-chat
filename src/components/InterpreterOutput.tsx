@@ -92,11 +92,7 @@ export function InterpreterOutput({ run }: { run: InterpreterRun }) {
 				aria-expanded={isCodeExpanded}
 				className="flex w-full items-center gap-1 rounded-md px-1 py-1 text-xs font-medium text-muted-foreground hover:bg-muted/20"
 			>
-				{isCodeExpanded ? (
-					<ChevronDown className="h-3.5 w-3.5" />
-				) : (
-					<ChevronRight className="h-3.5 w-3.5" />
-				)}
+				{isCodeExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
 				<span>{isCodeExpanded ? "Hide code" : "Show code"}</span>
 			</button>
 
@@ -122,9 +118,7 @@ export function InterpreterOutput({ run }: { run: InterpreterRun }) {
 
 			<OutputBlock label="Output" text={run.stdout} tone="normal" />
 
-			{run.result != null && run.result !== "" && (
-				<OutputBlock label="Result" text={run.result} tone="normal" />
-			)}
+			{run.result != null && run.result !== "" && <OutputBlock label="Result" text={run.result} tone="normal" />}
 
 			{run.files && run.files.length > 0 && (
 				<div className="mt-2 flex flex-wrap gap-2">
@@ -142,11 +136,7 @@ export function InterpreterOutput({ run }: { run: InterpreterRun }) {
 					data-interpreter-error
 				>
 					<AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
-					<span>
-						{run.timedOut
-							? "Execution timed out and was stopped."
-							: run.error || "The code failed to run."}
-					</span>
+					<span>{run.timedOut ? "Execution timed out and was stopped." : run.error || "The code failed to run."}</span>
 				</div>
 			)}
 

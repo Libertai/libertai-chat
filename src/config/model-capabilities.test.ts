@@ -45,13 +45,17 @@ const REGISTRY: Model[] = [
 	{
 		id: "hermes-3-8b-tee",
 		name: "Hermes 3 8B (TEE)",
-		capabilities: { text: { context_window: 16384, function_calling: false, reasoning: false, tee: true, vision: false } },
+		capabilities: {
+			text: { context_window: 16384, function_calling: false, reasoning: false, tee: true, vision: false },
+		},
 		pricing: {},
 	},
 	{
 		id: "qwen3.6-35b-a3b",
 		name: "Qwen3.6-35B-A3B",
-		capabilities: { text: { context_window: 131072, function_calling: true, reasoning: false, tee: false, vision: true } },
+		capabilities: {
+			text: { context_window: 131072, function_calling: true, reasoning: false, tee: false, vision: true },
+		},
 		pricing: {},
 	},
 	{

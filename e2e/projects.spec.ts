@@ -65,7 +65,10 @@ async function openSidebar(page: Page) {
 	const desktopSidebar = page.locator('[data-slot="sidebar"][data-state]');
 	const list = page.getByTestId("chat-list");
 	for (let attempt = 0; attempt < 3; attempt++) {
-		const state = await desktopSidebar.first().getAttribute("data-state").catch(() => null);
+		const state = await desktopSidebar
+			.first()
+			.getAttribute("data-state")
+			.catch(() => null);
 		const inViewport = await page
 			.getByTestId("create-project")
 			.evaluate((el) => {
@@ -136,21 +139,15 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	await page.reload({ waitUntil: "domcontentloaded" });
 	await openSidebar(page);
 	await expect(page.getByTestId(`project-group-${projectId}`)).toBeVisible();
-	await expect(
-		page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`),
-	).toBeVisible();
+	await expect(page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
 	await expect(page.getByTestId("ungrouped-section").getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
 
 	// Collapsing the project group hides its chats; expanding restores them. (Done while no dialog
 	// is open so nothing intercepts the toggle clicks.)
 	await page.getByTestId(`project-toggle-${projectId}`).click();
-	await expect(
-		page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`),
-	).toHaveCount(0);
+	await expect(page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`)).toHaveCount(0);
 	await page.getByTestId(`project-toggle-${projectId}`).click();
-	await expect(
-		page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`),
-	).toBeVisible();
+	await expect(page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
 
 	// Set per-project instructions via the project settings dialog.
 	await page.getByTestId(`project-actions-${projectId}`).click();

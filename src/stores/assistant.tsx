@@ -290,7 +290,10 @@ export const DEFAULT_CUSTOM_MODEL = "qwen3.6-35b-a3b";
 // Merge the code-level built-ins (applying any persisted user overrides) with the user's custom
 // assistants. Built-ins always come first, in their shipped order. This derived array is what
 // existing consumers (home cards, chat route) read from.
-function computeAssistants(customAssistants: Assistant[], builtinOverrides: Record<string, BuiltinOverride>): Assistant[] {
+function computeAssistants(
+	customAssistants: Assistant[],
+	builtinOverrides: Record<string, BuiltinOverride>,
+): Assistant[] {
 	const merged = BUILTIN_ASSISTANTS.map((builtin) => {
 		const override = builtinOverrides[builtin.id];
 		return override ? { ...builtin, ...override } : builtin;
@@ -371,9 +374,7 @@ export const useAssistantStore = create<AssistantStore>()(
 							assistants: computeAssistants(state.customAssistants, builtinOverrides),
 						};
 					}
-					const customAssistants = state.customAssistants.map((a) =>
-						a.id === assistantId ? { ...a, ...input } : a,
-					);
+					const customAssistants = state.customAssistants.map((a) => (a.id === assistantId ? { ...a, ...input } : a));
 					return { customAssistants, assistants: computeAssistants(customAssistants, state.builtinOverrides) };
 				});
 			},

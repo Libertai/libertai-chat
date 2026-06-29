@@ -101,4 +101,3 @@ describe("WORKER_SOURCE", () => {
 		expect(WORKER_SOURCE).toContain("bytesToBase64");
 	});
 });
-

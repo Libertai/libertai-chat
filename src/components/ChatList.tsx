@@ -19,14 +19,7 @@ import { useMemo, useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 function getChatTitle(chat: Chat): string {
 	if (chat.title) {
@@ -323,7 +316,10 @@ export function ChatList() {
 									<ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
 								)}
 								<Folder className="h-3 w-3 shrink-0 text-muted-foreground" />
-								<span className="text-sm font-medium text-foreground truncate" data-testid={`project-name-${project.id}`}>
+								<span
+									className="text-sm font-medium text-foreground truncate"
+									data-testid={`project-name-${project.id}`}
+								>
 									{project.name}
 								</span>
 								<span className="text-xs text-muted-foreground ml-1 shrink-0">{groupChats.length}</span>
@@ -448,7 +444,10 @@ export function ChatList() {
 			</Dialog>
 
 			{/* Project settings dialog (rename + per-project instructions). */}
-			<Dialog open={projectDialogOpen} onOpenChange={(open) => (open ? setProjectDialogOpen(true) : closeProjectDialog())}>
+			<Dialog
+				open={projectDialogOpen}
+				onOpenChange={(open) => (open ? setProjectDialogOpen(true) : closeProjectDialog())}
+			>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Project settings</DialogTitle>

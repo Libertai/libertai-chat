@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { Brain, Check, Pencil, Plus, Trash2, X } from "lucide-react";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -70,8 +64,8 @@ export function MemoryManager({ open, onOpenChange }: Readonly<MemoryManagerProp
 						Memory
 					</DialogTitle>
 					<DialogDescription>
-						Facts and preferences the assistant remembers across all your chats. Stored only in this browser
-						and shared only as part of a normal message you send.
+						Facts and preferences the assistant remembers across all your chats. Stored only in this browser and shared
+						only as part of a normal message you send.
 					</DialogDescription>
 				</DialogHeader>
 
@@ -133,12 +127,7 @@ export function MemoryManager({ open, onOpenChange }: Readonly<MemoryManagerProp
 										>
 											<Check className="h-4 w-4" />
 										</Button>
-										<Button
-											size="icon"
-											variant="ghost"
-											aria-label="Cancel edit"
-											onClick={() => setEditingId(null)}
-										>
+										<Button size="icon" variant="ghost" aria-label="Cancel edit" onClick={() => setEditingId(null)}>
 											<X className="h-4 w-4" />
 										</Button>
 									</>

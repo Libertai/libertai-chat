@@ -191,9 +191,7 @@ function MarkdownPreview({ code }: { code: string }) {
 							const source = normalizeCodeSource(hastText(codeNode));
 							return <CodeBlock language={language} code={source} />;
 						}
-						return (
-							<pre className="overflow-x-auto rounded bg-background/50 p-2 text-xs font-mono">{children}</pre>
-						);
+						return <pre className="overflow-x-auto rounded bg-background/50 p-2 text-xs font-mono">{children}</pre>;
 					},
 					ul: ({ children }) => <ul className="mb-2 list-disc list-inside space-y-1">{children}</ul>,
 					ol: ({ children }) => <ol className="mb-2 list-decimal list-inside space-y-1">{children}</ol>,

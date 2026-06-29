@@ -16,7 +16,12 @@ async function magic(blob: Blob, n = 4): Promise<string> {
 
 describe("rowsToCsv", () => {
 	it("serializes a grid with CRLF line endings", () => {
-		expect(rowsToCsv([["a", "b"], ["1", "2"]])).toBe("a,b\r\n1,2");
+		expect(
+			rowsToCsv([
+				["a", "b"],
+				["1", "2"],
+			]),
+		).toBe("a,b\r\n1,2");
 	});
 
 	it("quotes and escapes cells with commas, quotes and newlines (RFC 4180)", () => {
@@ -91,7 +96,10 @@ describe("markdownToDocxBlob", () => {
 
 describe("markdownToPdfBlob", () => {
 	it("produces a real PDF blob (%PDF magic) with the pdf mime type", async () => {
-		const blob = markdownToPdfBlob("# Heading\n\nBody text that is long enough to wrap across the page width several times over.", "Title");
+		const blob = markdownToPdfBlob(
+			"# Heading\n\nBody text that is long enough to wrap across the page width several times over.",
+			"Title",
+		);
 		expect(blob.type).toBe("application/pdf");
 		expect(await magic(blob, 4)).toBe("%PDF");
 	});

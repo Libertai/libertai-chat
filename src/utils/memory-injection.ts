@@ -3,8 +3,7 @@ import type { Memory } from "@/stores/memory";
 // Header that frames the user's saved memories inside the system context. Kept short and explicit
 // so the model treats the lines as durable facts about the user rather than instructions for the
 // current turn.
-export const MEMORY_BLOCK_HEADER =
-	"What you know about the user (saved memories, may be relevant across topics):";
+export const MEMORY_BLOCK_HEADER = "What you know about the user (saved memories, may be relevant across topics):";
 
 // Render the enabled memories as a single system-context block, or "" when there are none. Pure
 // function — no store/IO — so it can be unit tested directly and reused by the chat route.
