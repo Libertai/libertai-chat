@@ -12,8 +12,13 @@ import { useProjectStore } from "@/stores/project";
 import { useMemoryStore } from "@/stores/memory";
 import { buildSystemPrompt } from "@/utils/build-system-prompt";
 import { injectMemories } from "@/utils/memory-injection";
-import { useAccountStore } from "@libertai/auth";
+import { useAccountStore, useSubscription } from "@libertai/auth";
+import { isChatBlocked, isPaywallError, isAnonLimitError } from "@/utils/paywall";
+import { ChatPaywall } from "@/components/ChatPaywall";
+import { ChatUsageWarning } from "@/components/ChatUsageWarning";
+import { AnonChatNotice } from "@/components/AnonChatNotice";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
+import { useAnonUsage } from "@/hooks/data/use-anon-usage";
 import { resolveChatEndpoint } from "@/utils/chat-endpoint";
 import { useModels } from "@/hooks/data/use-models";
 import { supportsTools, resolveChatModel } from "@/config/model-capabilities";
@@ -56,6 +61,13 @@ function Chat() {
 	);
 	const isCanvasOpen = useCanvasStore((s) => s.openChatId === chatId);
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
+	const { data: subscription, refetch: refetchSubscription } = useSubscription();
+	// Blocked is derived solely from the live subscription's `allowed` flag — no optimistic local
+	// flag (that flashed the wall + left a ghost message on a bare 401 for users who aren't blocked).
+	const blocked = isAuthenticated && isChatBlocked(subscription);
+	// Logged-out users get a per-IP free-message limit (enforced by the chat proxy).
+	const { data: anonUsage, refetch: refetchAnonUsage } = useAnonUsage();
+	const anonBlocked = !isAuthenticated && anonUsage?.allowed === false;
 	const { chatApiKey, isLoading: isChatKeyLoading } = useChatApiKey();
 	const { data: models } = useModels();
 	const [isLoading, setIsLoading] = useState(false);
@@ -132,6 +144,8 @@ function Chat() {
 		// "can't send a message" bug). When the key resolves, `isChatKeyLoading` flips and this
 		// effect re-runs to generate against the connected endpoint.
 		if (isAuthenticated && isChatKeyLoading) return;
+		// Don't auto-fire a doomed request when the subscription says the user is out of allowance.
+		if (blocked || anonBlocked) return;
 		if (messages.length > 0 && !isLoading && !isStreaming && isInitialized) {
 			const lastMessage = messages[messages.length - 1];
 			// Only generate response if last message is from user and there's no pending assistant message
@@ -154,7 +168,7 @@ function Chat() {
 				generateAIResponse(forced, searchType).then();
 			}
 		}
-	}, [messages.length, isLoading, isStreaming, isInitialized, isAuthenticated, isChatKeyLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [messages.length, isLoading, isStreaming, isInitialized, isAuthenticated, isChatKeyLoading, blocked, anonBlocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const TOOL_LABELS: Record<string, string> = {
 		web_search: "Searching the web…",
@@ -164,6 +178,9 @@ function Chat() {
 	};
 
 	const generateAIResponse = async (forcedTool?: "web_search" | "generate_image", searchType?: SearchType) => {
+		// Single chokepoint for every generation path (auto-fire effect, regenerate, regenerate-from):
+		// a blocked user must never reach the gateway, or they'd get a 401/402 and a ghost message.
+		if (blocked || anonBlocked) return;
 		if (isLoading || isStreaming) return;
 		if (messages.length === 0) return;
 		if (messages[messages.length - 1].role !== "user") return;
@@ -197,6 +214,20 @@ function Chat() {
 		const collectedSources: { title: string; url: string; snippet: string }[] = [];
 		const collectedImages: ImageData[] = [];
 		const collectedInterpreter: InterpreterArtifact[] = [];
+
+		// Coalesce streaming writes. The route subscribes to the whole chat store, so every
+		// updateMessage re-renders it. Thinking models (e.g. Mega Mind) emit thousands of tiny
+		// reasoning deltas that can arrive in a burst — writing per-delta floods React and trips its
+		// max-update-depth guard (#185), which surfaced as a generic "error processing your request".
+		// Flush at most once per frame and force a final flush per turn so nothing is dropped.
+		const FLUSH_INTERVAL_MS = 50;
+		let lastFlush = 0;
+		const flushStreamedMessage = (force = false) => {
+			const now = Date.now();
+			if (!force && now - lastFlush < FLUSH_INTERVAL_MS) return;
+			lastFlush = now;
+			updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
+		};
 
 		try {
 			for (let iteration = 0; iteration < 5; iteration++) {
@@ -237,7 +268,7 @@ function Chat() {
 							setIsLoading(false);
 						}
 						setToolStatus(null);
-						updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
+						flushStreamedMessage();
 					}
 				}
 
@@ -247,6 +278,9 @@ function Chat() {
 				if (accumulated.content) {
 					syncMessageArtifacts(chatId, assistantMessage.id, accumulated.content);
 				}
+				// Force the trailing tokens since the last throttled flush to land before we either
+				// break or reset `accumulated` for the next tool iteration.
+				flushStreamedMessage(true);
 
 				if (!toolAcc.hasCalls()) break;
 
@@ -336,6 +370,26 @@ function Chat() {
 				) {
 					updateMessage(chatId, assistantMessage.id, "_(stopped)_");
 				}
+			} else if (!isAuthenticated && isAnonLimitError(error)) {
+				// Logged-out user hit the per-IP free limit (proxy 429). Refresh the meter so the
+				// sign-in wall shows + the composer disables, and drop the empty turn (no ghost text).
+				await refetchAnonUsage();
+				deleteMessage(chatId, assistantMessage.id);
+			} else if (isPaywallError(error)) {
+				// A 401/402 only means "out of allowance" if the subscription confirms it. Bare 401s
+				// also come from transient auth/whitelist issues — so re-fetch the subscription and
+				// only wall the composer (via the derived `blocked`) when it reports allowed===false.
+				const res = await refetchSubscription();
+				if (isChatBlocked(res.data)) {
+					// The ChatPaywall panel is the only signal — drop the empty turn (no ghost text).
+					deleteMessage(chatId, assistantMessage.id);
+				} else {
+					updateMessage(
+						chatId,
+						assistantMessage.id,
+						"Sorry, there was an error processing your request. Please try again.",
+					);
+				}
 			} else {
 				console.error("Error sending message:", error);
 				updateMessage(
@@ -359,6 +413,7 @@ function Chat() {
 		searchType?: SearchType,
 		attachments?: FileAttachment[],
 	) => {
+		if (blocked || anonBlocked) return;
 		if (!value.trim() || isLoading) return;
 		pendingForcedToolRef.current = forcedTool;
 		pendingSearchTypeRef.current = searchType;
@@ -441,37 +496,38 @@ function Chat() {
 					<div ref={messagesEndRef} />
 				</div>
 
-				{/* Input area */}
-				<div className="p-4">
-					<div className="max-w-4xl mx-auto">
-						{/* Transparency indicator: when the user has saved memories, show how many are folded
-						    into this chat's system context. Doubles as the e2e hook proving injection. */}
-						{enabledMemoryCount > 0 && (
-							<div className="max-w-2xl mx-auto mb-2 flex justify-center">
-								<span
-									data-testid="memory-injected-indicator"
-									data-memory-count={enabledMemoryCount}
-									className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-tiny text-muted-foreground"
-								>
-									<Brain className="h-3 w-3" />
-									{enabledMemoryCount} {enabledMemoryCount === 1 ? "memory" : "memories"} in context
-								</span>
-							</div>
-						)}
-						<div className="max-w-2xl mx-auto">
-							<ChatInput
-								onSubmit={handleSendMessage}
-								placeholder="Continue private conversation..."
-								disabled={isLoading}
-								assistant={getAssistantOrDefault(chat?.assistantId)}
-								model={chat?.model}
-								onModelSelect={(m) => setChatModel(chatId, m)}
-								autoFocus
-								isConnected={useConnected}
-								isGenerating={isLoading || isStreaming}
-								onStop={() => abortRef.current?.abort()}
-							/>
+			{/* Input area */}
+			<div className="p-4">
+				<div className="max-w-4xl mx-auto">
+					{/* Transparency indicator: when the user has saved memories, show how many are folded
+					    into this chat's system context. Doubles as the e2e hook proving injection. */}
+					{enabledMemoryCount > 0 && (
+						<div className="max-w-2xl mx-auto mb-2 flex justify-center">
+							<span
+								data-testid="memory-injected-indicator"
+								data-memory-count={enabledMemoryCount}
+								className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-tiny text-muted-foreground"
+							>
+								<Brain className="h-3 w-3" />
+								{enabledMemoryCount} {enabledMemoryCount === 1 ? "memory" : "memories"} in context
+							</span>
 						</div>
+					)}
+					<div className="max-w-2xl mx-auto">
+						{isAuthenticated ? blocked ? <ChatPaywall /> : <ChatUsageWarning /> : <AnonChatNotice />}
+						<ChatInput
+							onSubmit={handleSendMessage}
+							placeholder="Continue private conversation..."
+							disabled={isLoading || blocked || anonBlocked}
+							assistant={getAssistantOrDefault(chat?.assistantId)}
+							model={chat?.model}
+							onModelSelect={(m) => setChatModel(chatId, m)}
+							autoFocus
+							isConnected={useConnected}
+							isGenerating={isLoading || isStreaming}
+							onStop={() => abortRef.current?.abort()}
+						/>
+					</div>
 					</div>
 				</div>
 			</div>
