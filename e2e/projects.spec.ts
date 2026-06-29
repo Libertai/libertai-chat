@@ -1,10 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 
-// Verifies m9 (projects / folders + per-project instructions): from the sidebar a user creates a
-// project, moves a seeded chat into it, confirms the grouping PERSISTS across a full reload
-// (localStorage keys 'libertai-chats' for the chat->project link and 'libertai-projects' for the
-// project record), then sets per-project instructions and confirms those persist too.
+// Verifies the flat-sidebar projects redesign: from the sidebar a user creates a project (flat row
+// linking to /project/:id), moves a seeded chat into it, confirms both chats remain visible in the
+// flat Chats list, and confirms the assignment PERSISTS across a full reload (localStorage keys
+// 'libertai-chats' for the chat->project link and 'libertai-projects' for the project record).
+// Then sets per-project instructions via the shared ProjectDialogs and confirms those persist too.
 //
 // The app has a guest/logged-out mode, so the whole flow runs WITHOUT a wallet. We seed two chats
 // directly into localStorage so the sidebar ChatList renders deterministically with real data.
@@ -71,6 +72,7 @@ async function openSidebar(page: Page) {
 			.catch(() => null);
 		const inViewport = await page
 			.getByTestId("create-project")
+			.first()
 			.evaluate((el) => {
 				const r = el.getBoundingClientRect();
 				return r.left >= 0 && r.right <= window.innerWidth && r.width > 0;
@@ -96,16 +98,16 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	await page.goto("/", { waitUntil: "domcontentloaded", timeout: 30_000 });
 	await openSidebar(page);
 
-	// Both seeded chats start ungrouped.
+	// Both seeded chats are visible in the flat Chats list at start.
 	await expect(page.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
 	await expect(page.getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
 
-	// Create a project from the sidebar header button.
-	await page.getByTestId("create-project").click();
+	// Create a project from the sidebar header button (flat Projects section).
+	await page.getByTestId("create-project").first().click();
 	await page.getByTestId("project-name-input").fill("Work");
 	await page.getByTestId("project-create-submit").click();
 
-	// The (empty) project group appears.
+	// A flat project row appears in the Projects section.
 	const projectGroup = page.locator('[data-testid^="project-group-"]');
 	await expect(projectGroup).toHaveCount(1);
 	await expect(page.getByText("Work")).toBeVisible();
@@ -120,10 +122,9 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	await page.getByTestId(`chat-move-${CHAT_A}`).click();
 	await page.getByTestId(`chat-move-to-${projectId}-${CHAT_A}`).click();
 
-	// Chat A now lives inside the project group; chat B remains ungrouped.
-	const projectChats = page.getByTestId(`project-chats-${projectId}`);
-	await expect(projectChats.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
-	await expect(page.getByTestId("ungrouped-section").getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
+	// After moving: BOTH chats remain visible in the flat Chats list (project chats stay in list).
+	await expect(page.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
+	await expect(page.getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
 
 	// Persisted: the chat carries the projectId and the project record exists.
 	const chatsStored = await page.evaluate((k) => window.localStorage.getItem(k), CHATS_KEY);
@@ -132,24 +133,17 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	expect(projectsStored).toContain("Work");
 	expect(projectsStored).toContain(projectId);
 
-	// Screenshot the grouped sidebar.
+	// Screenshot the flat sidebar.
 	await page.screenshot({ path: "test-results/screenshots/projects-sidebar.png", fullPage: true });
 
-	// Grouping persists across a full reload.
+	// Flat layout persists across a full reload.
 	await page.reload({ waitUntil: "domcontentloaded" });
 	await openSidebar(page);
 	await expect(page.getByTestId(`project-group-${projectId}`)).toBeVisible();
-	await expect(page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
-	await expect(page.getByTestId("ungrouped-section").getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
+	await expect(page.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
+	await expect(page.getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
 
-	// Collapsing the project group hides its chats; expanding restores them. (Done while no dialog
-	// is open so nothing intercepts the toggle clicks.)
-	await page.getByTestId(`project-toggle-${projectId}`).click();
-	await expect(page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`)).toHaveCount(0);
-	await page.getByTestId(`project-toggle-${projectId}`).click();
-	await expect(page.getByTestId(`project-chats-${projectId}`).getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
-
-	// Set per-project instructions via the project settings dialog.
+	// Set per-project instructions via the project settings dialog (shared ProjectDialogs).
 	await page.getByTestId(`project-actions-${projectId}`).click();
 	await page.getByTestId(`project-settings-${projectId}`).click();
 	await page.getByTestId("project-settings-instructions").fill("Always answer in formal British English.");

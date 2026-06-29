@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
-import { ImageIcon, Plus, SquareTerminal } from "lucide-react";
+import { FolderOpen, ImageIcon, Plus, SquareTerminal } from "lucide-react";
 import { ClawIcon } from "@/components/ClawIcon";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
@@ -62,6 +62,26 @@ function SidebarNewConversationLink() {
 			>
 				<Plus className="h-4 w-4" />
 				New conversation
+			</Link>
+		</div>
+	);
+}
+
+// Projects nav link in sidebar
+function SidebarProjectsLink() {
+	const { isMobile, setOpenMobile } = useSidebar();
+	return (
+		<div className="px-2 py-1">
+			<Link
+				to="/projects"
+				onClick={() => {
+					if (isMobile) setOpenMobile(false);
+				}}
+				className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
+				data-testid="nav-projects"
+			>
+				<FolderOpen className="h-4 w-4" />
+				Projects
 			</Link>
 		</div>
 	);
@@ -159,6 +179,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 					<SidebarContent>
 						<SidebarNewConversationLink />
+						<SidebarProjectsLink />
 						<ChatSearch />
 						<SidebarProducts />
 						<ChatList />
