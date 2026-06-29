@@ -73,6 +73,7 @@ function Chat() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isInitialized, setIsInitialized] = useState(false);
 	const [isStreaming, setIsStreaming] = useState(false);
+	const [toolSteps, setToolSteps] = useState<string[]>([]);
 	const [toolStatus, setToolStatus] = useState<string | null>(null);
 	const pendingForcedToolRef = useRef<"web_search" | "generate_image" | undefined>(undefined);
 	const pendingSearchTypeRef = useRef<SearchType | undefined>(undefined);
@@ -188,6 +189,7 @@ function Chat() {
 		setIsLoading(true);
 		setIsStreaming(false);
 		setToolStatus(null);
+		setToolSteps([]);
 
 		const controller = new AbortController();
 		abortRef.current = controller;
@@ -284,8 +286,15 @@ function Chat() {
 
 				if (!toolAcc.hasCalls()) break;
 
-				setIsStreaming(false);
-				setIsLoading(true);
+				// Stay in the streaming (working) state across tool turns. Previously this dropped
+				// isStreaming and raised isLoading, which flickered the whole chat between "streaming"
+				// and "loading" on every tool transition and made multiple things look like they were
+				// running at once. We're still actively generating — tool execution is part of the
+				// same response from the user's view — so keep isStreaming true until the response
+				// settles in `finally`. isLoading stays false (it only gates the pre-stream waiting
+				// state); the streaming guard (isLoading || isStreaming) still blocks new messages.
+				setIsStreaming(true);
+				setIsLoading(false);
 
 				const calls = toolAcc.finalize();
 				requestMessages.push({
@@ -303,6 +312,11 @@ function Chat() {
 				}
 
 				for (const call of calls) {
+					// Promote the previous step to completed and start the new one as current, so the
+					// progress log accumulates across the whole multi-turn response instead of flashing
+					// and vanishing between tools. Only the friendly label is shown — never the tool
+					// name, arguments, or results.
+					setToolSteps((prev) => (toolStatus ? [...prev, toolStatus] : prev));
 					setToolStatus(TOOL_LABELS[call.name] ?? "Working…");
 					const opts = {
 						connectedApiUrl: env.LTAI_CONNECTED_API_URL,
@@ -330,16 +344,60 @@ function Chat() {
 					} else if (call.name === "run_python" || call.name === "run_javascript") {
 						const language = call.name === "run_python" ? "python" : "javascript";
 						const code = String(call.arguments.code ?? "");
+
+						// Insert a pending interpreter card immediately so the user sees the code that's
+						// about to run instead of a bare silent spinner through the long Pyodide cold load.
+						// The card fills in live as progress arrives; we swap in the final artifact on
+						// completion.
+						const pending: InterpreterArtifact = {
+							language,
+							code,
+							stdout: "",
+							stderr: "",
+							result: null,
+							imagePng: null,
+							error: null,
+							timedOut: false,
+							pending: true,
+							phase: "preparing",
+						};
+						collectedInterpreter.push(pending);
+						attachMessageMeta(chatId, assistantMessage.id, { interpreter: [...collectedInterpreter] });
+
+						// Throttle live updates for the same reason streaming text is throttled (#185):
+						// Pyodide batches stdout in a burst and writing per-batch floods React. Always
+						// attach a fresh array copy — reusing the same mutated `collectedInterpreter`
+						// reference can let a downstream reference-equality check skip the re-render, so a
+						// later run's pending card wouldn't paint until the next forced attach.
+						let lastMetaFlush = 0;
+						const flushMeta = (force = false) => {
+							const now = Date.now();
+							if (!force && now - lastMetaFlush < FLUSH_INTERVAL_MS) return;
+							lastMetaFlush = now;
+							attachMessageMeta(chatId, assistantMessage.id, { interpreter: [...collectedInterpreter] });
+						};
+
 						const { artifact, toolText } = await executeRunCode(language, code, {
 							signal: controller.signal,
+							onProgress: (p) => {
+								pending.stdout = p.stdout;
+								pending.stderr = p.stderr;
+								pending.phase = p.phase;
+								flushMeta();
+							},
 						});
-						collectedInterpreter.push(artifact);
-						attachMessageMeta(chatId, assistantMessage.id, { interpreter: collectedInterpreter });
+						// Replace the pending placeholder with the settled artifact (carries result /
+						// image / error / timedOut, and pending cleared so the card renders its final form).
+						collectedInterpreter[collectedInterpreter.length - 1] = { ...artifact };
+						attachMessageMeta(chatId, assistantMessage.id, { interpreter: [...collectedInterpreter] });
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else {
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: "Unknown tool." });
 					}
 				}
+				// Promote the last running step to completed before the next streaming turn, so the
+				// indicator never lingers as "in progress" while text streams.
+				setToolSteps((prev) => (toolStatus ? [...prev, toolStatus] : prev));
 				setToolStatus(null);
 
 				// An explicit "Create image" request is satisfied by the image alone — don't loop back for
@@ -402,6 +460,7 @@ function Chat() {
 			setIsLoading(false);
 			setIsStreaming(false);
 			setToolStatus(null);
+			setToolSteps([]);
 			abortRef.current = null;
 		}
 	};
@@ -466,6 +525,7 @@ function Chat() {
 								isLoading={isLoading}
 								isStreaming={isStreaming}
 								toolStatus={index === messages.length - 1 ? toolStatus : null}
+								toolSteps={index === messages.length - 1 ? toolSteps : []}
 								onRegenerate={handleRegenerateMessage}
 								onEditMessage={handleEditMessage}
 								onRegenerateFromMessage={handleRegenerateFromMessage}

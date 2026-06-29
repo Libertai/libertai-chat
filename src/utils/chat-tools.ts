@@ -1,7 +1,7 @@
 import type OpenAI from "openai";
 import type { ImageData, SearchSource } from "@/types/chats";
 import { runCode } from "@/lib/interpreter/run";
-import type { InterpreterLanguage, InterpreterResult } from "@/lib/interpreter/types";
+import type { InterpreterFile, InterpreterLanguage, InterpreterResult } from "@/lib/interpreter/types";
 
 export type ToolName = "web_search" | "generate_image" | "run_python" | "run_javascript";
 
@@ -187,6 +187,14 @@ export interface InterpreterArtifact {
 	imagePng: string | null;
 	error: string | null;
 	timedOut: boolean;
+	/** True while the run is in flight (cold load / executing). The UI renders a preparing/streaming
+	 *  state and fills in stdout live as progress arrives. False once the final result lands. */
+	pending?: boolean;
+	/** Current phase while pending: "preparing" (runtime + packages downloading) or "running"
+	 *  (user code executing). Undefined once settled. */
+	phase?: "preparing" | "running";
+	/** Files the code wrote to the sandbox filesystem, delivered to the user as downloads. */
+	files?: InterpreterFile[];
 }
 
 /** Render an interpreter run as the `tool` message text the model reads next turn. Keeps it
@@ -197,10 +205,24 @@ export function formatInterpreterResult(result: InterpreterResult): string {
 	if (result.result != null && result.result !== "") parts.push(`result: ${result.result}`);
 	if (result.stderr.trim()) parts.push(`stderr:\n${result.stderr.trim()}`);
 	if (result.imagePng) parts.push("A plot image was produced and shown to the user.");
+	if (result.files && result.files.length > 0) {
+		const list = result.files.map((f) => `${f.name} (${formatBytes(f.size)})`).join(", ");
+		parts.push(
+			`Delivered to the user as downloads: ${list}. File writes to the sandbox filesystem are ` +
+				`delivered to the user automatically — reference them by name and do not report a local /tmp path.`,
+		);
+	}
 	if (result.timedOut) parts.push("The execution was terminated because it exceeded the time limit.");
 	else if (result.error) parts.push(`error: ${result.error}`);
 	if (parts.length === 0) parts.push("The code ran successfully with no output.");
 	return parts.join("\n\n");
+}
+
+/** Human-readable byte size, e.g. 67.7 KB, used in the tool-result file list and the download chip. */
+export function formatBytes(bytes: number): string {
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export interface RunCodeOptions {
@@ -209,6 +231,8 @@ export interface RunCodeOptions {
 	/** Override the Pyodide CDN base (tests/self-host). */
 	pyodideIndexUrl?: string;
 	signal?: AbortSignal;
+	/** Live progress from the sandbox (cold load / streaming stdout). */
+	onProgress?: (progress: { phase: "preparing" | "running"; stdout: string; stderr: string }) => void;
 }
 
 /**
@@ -225,6 +249,7 @@ export async function executeRunCode(
 		timeoutMs: opts.timeoutMs,
 		pyodideIndexUrl: opts.pyodideIndexUrl,
 		signal: opts.signal,
+		onProgress: opts.onProgress,
 	});
 	const artifact: InterpreterArtifact = {
 		language,
@@ -235,6 +260,7 @@ export async function executeRunCode(
 		imagePng: result.imagePng,
 		error: result.error,
 		timedOut: result.timedOut,
+		files: result.files,
 	};
 	return { artifact, toolText: formatInterpreterResult(result) };
 }

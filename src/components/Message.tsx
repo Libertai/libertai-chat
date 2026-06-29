@@ -1,10 +1,24 @@
-import { Children, cloneElement, isValidElement, useEffect, useState, type ReactElement, type ReactNode } from "react";
+import { Children, cloneElement, isValidElement, useState, type ReactElement, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
-import { ChevronDown, ChevronRight, Copy, FileText, Globe, Lightbulb, Loader2, RotateCcw, Pencil, Square, Volume2, LayoutPanelLeft } from "lucide-react";
+import {
+	ChevronDown,
+	ChevronRight,
+	Check,
+	Copy,
+	FileText,
+	Globe,
+	Lightbulb,
+	Loader2,
+	RotateCcw,
+	Pencil,
+	Square,
+	Volume2,
+	LayoutPanelLeft,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MessageEditInput } from "@/components/MessageEditInput";
@@ -31,6 +45,7 @@ interface MessageProps {
 	isLoading: boolean;
 	isStreaming: boolean;
 	toolStatus?: string | null;
+	toolSteps?: string[];
 	onRegenerate: () => void;
 	onEditMessage?: (id: string, content: string) => void;
 	onRegenerateFromMessage?: (id: string) => void;
@@ -43,6 +58,7 @@ export function Message({
 	isLoading,
 	isStreaming,
 	toolStatus,
+	toolSteps,
 	onRegenerate,
 	onEditMessage,
 	onRegenerateFromMessage,
@@ -108,14 +124,6 @@ export function Message({
 		});
 	};
 
-	useEffect(() => {
-		const hasOnlyThinking = message.role === "assistant" && message.thinking && !message.content;
-
-		if (hasOnlyThinking) {
-			setIsThinkingExpanded(true);
-		}
-	}, [message.thinking, message.content, message.role]);
-
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(message.content);
@@ -173,10 +181,50 @@ export function Message({
 					</div>
 				)}
 
-				{message.role === "assistant" && isLastMessage && toolStatus && (
-					<div className="mb-3 flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
-						<span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" />
-						{toolStatus}
+				{message.role === "assistant" &&
+					isLastMessage &&
+					(toolStatus || (toolSteps && toolSteps.length > 0)) && (
+						<div className="mb-3 flex flex-col gap-1 px-3 py-2 text-sm text-muted-foreground">
+							{toolSteps?.map((step, i) => (
+								<div key={i} className="flex items-center gap-2">
+									<Check className="w-3.5 h-3.5 text-primary shrink-0" />
+									<span className="opacity-70">{step}</span>
+								</div>
+							))}
+							{toolStatus && (
+								<div className="flex items-center gap-2">
+									<Loader2 className="w-3.5 h-3.5 text-primary shrink-0 animate-spin" />
+									<span>{toolStatus}</span>
+								</div>
+							)}
+						</div>
+					)}
+
+				{/* Fallback working indicator: the assistant is active (streaming / loading) but no
+				    tool step or interpreter card is visible — e.g. the model is reasoning before emitting
+				    a tool call (thinking is collapsed by default), waiting on the gateway before the
+				    first token, or streaming preamble text between tool turns. Without this the message
+				    looks frozen during those gaps. */}
+				{message.role === "assistant" &&
+					isLastMessage &&
+					(isStreaming || isLoading) &&
+					!toolStatus &&
+					(!toolSteps || toolSteps.length === 0) &&
+					!(message.interpreter && message.interpreter.length > 0) && (
+						<div className="mb-3 flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
+							<Loader2 className="w-3.5 h-3.5 text-primary shrink-0 animate-spin" />
+							<span>Working…</span>
+						</div>
+					)}
+
+				{/* Client-side code-interpreter runs (run_python / run_javascript). Pinned above the
+				    streaming text so the card doesn't get shoved down/reflow as content streams in —
+				    previously it rendered below the text and appeared to flash then hide. */}
+				{message.role === "assistant" && message.interpreter && message.interpreter.length > 0 && (
+					<div className="mb-3 px-4">
+						{message.interpreter.map((run, index) => (
+							<InterpreterOutput key={index} run={run} />
+						))}
 					</div>
 				)}
 
@@ -254,9 +302,15 @@ export function Message({
 								remarkPlugins={[remarkGfm, remarkMath]}
 								rehypePlugins={[rehypeKatex]}
 								components={{
-									h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{renderWithCitations(children)}</h1>,
-									h2: ({ children }) => <h2 className="text-base font-bold mb-2">{renderWithCitations(children)}</h2>,
-									h3: ({ children }) => <h3 className="text-sm font-bold mb-1">{renderWithCitations(children)}</h3>,
+									h1: ({ children }) => (
+										<h1 className="text-xl font-bold mt-4 mb-3 first:mt-0">{renderWithCitations(children)}</h1>
+									),
+									h2: ({ children }) => (
+										<h2 className="text-lg font-bold mt-3 mb-2 first:mt-0">{renderWithCitations(children)}</h2>
+									),
+									h3: ({ children }) => (
+										<h3 className="text-base font-semibold mt-2 mb-1 first:mt-0">{renderWithCitations(children)}</h3>
+									),
 									p: ({ children }) => <p className="mb-2 last:mb-0">{renderWithCitations(children)}</p>,
 									strong: ({ children }) => <strong className="font-bold">{renderWithCitations(children)}</strong>,
 									em: ({ children }) => <em className="italic">{renderWithCitations(children)}</em>,
@@ -274,7 +328,7 @@ export function Message({
 									// Inline code only. Fenced blocks are handled by the `pre` override below,
 									// which has reliable access to the language + raw source via the hast node.
 									code: ({ children }) => (
-										<code className="bg-background/50 rounded px-1 py-0.5 text-xs font-mono">{children}</code>
+										<code className="bg-card/60 rounded px-1 py-0.5 text-xs font-mono">{children}</code>
 									),
 									pre: ({ node, children }) => {
 										// A fenced block is a <pre> wrapping a single <code> element. Read the
@@ -292,11 +346,9 @@ export function Message({
 											<pre className="bg-background/50 rounded p-2 overflow-x-auto text-xs font-mono">{children}</pre>
 										);
 									},
-									ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-									ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-									li: ({ children }) => (
-										<li className="text-sm [&>p]:inline [&>p]:m-0">{renderWithCitations(children)}</li>
-									),
+									ul: ({ children }) => <ul className="list-disc pl-6 mb-2 space-y-1">{children}</ul>,
+									ol: ({ children }) => <ol className="list-decimal pl-6 mb-2 space-y-1">{children}</ol>,
+									li: ({ children }) => <li className="pl-1">{renderWithCitations(children)}</li>,
 									input: ({ checked, type }) =>
 										type === "checkbox" ? (
 											<input
@@ -323,19 +375,11 @@ export function Message({
 											{renderWithCitations(children)}
 										</blockquote>
 									),
+									hr: () => <hr className="my-4 h-px border-0 bg-border" />,
 								}}
 							>
 								{message.content}
 							</ReactMarkdown>
-						</div>
-					)}
-
-					{/* Client-side code-interpreter runs (run_python / run_javascript) */}
-					{message.role === "assistant" && message.interpreter && message.interpreter.length > 0 && (
-						<div className="mt-1">
-							{message.interpreter.map((run, index) => (
-								<InterpreterOutput key={index} run={run} />
-							))}
 						</div>
 					)}
 

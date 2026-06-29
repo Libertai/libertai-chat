@@ -4,6 +4,8 @@ import {
 	formatSearchResults,
 	executeWebSearch,
 	executeGenerateImage,
+	formatBytes,
+	formatInterpreterResult,
 	TOOL_DEFINITIONS,
 	SEARCH_TYPES,
 	DEFAULT_SEARCH_TYPE,
@@ -40,6 +42,46 @@ describe("formatSearchResults", () => {
 		const { sources, toolText } = formatSearchResults([]);
 		expect(sources).toEqual([]);
 		expect(toolText).toBe("No results found.");
+	});
+});
+
+describe("formatBytes", () => {
+	it("formats bytes / KB / MB", () => {
+		expect(formatBytes(0)).toBe("0 B");
+		expect(formatBytes(512)).toBe("512 B");
+		expect(formatBytes(67_700)).toBe("66.1 KB");
+		expect(formatBytes(2 * 1024 * 1024)).toBe("2.0 MB");
+	});
+});
+
+describe("formatInterpreterResult", () => {
+	it("reports delivered files by name and warns against reporting a local path", () => {
+		const text = formatInterpreterResult({
+			language: "python",
+			stdout: "saved to /tmp/LibertAI_Brochure.pdf (67.7 KB)",
+			stderr: "",
+			result: null,
+			imagePng: null,
+			files: [{ name: "LibertAI_Brochure.pdf", mime: "application/pdf", base64: "JVBER", size: 67_700 }],
+			error: null,
+			timedOut: false,
+		});
+		expect(text).toContain("Delivered to the user as downloads: LibertAI_Brochure.pdf (66.1 KB)");
+		expect(text).toContain("do not report a local /tmp path");
+	});
+
+	it("does not mention files when none were produced", () => {
+		const text = formatInterpreterResult({
+			language: "python",
+			stdout: "done",
+			stderr: "",
+			result: null,
+			imagePng: null,
+			files: [],
+			error: null,
+			timedOut: false,
+		});
+		expect(text).not.toContain("Delivered to the user");
 	});
 });
 

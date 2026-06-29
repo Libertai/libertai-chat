@@ -34,11 +34,12 @@ describe("buildIframeSource", () => {
 
 	it("builds the worker from an inline Blob (no same-origin worker URL needed)", () => {
 		expect(html).toContain("new Blob([WORKER_SOURCE]");
-		expect(html).toContain("new Worker(url)");
+		expect(html).toContain("new Worker(workerUrl)");
 	});
 
 	it("enforces an execution timeout by terminating the worker", () => {
-		expect(html).toContain("worker.terminate()");
+		// The worker is torn down on failure paths (timeout / crash) via dropWorker().
+		expect(html).toContain(".terminate()");
 		expect(html).toContain("setTimeout");
 		expect(html).toContain("timedOut: true");
 	});
@@ -48,9 +49,22 @@ describe("buildIframeSource", () => {
 		expect(html).toContain('type: "result"');
 	});
 
+	it("keeps the worker warm on success but tears it down on failure", () => {
+		// One shared worker is reused across runs so Pyodide stays warm; only failure paths drop it.
+		expect(html).toContain("getWorker()");
+		expect(html).toContain("dropWorker()");
+		// Normal completion derives keepWorker from the worker's ok flag; failure paths pass false.
+		expect(html).toContain("!!d.ok");
+		expect(html).toMatch(/,\s*false\s*\)/);
+	});
+
 	it("embeds the worker source as a safely-escaped string literal", () => {
 		// JSON.stringify(WORKER_SOURCE) must appear verbatim so the worker code is delivered intact.
 		expect(html).toContain(JSON.stringify(WORKER_SOURCE));
+	});
+
+	it("relays harvested files through to the host result", () => {
+		expect(html).toContain("files: Array.isArray(p.files)");
 	});
 });
 
@@ -71,4 +85,16 @@ describe("WORKER_SOURCE", () => {
 		expect(WORKER_SOURCE).toContain("sandboxConsole");
 		expect(WORKER_SOURCE).toContain("out.result");
 	});
+
+	it("harvests files the code writes to the sandbox filesystem and ships them as base64", () => {
+		// The worker diffs the scratch-dirs tree before/after the run and delivers new/changed files
+		// so the user can download them (instead of the model falsely reporting a trapped /tmp path).
+		expect(WORKER_SOURCE).toContain("SCRATCH_DIRS");
+		expect(WORKER_SOURCE).toContain("snapshotFSSet");
+		expect(WORKER_SOURCE).toContain("FS.readFile");
+		expect(WORKER_SOURCE).toContain("guessMime");
+		expect(WORKER_SOURCE).toContain("out.files");
+		expect(WORKER_SOURCE).toContain("MAX_FILE_BYTES");
+	});
 });
+

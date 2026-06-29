@@ -18,6 +18,9 @@ export const DEFAULT_TIMEOUT_MS = 120_000;
 
 export interface RunOptions {
 	timeoutMs?: number;
+	/** Called on each progress event from the sandbox (cold-load / streaming stdout) so the host
+	 *  can update a live interpreter card instead of waiting silently for the final result. */
+	onProgress?: (progress: { phase: "preparing" | "running"; stdout: string; stderr: string }) => void;
 	/** Override the CDN base (tests/self-host). Defaults to the pinned jsdelivr version. */
 	pyodideIndexUrl?: string;
 	signal?: AbortSignal;
@@ -73,7 +76,7 @@ export function disposeInterpreter(): void {
 }
 
 function errorResult(language: InterpreterLanguage, error: string, timedOut = false): InterpreterResult {
-	return { language, stdout: "", stderr: "", result: null, imagePng: null, error, timedOut };
+	return { language, stdout: "", stderr: "", result: null, imagePng: null, files: [], error, timedOut };
 }
 
 /**
@@ -115,6 +118,11 @@ export async function runCode(
 		const onMessage = (event: MessageEvent) => {
 			if (event.source !== sandbox.iframe.contentWindow) return;
 			const data = event.data;
+			// Live progress (cold load / streaming stdout): forward to the caller without resolving.
+			if (data && data.type === "progress" && data.id === id) {
+				options.onProgress?.({ phase: data.phase, stdout: data.stdout, stderr: data.stderr });
+				return;
+			}
 			if (!data || data.type !== "result" || data.id !== id) return;
 			cleanup();
 			resolve(data.result as InterpreterResult);

@@ -15,6 +15,22 @@ export const InterpreterRunV6Schema = z.object({
 	imagePng: z.string().nullable(),
 	error: z.string().nullable(),
 	timedOut: z.boolean(),
+	// Live-run state. Only set while a run is in flight (cold load / executing); absent on settled
+	// runs, so older persisted chats deserialize fine.
+	pending: z.boolean().optional(),
+	phase: z.enum(["preparing", "running"]).optional(),
+	// Files the code wrote to the sandbox filesystem, delivered to the user as downloads.
+	// Optional so older persisted chats (pre-file-delivery) deserialize cleanly.
+	files: z
+		.array(
+			z.object({
+				name: z.string(),
+				mime: z.string(),
+				base64: z.string(),
+				size: z.number(),
+			}),
+		)
+		.optional(),
 });
 
 export const MessageV6Schema = MessageV5Schema.extend({

@@ -1,5 +1,7 @@
-import { AlertTriangle, Terminal } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { AlertTriangle, Download, FileText, Loader2, Terminal } from "lucide-react";
 import { CodeBlock } from "@/components/CodeBlock";
+import { formatBytes } from "@/utils/chat-tools";
 import type { InterpreterRun } from "@/types/chats";
 
 // Renders one client-side code-interpreter run inside an assistant message: the executed source
@@ -33,6 +35,45 @@ function OutputBlock({ label, text, tone }: { label: string; text: string; tone:
 	);
 }
 
+/** One download chip for a file the executed code wrote to the sandbox filesystem. The bytes are
+ *  base64-embedded on the message; we build a blob URL from them on mount and revoke it on unmount
+ *  so clicking downloads the original file. */
+function FileChip({ file }: { file: { name: string; mime: string; base64: string; size: number } }) {
+	const url = useMemo(() => {
+		try {
+			const bin = atob(file.base64);
+			const bytes = new Uint8Array(bin.length);
+			for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+			return URL.createObjectURL(new Blob([bytes], { type: file.mime || "application/octet-stream" }));
+		} catch {
+			return null;
+		}
+	}, [file.base64, file.mime]);
+
+	useEffect(() => {
+		return () => {
+			if (url) URL.revokeObjectURL(url);
+		};
+	}, [url]);
+
+	if (!url) return null;
+	return (
+		<a
+			href={url}
+			download={file.name}
+			className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-3 py-2 text-sm transition-colors hover:bg-muted/40"
+			data-interpreter-file={file.name}
+		>
+			<FileText className="h-4 w-4 flex-none text-primary" />
+			<span className="flex min-w-0 flex-col">
+				<span className="truncate font-medium">{file.name}</span>
+				<span className="text-xs text-muted-foreground">{formatBytes(file.size)}</span>
+			</span>
+			<Download className="ml-auto h-4 w-4 flex-none text-muted-foreground" />
+		</a>
+	);
+}
+
 export function InterpreterOutput({ run }: { run: InterpreterRun }) {
 	const hasOutput =
 		run.stdout.trim() || run.stderr.trim() || (run.result != null && run.result !== "") || run.imagePng || run.error;
@@ -49,6 +90,13 @@ export function InterpreterOutput({ run }: { run: InterpreterRun }) {
 			</div>
 
 			<CodeBlock language={CODE_FENCE_LANG[run.language]} code={run.code} />
+
+			{run.pending && (
+				<div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+					<Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+					<span>{run.phase === "preparing" ? "Preparing Python environment…" : "Running…"}</span>
+				</div>
+			)}
 
 			{run.imagePng && (
 				<div className="mt-2">
@@ -67,6 +115,14 @@ export function InterpreterOutput({ run }: { run: InterpreterRun }) {
 				<OutputBlock label="Result" text={run.result} tone="normal" />
 			)}
 
+			{run.files && run.files.length > 0 && (
+				<div className="mt-2 flex flex-wrap gap-2">
+					{run.files.map((file, i) => (
+						<FileChip key={i} file={file} />
+					))}
+				</div>
+			)}
+
 			<OutputBlock label="Errors" text={run.stderr} tone="error" />
 
 			{(run.error || run.timedOut) && (
@@ -83,7 +139,7 @@ export function InterpreterOutput({ run }: { run: InterpreterRun }) {
 				</div>
 			)}
 
-			{!hasOutput && !run.timedOut && (
+			{!hasOutput && !run.timedOut && !run.pending && (
 				<div className="mt-2 text-xs text-muted-foreground">Ran with no output.</div>
 			)}
 		</div>
