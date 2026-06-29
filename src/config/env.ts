@@ -1,7 +1,12 @@
 import { z } from "zod";
 
+// Inference + connected URLs are absolute in production, but in dev the inference
+// endpoint can be a root-relative path (e.g. "/api") backed by the vite proxy so the
+// cookie-based session is same-site. Accept either form.
+const urlOrPath = z.union([z.url(), z.string().startsWith("/")]);
+
 const envSchema = z.object({
-	LTAI_INFERENCE_API_URL: z.url(),
+	LTAI_INFERENCE_API_URL: urlOrPath,
 	LTAI_CONNECTED_API_URL: z.url(),
 	SOLANA_RPC: z.url(),
 	LTAI_BASE_ADDRESS: z.string().startsWith("0x").optional().default("0xF8B1b47AA748F5C7b5D0e80C726a843913EB573a"),
