@@ -426,6 +426,18 @@ function Chat() {
 				collectedSources.length === 0
 			) {
 				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
+			} else if (!accumulated.content && !accumulated.thinking && collectedSources.length > 0) {
+				// The model spent all its turns gathering sources (web_search) and never emitted a
+				// final summary — the tool loop hit its iteration cap. Don't leave a blank message:
+				// surface a short line pointing at the collected sources so the user isn't stuck
+				// with a silent turn (they previously had to type "continue" to get anything).
+				updateMessage(
+					chatId,
+					assistantMessage.id,
+					`I gathered ${collectedSources.length} source${collectedSources.length > 1 ? "s" : ""} ` +
+						"but ran out of turns to summarise them. The sources are listed below — say \"continue\" " +
+						"and I'll write it up.",
+				);
 			}
 		} catch (error) {
 			if (controller.signal.aborted) {
