@@ -26,6 +26,18 @@ function postProgress(phase, out) {
 	self.postMessage({ id: currentId, type: "progress", phase: phase, stdout: out.stdout || "", stderr: out.stderr || "" });
 }
 
+// Encode a Uint8Array (Pyodide FS.readFile's default binary return) as base64. Pyodide's FS.readFile
+// does NOT accept { encoding: "base64" } — only "utf8" (text) or binary (Uint8Array) — so we read raw
+// bytes and encode here in chunks to avoid blowing the call stack on large files.
+function bytesToBase64(bytes) {
+	var CHUNK = 0x8000;
+	var s = "";
+	for (var i = 0; i < bytes.length; i += CHUNK) {
+		s += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+	}
+	return btoa(s);
+}
+
 // Load Pyodide once per worker, from the pinned CDN base. importScripts is allowed by the iframe
 // CSP script-src for the jsdelivr origin. Returns the Pyodide instance.
 function loadPyodideOnce(indexUrl) {
@@ -190,9 +202,11 @@ async function runPython(code, indexUrl) {
 				continue;
 			}
 			try {
-				const b64 = pyodide.FS.readFile(path, { encoding: "base64" });
-				if (b64) {
-					out.files.push({ name: name, mime: guessMime(name), base64: String(b64), size: size });
+				// FS.readFile returns a Uint8Array by default (the "base64" encoding Pyodide's FS
+				// rejects); encode to base64 in JS so the host can rebuild a blob for download.
+				const bytes = pyodide.FS.readFile(path);
+				if (bytes && bytes.length) {
+					out.files.push({ name: name, mime: guessMime(name), base64: bytesToBase64(bytes), size: size });
 					total += size;
 				}
 			} catch (e) {

@@ -95,6 +95,10 @@ describe("WORKER_SOURCE", () => {
 		expect(WORKER_SOURCE).toContain("guessMime");
 		expect(WORKER_SOURCE).toContain("out.files");
 		expect(WORKER_SOURCE).toContain("MAX_FILE_BYTES");
+		// Pyodide's FS.readFile rejects { encoding: "base64" } (only "utf8"/binary); the worker reads
+		// raw bytes and base64-encodes in JS. Guard against regressing back to the broken call.
+		expect(WORKER_SOURCE).not.toContain('FS.readFile(path, { encoding: "base64" })');
+		expect(WORKER_SOURCE).toContain("bytesToBase64");
 	});
 });
 
