@@ -328,8 +328,14 @@ function Chat() {
 					if (call.name === "web_search") {
 						const query = String(call.arguments.query ?? "");
 						const { sources, toolText } = await executeWebSearch(query, opts);
-						collectedSources.push(...sources);
-						attachMessageMeta(chatId, assistantMessage.id, { sources: collectedSources });
+						// Dedup by URL across the whole multi-turn response — the search service can
+						// return the same URL twice, and the model often re-runs web_search between
+						// turns, re-adding the same sources. Without dedup the Sources list renders
+						// duplicate keys (React warning) and the count is inflated.
+						for (const s of sources) {
+							if (!collectedSources.some((c) => c.url === s.url)) collectedSources.push(s);
+						}
+						attachMessageMeta(chatId, assistantMessage.id, { sources: [...collectedSources] });
 						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else if (call.name === "generate_image") {
 						const { image, toolText } = await executeGenerateImage(
@@ -408,23 +414,30 @@ function Chat() {
 				}
 			}
 
+			// An empty final turn isn't a failure if the response produced something — sources from a
+			// web search, images, or interpreter runs are themselves a usable outcome. Only apologise
+			// when the turn produced literally nothing. (Previously a search that gathered sources but
+			// no trailing text was wiped with "Sorry, I could not process your request.")
 			if (
 				!accumulated.content &&
 				!accumulated.thinking &&
 				collectedImages.length === 0 &&
-				collectedInterpreter.length === 0
+				collectedInterpreter.length === 0 &&
+				collectedSources.length === 0
 			) {
 				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
 			}
 		} catch (error) {
 			if (controller.signal.aborted) {
-				// Keep whatever streamed before the stop (content/thinking already persisted, images kept
-				// via attachMessageMeta). Only leave a marker when the turn produced nothing at all.
+				// Keep whatever streamed before the stop (content/thinking already persisted, images
+				// and sources kept via attachMessageMeta). Only leave a marker when the turn produced
+				// nothing at all — sources from a partial web search are kept, not replaced.
 				if (
 					!accumulated.content &&
 					!accumulated.thinking &&
 					collectedImages.length === 0 &&
-					collectedInterpreter.length === 0
+					collectedInterpreter.length === 0 &&
+					collectedSources.length === 0
 				) {
 					updateMessage(chatId, assistantMessage.id, "_(stopped)_");
 				}
