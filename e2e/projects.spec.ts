@@ -108,13 +108,13 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	await page.getByTestId("project-create-submit").click();
 
 	// A flat project row appears in the Projects section.
-	const projectGroup = page.locator('[data-testid^="project-group-"]');
+	const projectGroup = page.locator('[data-testid^="project-row-"]');
 	await expect(projectGroup).toHaveCount(1);
 	await expect(page.getByText("Work")).toBeVisible();
 
 	// Resolve the new project id from the rendered group testid.
 	const groupTestId = await projectGroup.getAttribute("data-testid");
-	const projectId = groupTestId!.replace("project-group-", "");
+	const projectId = groupTestId!.replace("project-row-", "");
 
 	// Move chat A into the project via its actions menu -> "Move to project" submenu.
 	await page.getByTestId(`chat-row-${CHAT_A}`).hover();
@@ -139,7 +139,7 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	// Flat layout persists across a full reload.
 	await page.reload({ waitUntil: "domcontentloaded" });
 	await openSidebar(page);
-	await expect(page.getByTestId(`project-group-${projectId}`)).toBeVisible();
+	await expect(page.getByTestId(`project-row-${projectId}`)).toBeVisible();
 	await expect(page.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
 	await expect(page.getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
 

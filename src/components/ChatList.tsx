@@ -73,7 +73,7 @@ export function ChatList() {
 		deleteProject(projectId);
 	};
 
-	// Per-chat action menu, reused inside both project groups and the ungrouped section.
+	// Per-chat action menu, reused for each chat row.
 	const ChatActionsMenu = ({ chat }: { chat: Chat }) => (
 		<DropdownMenu
 			open={dropdownOpenChatId === chat.id}
@@ -226,7 +226,7 @@ export function ChatList() {
 							<div
 								key={project.id}
 								className="flex items-center group rounded-md hover:bg-muted/50"
-								data-testid={`project-group-${project.id}`}
+								data-testid={`project-row-${project.id}`}
 							>
 								<Link
 									to="/project/$projectId"
