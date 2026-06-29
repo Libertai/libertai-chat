@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from "react";
 import { AlertTriangle, Download, FileText, Loader2, Terminal } from "lucide-react";
 import { CodeBlock } from "@/components/CodeBlock";
+import { downloadBlob } from "@/lib/export/download";
 import { formatBytes } from "@/utils/chat-tools";
 import type { InterpreterRun } from "@/types/chats";
 
@@ -36,31 +36,24 @@ function OutputBlock({ label, text, tone }: { label: string; text: string; tone:
 }
 
 /** One download chip for a file the executed code wrote to the sandbox filesystem. The bytes are
- *  base64-embedded on the message; we build a blob URL from them on mount and revoke it on unmount
- *  so clicking downloads the original file. */
+ *  base64-embedded on the message; on click we decode them to a Blob and fire the download via the
+ *  shared downloadBlob helper (the same pattern transactions / the image preview / canvas export use),
+ *  rather than holding a long-lived blob: anchor — a persistent blob URL tripped a CSP/load error. */
 function FileChip({ file }: { file: { name: string; mime: string; base64: string; size: number } }) {
-	const url = useMemo(() => {
+	const handleDownload = () => {
 		try {
 			const bin = atob(file.base64);
 			const bytes = new Uint8Array(bin.length);
 			for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-			return URL.createObjectURL(new Blob([bytes], { type: file.mime || "application/octet-stream" }));
-		} catch {
-			return null;
+			downloadBlob(new Blob([bytes], { type: file.mime || "application/octet-stream" }), file.name);
+		} catch (err) {
+			console.error("Failed to decode interpreter file:", err);
 		}
-	}, [file.base64, file.mime]);
-
-	useEffect(() => {
-		return () => {
-			if (url) URL.revokeObjectURL(url);
-		};
-	}, [url]);
-
-	if (!url) return null;
+	};
 	return (
-		<a
-			href={url}
-			download={file.name}
+		<button
+			type="button"
+			onClick={handleDownload}
 			className="flex items-center gap-2 rounded-lg border border-border bg-card/40 px-3 py-2 text-sm transition-colors hover:bg-muted/40"
 			data-interpreter-file={file.name}
 		>
@@ -70,7 +63,7 @@ function FileChip({ file }: { file: { name: string; mime: string; base64: string
 				<span className="text-xs text-muted-foreground">{formatBytes(file.size)}</span>
 			</span>
 			<Download className="ml-auto h-4 w-4 flex-none text-muted-foreground" />
-		</a>
+		</button>
 	);
 }
 
