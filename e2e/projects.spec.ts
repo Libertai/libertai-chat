@@ -162,3 +162,23 @@ test("create a project, move a chat into it, persist across reload, and set inst
 		"Always answer in formal British English.",
 	);
 });
+
+test("projects index lists projects and filters by search", async ({ page }) => {
+	await seedChats(page);
+	await page.goto("/", { waitUntil: "domcontentloaded", timeout: 30_000 });
+	await openSidebar(page);
+	// Create two projects via the sidebar create dialog.
+	for (const name of ["Travel", "Work"]) {
+		await page.getByTestId("create-project").first().click();
+		await page.getByTestId("project-name-input").fill(name);
+		await page.getByTestId("project-create-submit").click();
+	}
+	await page.getByTestId("nav-projects").click();
+	const projectsPage = page.getByTestId("projects-page");
+	await expect(projectsPage).toBeVisible();
+	await expect(projectsPage.getByText("Travel")).toBeVisible();
+	await expect(projectsPage.getByText("Work")).toBeVisible();
+	await page.getByTestId("projects-search").fill("Trav");
+	await expect(projectsPage.getByText("Travel")).toBeVisible();
+	await expect(projectsPage.getByText("Work")).toHaveCount(0);
+});
