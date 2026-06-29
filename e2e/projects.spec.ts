@@ -182,3 +182,137 @@ test("projects index lists projects and filters by search", async ({ page }) => 
 	await expect(projectsPage.getByText("Travel")).toBeVisible();
 	await expect(projectsPage.getByText("Work")).toHaveCount(0);
 });
+
+// ---------------------------------------------------------------------------
+// Task 6: /project/$projectId detail page
+// ---------------------------------------------------------------------------
+
+const PROJECT_ID = "e2e-project-detail-001";
+const PROJECT_CHAT_ID = "e2e-project-detail-chat-001";
+
+function seedProjectWithChat(page: Page) {
+	const now = new Date().toISOString();
+	const projects = {
+		state: {
+			projects: {
+				[PROJECT_ID]: {
+					id: PROJECT_ID,
+					name: "Design System",
+					createdAt: now,
+					updatedAt: now,
+				},
+			},
+		},
+		version: 1,
+	};
+	const chats = {
+		state: {
+			chats: {
+				[PROJECT_CHAT_ID]: {
+					id: PROJECT_CHAT_ID,
+					assistantId: "6984ea23-1c6c-402e-adf0-1afddceec404",
+					createdAt: now,
+					updatedAt: now,
+					title: "Color tokens",
+					messages: [
+						{
+							id: "aaaa1111-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+							role: "user",
+							content: "Help with color tokens",
+							timestamp: now,
+						},
+					],
+					projectId: PROJECT_ID,
+				},
+			},
+			legacyMigrated: true,
+		},
+		version: 9,
+	};
+	return Promise.all([
+		page.addInitScript(
+			([key, value]) => {
+				window.localStorage.setItem(key, value);
+			},
+			[PROJECTS_KEY, JSON.stringify(projects)] as const,
+		),
+		page.addInitScript(
+			([key, value]) => {
+				window.localStorage.setItem(key, value);
+			},
+			[CHATS_KEY, JSON.stringify(chats)] as const,
+		),
+	]);
+}
+
+function seedProjectNoChats(page: Page) {
+	const now = new Date().toISOString();
+	const projects = {
+		state: {
+			projects: {
+				[PROJECT_ID]: {
+					id: PROJECT_ID,
+					name: "Design System",
+					createdAt: now,
+					updatedAt: now,
+				},
+			},
+		},
+		version: 1,
+	};
+	const chats = {
+		state: {
+			chats: {},
+			legacyMigrated: true,
+		},
+		version: 9,
+	};
+	return Promise.all([
+		page.addInitScript(
+			([key, value]) => {
+				window.localStorage.setItem(key, value);
+			},
+			[PROJECTS_KEY, JSON.stringify(projects)] as const,
+		),
+		page.addInitScript(
+			([key, value]) => {
+				window.localStorage.setItem(key, value);
+			},
+			[CHATS_KEY, JSON.stringify(chats)] as const,
+		),
+	]);
+}
+
+test("project detail page: shows project name, lists seeded chat, new-chat link points to project", async ({
+	page,
+}) => {
+	await seedProjectWithChat(page);
+	await page.goto(`/project/${PROJECT_ID}`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+
+	await expect(page.getByTestId("project-detail-page")).toBeVisible();
+	await expect(page.getByTestId("project-detail-name")).toHaveText("Design System");
+
+	// Seeded chat appears in the list.
+	await expect(page.getByTestId("project-chats")).toBeVisible();
+	await expect(page.getByTestId(`project-chat-${PROJECT_CHAT_ID}`)).toBeVisible();
+
+	// New-chat link href encodes the project id.
+	const newChatLink = page.getByTestId("project-new-chat");
+	await expect(newChatLink).toBeVisible();
+	const href = await newChatLink.getAttribute("href");
+	expect(href).toContain(`project=${PROJECT_ID}`);
+});
+
+test("project detail page: shows empty state when project has no chats", async ({ page }) => {
+	await seedProjectNoChats(page);
+	await page.goto(`/project/${PROJECT_ID}`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+
+	await expect(page.getByTestId("project-detail-page")).toBeVisible();
+	await expect(page.getByTestId("project-chats-empty")).toBeVisible();
+});
+
+test("project detail page: not-found state for unknown project id", async ({ page }) => {
+	await page.goto("/project/does-not-exist", { waitUntil: "domcontentloaded", timeout: 30_000 });
+
+	await expect(page.getByTestId("project-not-found")).toBeVisible();
+});
