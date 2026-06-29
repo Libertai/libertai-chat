@@ -6,6 +6,7 @@ import { ClawIcon } from "@/components/ClawIcon";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
 import { ChatSearch } from "@/components/ChatSearch";
+import { ProjectDialogs } from "@/components/ProjectDialogs";
 import {
 	Sidebar,
 	SidebarContent,
@@ -183,6 +184,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 						{children}
 					</main>
 				</SidebarInset>
+				<ProjectDialogs />
 			</div>
 		</SidebarProvider>
 	);
