@@ -1,4 +1,5 @@
-import { AlertTriangle, Download, FileText, Loader2, Terminal } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ChevronDown, ChevronRight, Download, FileText, Loader2, Terminal } from "lucide-react";
 import { CodeBlock } from "@/components/CodeBlock";
 import { downloadBlob } from "@/lib/export/download";
 import { formatBytes } from "@/utils/chat-tools";
@@ -68,6 +69,7 @@ function FileChip({ file }: { file: { name: string; mime: string; base64: string
 }
 
 export function InterpreterOutput({ run }: { run: InterpreterRun }) {
+	const [isCodeExpanded, setIsCodeExpanded] = useState(false);
 	const hasOutput =
 		run.stdout.trim() || run.stderr.trim() || (run.result != null && run.result !== "") || run.imagePng || run.error;
 
@@ -82,7 +84,23 @@ export function InterpreterOutput({ run }: { run: InterpreterRun }) {
 				<span>{LANGUAGE_LABEL[run.language]} interpreter</span>
 			</div>
 
-			<CodeBlock language={CODE_FENCE_LANG[run.language]} code={run.code} />
+			{/* Source is collapsed by default — non-technical users see the result (output / files /
+			    images), not the code; click the header to reveal it. */}
+			<button
+				type="button"
+				onClick={() => setIsCodeExpanded((v) => !v)}
+				aria-expanded={isCodeExpanded}
+				className="flex w-full items-center gap-1 rounded-md px-1 py-1 text-xs font-medium text-muted-foreground hover:bg-muted/20"
+			>
+				{isCodeExpanded ? (
+					<ChevronDown className="h-3.5 w-3.5" />
+				) : (
+					<ChevronRight className="h-3.5 w-3.5" />
+				)}
+				<span>{isCodeExpanded ? "Hide code" : "Show code"}</span>
+			</button>
+
+			{isCodeExpanded && <CodeBlock language={CODE_FENCE_LANG[run.language]} code={run.code} />}
 
 			{run.pending && (
 				<div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
