@@ -127,7 +127,16 @@ async function runPython(code, indexUrl) {
 	const hasMatplotlib = /matplotlib|pyplot|\bplt\b/.test(code);
 	if (hasMatplotlib) {
 		try {
-			await pyodide.runPythonAsync("import matplotlib\nmatplotlib.use('AGG')");
+			// Force the headless Agg backend (no GUI in a worker) and silence the inevitable
+			// "FigureCanvasAgg is non-interactive, and thus cannot be shown" UserWarning that fires
+			// when the code calls plt.show() / returns a figure — it's expected here (we capture the
+			// figure to a PNG) and only clutters stderr / the tool result the model reads next.
+			await pyodide.runPythonAsync(
+				"import matplotlib, warnings\n" +
+					"matplotlib.use('AGG')\n" +
+					// Canvas name varies (FigureCanvasAgg/Pdf/…); match the constant tail.
+					"warnings.filterwarnings('ignore', message='.*is non-interactive, and thus cannot be shown.*')\n",
+			);
 		} catch (_e) { /* matplotlib not present; ignore */ }
 	}
 
