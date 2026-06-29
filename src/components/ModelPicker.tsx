@@ -27,7 +27,7 @@ function TeeBadge({ className }: Readonly<{ className?: string }>) {
 		<span
 			data-testid="tee-badge"
 			className={cn(
-				"inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-tiny font-medium text-primary",
+				"inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-tiny font-medium text-primary",
 				className,
 			)}
 		>

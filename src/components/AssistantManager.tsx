@@ -245,7 +245,7 @@ export function AssistantManager({ open, onOpenChange }: Readonly<AssistantManag
 							/>
 						</div>
 
-						<div className="flex flex-col gap-1.5">
+						<div className="flex flex-col items-start gap-1.5">
 							<span className="text-sm font-medium text-foreground">Model</span>
 							<ModelPicker value={form.model} onSelect={(model) => setForm((f) => ({ ...f, model }))} />
 						</div>

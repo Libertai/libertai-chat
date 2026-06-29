@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useChatStore } from "@/stores/chat";
 import { useProjectStore, type Project } from "@/stores/project";
 import { type Chat, type Message } from "@/types/chats";
-import { ChevronDown, ChevronRight, Folder, FolderPlus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, FolderPlus, MoreHorizontal, Pencil, Settings, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
 	DropdownMenu,
@@ -344,8 +344,8 @@ export function ChatList() {
 										}}
 										data-testid={`project-settings-${project.id}`}
 									>
-										<Pencil className="h-3 w-3 mr-2" />
-										Rename &amp; instructions
+										<Settings className="h-3 w-3 mr-2" />
+										Settings
 									</DropdownMenuItem>
 									<DropdownMenuItem
 										className="text-destructive focus:text-destructive"
