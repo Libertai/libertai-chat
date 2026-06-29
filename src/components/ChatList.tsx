@@ -3,13 +3,12 @@ import { useChatStore } from "@/stores/chat";
 import { useProjectStore } from "@/stores/project";
 import { type Chat } from "@/types/chats";
 import { getChatTitle, truncateText } from "@/utils/chat-title";
-import { Folder, FolderPlus, MoreHorizontal, Pencil, Settings, Trash2 } from "lucide-react";
+import { Check, Folder, FolderMinus, FolderPlus, MoreHorizontal, Pencil, Settings, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuSub,
 	DropdownMenuSubContent,
@@ -74,98 +73,102 @@ export function ChatList() {
 	};
 
 	// Per-chat action menu, reused for each chat row.
-	const ChatActionsMenu = ({ chat }: { chat: Chat }) => (
-		<DropdownMenu
-			open={dropdownOpenChatId === chat.id}
-			onOpenChange={(open) => {
-				setDropdownOpenChatId(open ? chat.id : null);
-				setActiveChat(open ? chat.id : null);
-			}}
-		>
-			<DropdownMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
-					className="h-6 w-6 bg-background hover:bg-background"
-					onClick={(e) => e.preventDefault()}
-					data-testid={`chat-actions-${chat.id}`}
-				>
-					<MoreHorizontal className="h-3 w-3" />
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end">
-				<DropdownMenuItem
-					onClick={(e) => {
-						e.preventDefault();
-						handleRenameClick(chat);
-					}}
-				>
-					<Pencil className="h-3 w-3 mr-2" />
-					Rename
-				</DropdownMenuItem>
+	const ChatActionsMenu = ({ chat }: { chat: Chat }) => {
+		const inProject = !!chat.projectId && projects.some((p) => p.id === chat.projectId);
+		return (
+			<DropdownMenu
+				open={dropdownOpenChatId === chat.id}
+				onOpenChange={(open) => {
+					setDropdownOpenChatId(open ? chat.id : null);
+					setActiveChat(open ? chat.id : null);
+				}}
+			>
+				<DropdownMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-6 w-6 bg-background hover:bg-background"
+						onClick={(e) => e.preventDefault()}
+						data-testid={`chat-actions-${chat.id}`}
+					>
+						<MoreHorizontal className="h-3 w-3" />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end">
+					<DropdownMenuItem
+						onClick={(e) => {
+							e.preventDefault();
+							handleRenameClick(chat);
+						}}
+					>
+						<Pencil className="h-3 w-3 mr-2" />
+						Rename
+					</DropdownMenuItem>
 
-				<DropdownMenuSub>
-					<DropdownMenuSubTrigger data-testid={`chat-move-${chat.id}`}>
-						<Folder className="h-3 w-3 mr-2" />
-						Move to project
-					</DropdownMenuSubTrigger>
-					<DropdownMenuSubContent>
-						<DropdownMenuLabel>Projects</DropdownMenuLabel>
+					<DropdownMenuSub>
+						<DropdownMenuSubTrigger data-testid={`chat-move-${chat.id}`}>
+							<Folder className="h-3 w-3 mr-2" />
+							{inProject ? "Change project" : "Add to project"}
+						</DropdownMenuSubTrigger>
+						<DropdownMenuSubContent>
+							{projects.map((project) => (
+								<DropdownMenuItem
+									key={project.id}
+									disabled={chat.projectId === project.id}
+									onClick={(e) => {
+										e.preventDefault();
+										setChatProject(chat.id, project.id);
+										setDropdownOpenChatId(null);
+									}}
+									data-testid={`chat-move-to-${project.id}-${chat.id}`}
+								>
+									<span className="truncate">{project.name}</span>
+									{chat.projectId === project.id && <Check className="ml-auto h-3 w-3" />}
+								</DropdownMenuItem>
+							))}
+							{projects.length > 0 && <DropdownMenuSeparator />}
+							<DropdownMenuItem
+								onClick={(e) => {
+									e.preventDefault();
+									setDropdownOpenChatId(null);
+									openCreate();
+								}}
+							>
+								<FolderPlus className="h-3 w-3 mr-2" />
+								New project
+							</DropdownMenuItem>
+						</DropdownMenuSubContent>
+					</DropdownMenuSub>
+
+					{inProject && (
 						<DropdownMenuItem
-							disabled={!chat.projectId}
 							onClick={(e) => {
 								e.preventDefault();
 								setChatProject(chat.id, undefined);
 								setDropdownOpenChatId(null);
 							}}
-							data-testid={`chat-move-none-${chat.id}`}
+							data-testid={`chat-remove-from-project-${chat.id}`}
 						>
-							No project
+							<FolderMinus className="h-3 w-3 mr-2" />
+							Remove from project
 						</DropdownMenuItem>
-						{projects.length > 0 && <DropdownMenuSeparator />}
-						{projects.map((project) => (
-							<DropdownMenuItem
-								key={project.id}
-								disabled={chat.projectId === project.id}
-								onClick={(e) => {
-									e.preventDefault();
-									setChatProject(chat.id, project.id);
-									setDropdownOpenChatId(null);
-								}}
-								data-testid={`chat-move-to-${project.id}-${chat.id}`}
-							>
-								<Folder className="h-3 w-3 mr-2" />
-								{project.name}
-							</DropdownMenuItem>
-						))}
-						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							onClick={(e) => {
-								e.preventDefault();
-								setDropdownOpenChatId(null);
-								openCreate();
-							}}
-						>
-							<FolderPlus className="h-3 w-3 mr-2" />
-							New project
-						</DropdownMenuItem>
-					</DropdownMenuSubContent>
-				</DropdownMenuSub>
+					)}
 
-				<DropdownMenuSeparator />
-				<DropdownMenuItem
-					className="text-destructive focus:text-destructive"
-					onClick={(e) => {
-						e.preventDefault();
-						handleDeleteChat(chat.id);
-					}}
-				>
-					<Trash2 className="h-3 w-3 mr-2" />
-					Delete
-				</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						className="text-destructive focus:text-destructive"
+						onClick={(e) => {
+							e.preventDefault();
+							handleDeleteChat(chat.id);
+						}}
+					>
+						<Trash2 className="h-3 w-3 mr-2" />
+						Delete
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		);
+	};
 
 	const ChatRow = ({ chat }: { chat: Chat }) => (
 		<div
