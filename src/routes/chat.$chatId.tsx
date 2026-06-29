@@ -75,6 +75,10 @@ function Chat() {
 	const [isStreaming, setIsStreaming] = useState(false);
 	const [toolSteps, setToolSteps] = useState<string[]>([]);
 	const [toolStatus, setToolStatus] = useState<string | null>(null);
+	// When the tool loop hits its turn cap without a final answer, we offer a Continue button on that
+	// last assistant message instead of leaving the user stuck typing "continue". Holds the id of the
+	// message that ran out (so the affordance only shows on the relevant turn), or null.
+	const [continueFromMessageId, setContinueFromMessageId] = useState<string | null>(null);
 	const pendingForcedToolRef = useRef<"web_search" | "generate_image" | undefined>(undefined);
 	const pendingSearchTypeRef = useRef<SearchType | undefined>(undefined);
 	const abortRef = useRef<AbortController | null>(null);
@@ -231,8 +235,14 @@ function Chat() {
 			updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
 		};
 
+		// Cap on sequential tool turns (each is a model round-trip + tool execution). 5 was too tight
+		// — a research task that does several web_search calls (each its own turn) ran out before the
+		// model could write a summary, leaving a blank message. 10 gives multi-step tool use room to
+		// breathe; the Continue button below is the safety net if it's still not enough.
+		const MAX_TOOL_TURNS = 10;
+		let ranOutOfTurns = false;
 		try {
-			for (let iteration = 0; iteration < 5; iteration++) {
+			for (let iteration = 0; iteration < MAX_TOOL_TURNS; iteration++) {
 				const toolAcc = new ToolCallAccumulator();
 				accumulated.content = "";
 				accumulated.thinking = "";
@@ -285,6 +295,12 @@ function Chat() {
 				flushStreamedMessage(true);
 
 				if (!toolAcc.hasCalls()) break;
+
+				// We're about to spend another turn executing tools. If this turns out to be the last
+				// iteration (cap reached), we never come back here to clear the flag — so mark it now:
+				// it's only reset to false on a clean final-answer break above. After the loop, this
+				// tells us the response stopped because of the turn cap, not because the model finished.
+				ranOutOfTurns = true;
 
 				// Stay in the streaming (working) state across tool turns. Previously this dropped
 				// isStreaming and raised isLoading, which flickered the whole chat between "streaming"
@@ -418,26 +434,29 @@ function Chat() {
 			// web search, images, or interpreter runs are themselves a usable outcome. Only apologise
 			// when the turn produced literally nothing. (Previously a search that gathered sources but
 			// no trailing text was wiped with "Sorry, I could not process your request.")
-			if (
-				!accumulated.content &&
-				!accumulated.thinking &&
-				collectedImages.length === 0 &&
-				collectedInterpreter.length === 0 &&
-				collectedSources.length === 0
-			) {
+			const gatheredSomething =
+				collectedSources.length > 0 || collectedImages.length > 0 || collectedInterpreter.length > 0;
+			if (!accumulated.content && !accumulated.thinking && !gatheredSomething) {
 				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
-			} else if (!accumulated.content && !accumulated.thinking && collectedSources.length > 0) {
-				// The model spent all its turns gathering sources (web_search) and never emitted a
-				// final summary — the tool loop hit its iteration cap. Don't leave a blank message:
-				// surface a short line pointing at the collected sources so the user isn't stuck
-				// with a silent turn (they previously had to type "continue" to get anything).
+			} else if (!accumulated.content && !accumulated.thinking && ranOutOfTurns) {
+				// The model spent every turn calling tools (often several web_search rounds) and never
+				// wrote a final summary — the tool loop hit its turn cap. Don't leave a blank message:
+				// surface a short line explaining what's gathered and offer a Continue button (set just
+				// below) so the user can prompt one more turn with a click instead of typing "continue".
+				const parts: string[] = [];
+				if (collectedSources.length > 0)
+					parts.push(`${collectedSources.length} source${collectedSources.length > 1 ? "s" : ""}`);
+				if (collectedImages.length > 0)
+					parts.push(`${collectedImages.length} image${collectedImages.length > 1 ? "s" : ""}`);
+				if (collectedInterpreter.length > 0) parts.push("code run" + (collectedInterpreter.length > 1 ? "s" : ""));
+				const what = parts.length ? parts.join(", ") : "research";
 				updateMessage(
 					chatId,
 					assistantMessage.id,
-					`I gathered ${collectedSources.length} source${collectedSources.length > 1 ? "s" : ""} ` +
-						"but ran out of turns to summarise them. The sources are listed below — say \"continue\" " +
-						"and I'll write it up.",
+					`I gathered ${what} but ran out of turns to write it up. ` +
+						"Continue below and I'll summarise what I found.",
 				);
+				setContinueFromMessageId(assistantMessage.id);
 			}
 		} catch (error) {
 			if (controller.signal.aborted) {
@@ -504,6 +523,17 @@ function Chat() {
 		addMessage(chatId, "user", value.trim(), undefined, images, attachments);
 	};
 
+	// One click to resume a turn that hit the tool-loop cap without a final answer. We keep the
+	// gathered assistant turn (sources/images/interpreter stay attached to it) and append a fresh
+	// user "Continue." so generateAIResponse takes one more round-trip to summarise. Without this the
+	// user had to type "continue" themselves after a long silent run.
+	const handleContinue = async () => {
+		if (isLoading || isStreaming) return;
+		setContinueFromMessageId(null);
+		addMessage(chatId, "user", "Continue");
+		await generateAIResponse();
+	};
+
 	const handleRegenerateMessage = async () => {
 		if (isLoading || isStreaming || messages.length === 0) return;
 
@@ -551,6 +581,8 @@ function Chat() {
 								isStreaming={isStreaming}
 								toolStatus={index === messages.length - 1 ? toolStatus : null}
 								toolSteps={index === messages.length - 1 ? toolSteps : []}
+								needsContinue={continueFromMessageId === message.id}
+								onContinue={handleContinue}
 								onRegenerate={handleRegenerateMessage}
 								onEditMessage={handleEditMessage}
 								onRegenerateFromMessage={handleRegenerateFromMessage}

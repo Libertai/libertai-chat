@@ -46,6 +46,10 @@ interface MessageProps {
 	isStreaming: boolean;
 	toolStatus?: string | null;
 	toolSteps?: string[];
+	// Set on the last assistant turn when the tool loop hit its turn cap without a final answer —
+	// shows a Continue button so the user can prompt one more round-trip with a click.
+	needsContinue?: boolean;
+	onContinue?: () => void;
 	onRegenerate: () => void;
 	onEditMessage?: (id: string, content: string) => void;
 	onRegenerateFromMessage?: (id: string) => void;
@@ -59,6 +63,8 @@ export function Message({
 	isStreaming,
 	toolStatus,
 	toolSteps,
+	needsContinue,
+	onContinue,
 	onRegenerate,
 	onEditMessage,
 	onRegenerateFromMessage,
@@ -517,6 +523,23 @@ export function Message({
 						)}
 					</div>
 				)}
+
+				{/* Continue prompt for a turn that hit the tool-loop cap without a final answer. Distinct
+				    from the toolbar above (which only renders when there's content) so it stays a clear
+				    call-to-action after the "ran out of turns" line. */}
+				{message.role === "assistant" &&
+					needsContinue &&
+					isLastMessage &&
+					!isLoading &&
+					!isStreaming &&
+					onContinue && (
+						<div className="mt-2 mx-2">
+							<Button variant="outline" size="sm" onClick={onContinue} className="gap-1.5">
+								<ChevronRight className="w-4 h-4" />
+								Continue
+							</Button>
+						</div>
+					)}
 			</div>
 		</div>
 	);
