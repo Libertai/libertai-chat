@@ -6,13 +6,18 @@ import { AssistantManager } from "@/components/AssistantManager";
 import { MemoryManager } from "@/components/MemoryManager";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
+import { useProjectStore } from "@/stores/project";
 import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { setPendingForcedTool } from "@/utils/pending-forced-tool";
+import { attachChatToProject } from "@/utils/attach-project";
 import type { SearchType } from "@/utils/chat-tools";
 import type { ImageData, FileAttachment } from "@/types/chats";
 
 export const Route = createFileRoute("/")({
+	validateSearch: (search: Record<string, unknown>): { project?: string } => ({
+		project: typeof search.project === "string" ? search.project : undefined,
+	}),
 	component: Index,
 });
 
@@ -20,6 +25,8 @@ function Index() {
 	const navigate = useNavigate();
 	const { createChat } = useChatStore();
 	const { assistants, selectedAssistant, setSelectedAssistant, getAssistantOrDefault } = useAssistantStore();
+	const { project: projectParam } = Route.useSearch();
+	const activeProject = useProjectStore((s) => s.getProject(projectParam));
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { chatApiKey } = useChatApiKey();
 	const [isFocused, setIsFocused] = useState(false);
@@ -46,6 +53,7 @@ function Index() {
 
 		// Create chat with the first message, images and extracted file attachments
 		createChat(chatId, firstMessage, selectedAssistant, images, attachments);
+		attachChatToProject(chatId, activeProject?.id);
 
 		// Carry a forced tool (and its search mode) across navigation so the new chat's first
 		// response honors it.
@@ -179,7 +187,7 @@ function Index() {
 									setIsFocused(false);
 								}
 							}}
-							placeholder="Start a private conversation..."
+							placeholder={activeProject ? `New chat in ${activeProject.name}...` : "Start a private conversation..."}
 							isSubmitting={isSubmitting}
 							assistant={getAssistantOrDefault(selectedAssistant)}
 							isConnected={isAuthenticated && !!chatApiKey}
