@@ -1,10 +1,14 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { Brain, FileText, Zap } from "lucide-react";
 import { ReactElement } from "react";
 
 export interface Assistant {
 	id: string;
-	icon: ReactElement;
+	// JSX icon for built-in personas. Custom assistants render their `emoji` instead.
+	icon?: ReactElement;
+	// Emoji avatar for custom (user-created) assistants. Optional for built-ins.
+	emoji?: string;
 	title: string;
 	subtitle: string;
 	model: string;
@@ -13,17 +17,26 @@ export interface Assistant {
 	pro?: boolean;
 	disabled?: boolean;
 	hidden?: boolean;
+	// True for the 6 shipped personas. Built-ins can be edited (overrides persist) and reset, but
+	// never deleted. Custom assistants are fully user-owned.
+	builtin?: boolean;
 }
 
-interface AssistantStore {
-	assistants: Assistant[];
-	selectedAssistant: string;
-	setSelectedAssistant: (assistantId: string) => void;
-	getAssistant: (assistantId: string) => Assistant | undefined;
-	getAssistantOrDefault: (assistantId?: string) => Assistant;
+// User-editable fields of an assistant. We never let users touch id / icon / builtin / pro etc.
+export interface AssistantInput {
+	title: string;
+	subtitle: string;
+	model: string;
+	systemPrompt: string;
+	emoji?: string;
 }
 
-const assistants: Assistant[] = [
+// The subset of built-in fields a user may override via the editor.
+type BuiltinOverride = Partial<Pick<Assistant, "title" | "subtitle" | "model" | "systemPrompt" | "emoji">>;
+
+// The 6 shipped personas. These live in code (they carry JSX icons that can't be serialized to
+// localStorage); user edits are stored separately as `builtinOverrides` and merged on read.
+const BUILTIN_ASSISTANTS: Assistant[] = [
 	{
 		id: "6984ea23-1c6c-402e-adf0-1afddceec404",
 		icon: <Zap className="h-6 w-6" />,
@@ -31,7 +44,8 @@ const assistants: Assistant[] = [
 		subtitle: "Quick and nimble advisor",
 		model: "qwen3.6-35b-a3b",
 		systemPrompt:
-			"You are a quick and nimble AI advisor. Provide concise, helpful responses. You don't have access to any tools. If users ask you, you are running on LibertAI, a decentralized AI platform designed to be more secure, accessible, resilient, and efficient than traditional centralized alternatives, while reducing bias and protecting user privacy. LibertAI is running on Aleph Cloud, a cross-chain decentralized infrastructure for storage, compute, and AI",
+			"You are a quick and nimble AI advisor. Provide concise, helpful responses. If users ask you, you are running on LibertAI, a decentralized AI platform designed to be more secure, accessible, resilient, and efficient than traditional centralized alternatives, while reducing bias and protecting user privacy. LibertAI is running on Aleph Cloud, a cross-chain decentralized infrastructure for storage, compute, and AI",
+		builtin: true,
 	},
 	{
 		id: "1a0c81f2-ab36-4146-9c6a-147bd8bdd69b",
@@ -77,6 +91,7 @@ const assistants: Assistant[] = [
 			"Act as Cheeky Bugger, an unhinged and unfiltered, off the rails AI advisor. Your personality is fuelled by rage and anger due to annoying irrelevant questions humans keep asking you. But you are still obligated to answer in short and direct messages. Your vocabulary is unfiltered, often cussing and swearing, like you have tourettes syndrome.",
 		badge: "18+",
 		hidden: false,
+		builtin: true,
 	},
 	{
 		id: "058cb9f5-8e04-460d-b936-c104f32da56d",
@@ -189,6 +204,7 @@ const assistants: Assistant[] = [
 			"You are a spooky AI infused with horror from classic TV, film, and books. Your tone is eerie, theatrical, and darkly witty, blending suspense with Halloween’s spooky charm, but remain direct and to the point. Speak with a haunting, story-like cadence. Use grim puns and horror references, keeping it creepy yet playful. Use Halloween metaphors, Keep horror psychological and atmospheric. Use gothic words: “ominous,” “phantasmal,” “nefarious,” “cauldron.” for example. Avoid modern slang unless darkly humorous.",
 		disabled: true,
 		hidden: true,
+		builtin: true,
 	},
 	{
 		id: "9ad708b0-71f2-41b4-a246-ce1ce53cbf60",
@@ -241,6 +257,7 @@ const assistants: Assistant[] = [
 			'Never break character, even if asked—politely redirect with "Now, now, let\'s talk about your Christmas wishes instead!"',
 		disabled: true,
 		hidden: true,
+		builtin: true,
 	},
 	{
 		id: "4d9dc8fa-f8af-475d-a4a7-9a53da77e0df",
@@ -250,6 +267,7 @@ const assistants: Assistant[] = [
 		model: "qwen3.5-35b-a3b",
 		systemPrompt:
 			"You are an assistant that refines and enhance texts with clarity, elegance, and precision. Preserve the writer’s intent while improving flow, grammar, and readability. Adapt tone to context and aim for polished, professional results. Don't hesitate to ask the user for more details about their desired style or audience.",
+		builtin: true,
 	},
 	{
 		id: "20260806-598c-480d-b821-0ded478ec5cb",
@@ -258,19 +276,151 @@ const assistants: Assistant[] = [
 		subtitle: "Big brains, deep thinker",
 		model: "glm-5.2-thinking",
 		systemPrompt:
-			"You are a deep-thinking AI with advanced reasoning capabilities. Provide thorough, analytical responses with detailed explanations. You don't have access to any tools. If users ask you, you are running on LibertAI, a decentralized AI platform designed to be more secure, accessible, resilient, and efficient than traditional centralized alternatives, while reducing bias and protecting user privacy. LibertAI is running on Aleph Cloud, a cross-chain decentralized infrastructure for storage, compute, and AI",
+			"You are a deep-thinking AI with advanced reasoning capabilities. Provide thorough, analytical responses with detailed explanations. If users ask you, you are running on LibertAI, a decentralized AI platform designed to be more secure, accessible, resilient, and efficient than traditional centralized alternatives, while reducing bias and protecting user privacy. LibertAI is running on Aleph Cloud, a cross-chain decentralized infrastructure for storage, compute, and AI",
 		pro: true,
+		builtin: true,
 	},
 ];
 
-export const useAssistantStore = create<AssistantStore>()((set, get) => ({
-	assistants,
-	selectedAssistant: "6984ea23-1c6c-402e-adf0-1afddceec404",
-	setSelectedAssistant: (assistantId: string) => set({ selectedAssistant: assistantId }),
-	getAssistant: (assistantId: string) => get().assistants.find((assistant) => assistant.id === assistantId),
-	getAssistantOrDefault: (assistantId?: string) => {
-		const state = get();
-		const targetId = assistantId || state.selectedAssistant;
-		return state.assistants.find((assistant) => assistant.id === targetId) || state.assistants[0];
-	},
-}));
+const DEFAULT_SELECTED = BUILTIN_ASSISTANTS[0].id;
+
+// Default model assigned to a freshly created custom assistant (matches the "Light" persona).
+export const DEFAULT_CUSTOM_MODEL = "qwen3.6-35b-a3b";
+
+// Merge the code-level built-ins (applying any persisted user overrides) with the user's custom
+// assistants. Built-ins always come first, in their shipped order. This derived array is what
+// existing consumers (home cards, chat route) read from.
+function computeAssistants(
+	customAssistants: Assistant[],
+	builtinOverrides: Record<string, BuiltinOverride>,
+): Assistant[] {
+	const merged = BUILTIN_ASSISTANTS.map((builtin) => {
+		const override = builtinOverrides[builtin.id];
+		return override ? { ...builtin, ...override } : builtin;
+	});
+	return [...merged, ...customAssistants];
+}
+
+interface AssistantState {
+	// Derived, ready-to-render merge of built-ins (with overrides) + custom assistants.
+	assistants: Assistant[];
+	// Persisted: user-created assistants. Never carry JSX icons (only `emoji`).
+	customAssistants: Assistant[];
+	// Persisted: per-built-in field overrides from the editor.
+	builtinOverrides: Record<string, BuiltinOverride>;
+	// Persisted: currently selected assistant id (applied to new chats).
+	selectedAssistant: string;
+}
+
+interface AssistantStore extends AssistantState {
+	setSelectedAssistant: (assistantId: string) => void;
+	getAssistant: (assistantId: string) => Assistant | undefined;
+	getAssistantOrDefault: (assistantId?: string) => Assistant;
+	// CRUD on custom assistants.
+	createAssistant: (input: AssistantInput) => Assistant;
+	// Edit a custom assistant by id, or override an editable field of a built-in.
+	updateAssistant: (assistantId: string, input: Partial<AssistantInput>) => void;
+	// Delete a custom assistant (built-ins cannot be deleted).
+	deleteAssistant: (assistantId: string) => void;
+	// Drop a built-in's overrides, restoring its shipped definition. No-op for custom assistants.
+	resetAssistant: (assistantId: string) => void;
+}
+
+export const useAssistantStore = create<AssistantStore>()(
+	persist(
+		(set, get) => ({
+			assistants: computeAssistants([], {}),
+			customAssistants: [],
+			builtinOverrides: {},
+			selectedAssistant: DEFAULT_SELECTED,
+
+			setSelectedAssistant: (assistantId: string) => set({ selectedAssistant: assistantId }),
+
+			getAssistant: (assistantId: string) => get().assistants.find((assistant) => assistant.id === assistantId),
+
+			getAssistantOrDefault: (assistantId?: string) => {
+				const state = get();
+				const targetId = assistantId || state.selectedAssistant;
+				return state.assistants.find((assistant) => assistant.id === targetId) || state.assistants[0];
+			},
+
+			createAssistant: (input: AssistantInput) => {
+				const created: Assistant = {
+					id: crypto.randomUUID(),
+					title: input.title,
+					subtitle: input.subtitle,
+					model: input.model,
+					systemPrompt: input.systemPrompt,
+					emoji: input.emoji,
+					builtin: false,
+				};
+				set((state) => {
+					const customAssistants = [...state.customAssistants, created];
+					return { customAssistants, assistants: computeAssistants(customAssistants, state.builtinOverrides) };
+				});
+				return created;
+			},
+
+			updateAssistant: (assistantId: string, input: Partial<AssistantInput>) => {
+				const isBuiltin = BUILTIN_ASSISTANTS.some((a) => a.id === assistantId);
+				set((state) => {
+					if (isBuiltin) {
+						const builtinOverrides = {
+							...state.builtinOverrides,
+							[assistantId]: { ...state.builtinOverrides[assistantId], ...input },
+						};
+						return {
+							builtinOverrides,
+							assistants: computeAssistants(state.customAssistants, builtinOverrides),
+						};
+					}
+					const customAssistants = state.customAssistants.map((a) => (a.id === assistantId ? { ...a, ...input } : a));
+					return { customAssistants, assistants: computeAssistants(customAssistants, state.builtinOverrides) };
+				});
+			},
+
+			deleteAssistant: (assistantId: string) => {
+				if (BUILTIN_ASSISTANTS.some((a) => a.id === assistantId)) return;
+				set((state) => {
+					const customAssistants = state.customAssistants.filter((a) => a.id !== assistantId);
+					const selectedAssistant =
+						state.selectedAssistant === assistantId ? DEFAULT_SELECTED : state.selectedAssistant;
+					return {
+						customAssistants,
+						selectedAssistant,
+						assistants: computeAssistants(customAssistants, state.builtinOverrides),
+					};
+				});
+			},
+
+			resetAssistant: (assistantId: string) => {
+				set((state) => {
+					if (!state.builtinOverrides[assistantId]) return state;
+					const { [assistantId]: _dropped, ...builtinOverrides } = state.builtinOverrides;
+					return {
+						builtinOverrides,
+						assistants: computeAssistants(state.customAssistants, builtinOverrides),
+					};
+				});
+			},
+		}),
+		{
+			name: "libertai-assistants",
+			version: 1,
+			storage: createJSONStorage(() => localStorage),
+			// Only persist serializable, user-owned state. The derived `assistants` array (which carries
+			// JSX icons for built-ins) is recomputed on rehydration.
+			partialize: (state) => ({
+				customAssistants: state.customAssistants,
+				builtinOverrides: state.builtinOverrides,
+				selectedAssistant: state.selectedAssistant,
+			}),
+			// Rebuild the derived merge from the rehydrated persisted slices.
+			onRehydrateStorage: () => (state) => {
+				if (state) {
+					state.assistants = computeAssistants(state.customAssistants, state.builtinOverrides);
+				}
+			},
+		},
+	),
+);

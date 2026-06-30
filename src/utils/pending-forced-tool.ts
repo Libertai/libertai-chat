@@ -1,4 +1,10 @@
-import type { ToolName } from "@/utils/chat-tools";
+import type { SearchType, ToolName } from "@/utils/chat-tools";
+
+/** A forced tool plus, for web_search, the search mode chosen on the input. */
+export interface PendingForcedTool {
+	tool: ToolName;
+	searchType?: SearchType;
+}
 
 /**
  * Transient hand-off for a forced tool selected on the home input before a new chat exists.
@@ -9,14 +15,14 @@ import type { ToolName } from "@/utils/chat-tools";
  * consumes it exactly once. Module-level state survives client-side navigation (no full reload) and
  * is intentionally NOT persisted — it only bridges that single navigation.
  */
-const pending = new Map<string, ToolName>();
+const pending = new Map<string, PendingForcedTool>();
 
-export function setPendingForcedTool(chatId: string, tool: ToolName): void {
-	pending.set(chatId, tool);
+export function setPendingForcedTool(chatId: string, tool: ToolName, searchType?: SearchType): void {
+	pending.set(chatId, { tool, searchType });
 }
 
-export function consumePendingForcedTool(chatId: string): ToolName | undefined {
-	const tool = pending.get(chatId);
-	if (tool !== undefined) pending.delete(chatId);
-	return tool;
+export function consumePendingForcedTool(chatId: string): PendingForcedTool | undefined {
+	const entry = pending.get(chatId);
+	if (entry !== undefined) pending.delete(chatId);
+	return entry;
 }

@@ -1,14 +1,23 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Brain, Settings2 } from "lucide-react";
 import { ChatInput } from "@/components/ChatInput";
+import { AssistantManager } from "@/components/AssistantManager";
+import { MemoryManager } from "@/components/MemoryManager";
 import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
+import { useProjectStore } from "@/stores/project";
 import { useAccountStore } from "@libertai/auth";
 import { useChatApiKey } from "@/hooks/data/use-chat-api-key";
 import { setPendingForcedTool } from "@/utils/pending-forced-tool";
-import type { ImageData } from "@/types/chats";
+import { attachChatToProject } from "@/utils/attach-project";
+import type { SearchType } from "@/utils/chat-tools";
+import type { ImageData, FileAttachment } from "@/types/chats";
 
 export const Route = createFileRoute("/")({
+	validateSearch: (search: Record<string, unknown>): { project?: string } => ({
+		project: typeof search.project === "string" ? search.project : undefined,
+	}),
 	component: Index,
 });
 
@@ -16,14 +25,24 @@ function Index() {
 	const navigate = useNavigate();
 	const { createChat } = useChatStore();
 	const { assistants, selectedAssistant, setSelectedAssistant, getAssistantOrDefault } = useAssistantStore();
+	const { project: projectParam } = Route.useSearch();
+	const activeProject = useProjectStore((s) => s.getProject(projectParam));
 	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
 	const { chatApiKey } = useChatApiKey();
 	const [isFocused, setIsFocused] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasContent, setHasContent] = useState(false);
+	const [managerOpen, setManagerOpen] = useState(false);
+	const [memoryOpen, setMemoryOpen] = useState(false);
 	const shouldShowCentered = isFocused || hasContent;
 
-	const handleSubmit = (value: string, images?: ImageData[], forcedTool?: "web_search" | "generate_image") => {
+	const handleSubmit = (
+		value: string,
+		images?: ImageData[],
+		forcedTool?: "web_search" | "generate_image",
+		searchType?: SearchType,
+		attachments?: FileAttachment[],
+	) => {
 		if (!value.trim() || isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -32,12 +51,14 @@ function Index() {
 		const chatId = crypto.randomUUID();
 		const firstMessage = value.trim();
 
-		// Create chat with the first message and images
-		createChat(chatId, firstMessage, selectedAssistant, images);
+		// Create chat with the first message, images and extracted file attachments
+		createChat(chatId, firstMessage, selectedAssistant, images, attachments);
+		attachChatToProject(chatId, activeProject?.id);
 
-		// Carry a forced tool across navigation so the new chat's first response honors it
+		// Carry a forced tool (and its search mode) across navigation so the new chat's first
+		// response honors it.
 		if (forcedTool) {
-			setPendingForcedTool(chatId, forcedTool);
+			setPendingForcedTool(chatId, forcedTool, searchType);
 		}
 
 		// Small delay to show the animation before navigating
@@ -66,6 +87,32 @@ function Index() {
 						AI advisor.
 					</span>
 				</h1>
+
+				{/* Manage assistants / Memory entry points - hidden alongside the cards when typing/focused. */}
+				<div
+					className={`flex items-center justify-center gap-2 md:transition-all md:duration-500 ${
+						shouldShowCentered ? "md:opacity-0 md:pointer-events-none" : "opacity-100"
+					}`}
+				>
+					<button
+						type="button"
+						data-testid="manage-assistants"
+						onClick={() => setManagerOpen(true)}
+						className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground"
+					>
+						<Settings2 className="h-4 w-4" />
+						Manage assistants
+					</button>
+					<button
+						type="button"
+						data-testid="manage-memory"
+						onClick={() => setMemoryOpen(true)}
+						className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground"
+					>
+						<Brain className="h-4 w-4" />
+						Memory
+					</button>
+				</div>
 
 				{/* Cards grid - hide when focused or typing */}
 				<div
@@ -101,7 +148,11 @@ function Index() {
 									)}
 									<div className="flex flex-col justify-between h-full">
 										<div className={`rounded-full p-2 md:p-3 w-fit ${isSelected ? "bg-background" : "bg-hover"}`}>
-											{card.icon}
+											{card.icon ?? (
+												<span className="flex h-6 w-6 items-center justify-center text-xl" aria-hidden>
+													{card.emoji ?? "🤖"}
+												</span>
+											)}
 										</div>
 										<div className="space-y-1">
 											<h3 className="text-base md:text-lg font-medium text-foreground">{card.title}</h3>
@@ -113,6 +164,9 @@ function Index() {
 						})}
 				</div>
 			</div>
+
+			<AssistantManager open={managerOpen} onOpenChange={setManagerOpen} />
+			<MemoryManager open={memoryOpen} onOpenChange={setMemoryOpen} />
 
 			{/* Single animated input container */}
 			<div
@@ -133,7 +187,7 @@ function Index() {
 									setIsFocused(false);
 								}
 							}}
-							placeholder="Start a private conversation..."
+							placeholder={activeProject ? `New chat in ${activeProject.name}...` : "Start a private conversation..."}
 							isSubmitting={isSubmitting}
 							assistant={getAssistantOrDefault(selectedAssistant)}
 							isConnected={isAuthenticated && !!chatApiKey}

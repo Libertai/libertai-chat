@@ -1,11 +1,12 @@
 import { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
-import { ImageIcon, Plus, SquareTerminal } from "lucide-react";
+import { FolderOpen, ImageIcon, Plus, SquareTerminal } from "lucide-react";
 import { ClawIcon } from "@/components/ClawIcon";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
 import { ChatSearch } from "@/components/ChatSearch";
+import { ProjectDialogs } from "@/components/ProjectDialogs";
 import {
 	Sidebar,
 	SidebarContent,
@@ -61,6 +62,26 @@ function SidebarNewConversationLink() {
 			>
 				<Plus className="h-4 w-4" />
 				New conversation
+			</Link>
+		</div>
+	);
+}
+
+// Projects nav link in sidebar
+function SidebarProjectsLink() {
+	const { isMobile, setOpenMobile } = useSidebar();
+	return (
+		<div className="px-2 py-1">
+			<Link
+				to="/projects"
+				onClick={() => {
+					if (isMobile) setOpenMobile(false);
+				}}
+				className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
+				data-testid="nav-projects"
+			>
+				<FolderOpen className="h-4 w-4" />
+				Projects
 			</Link>
 		</div>
 	);
@@ -158,6 +179,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 					<SidebarContent>
 						<SidebarNewConversationLink />
+						<SidebarProjectsLink />
 						<ChatSearch />
 						<SidebarProducts />
 						<ChatList />
@@ -174,15 +196,19 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 					{/* Main content */}
 					<main
-						className="flex-1 overflow-auto w-full"
+						className="overflow-auto w-full"
 						style={{
 							marginTop: "calc(4rem + env(safe-area-inset-top))",
+							// Bound the scroll area to the space below the fixed header so it (not the whole
+							// document) scrolls. Lets routes use h-full to pin elements like the chat input.
+							height: "calc(100svh - 4rem - env(safe-area-inset-top))",
 							paddingBottom: "env(safe-area-inset-bottom)",
 						}}
 					>
 						{children}
 					</main>
 				</SidebarInset>
+				<ProjectDialogs />
 			</div>
 		</SidebarProvider>
 	);

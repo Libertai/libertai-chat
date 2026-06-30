@@ -26,9 +26,7 @@ export function AnonChatNotice() {
 		return (
 			<div className="mx-auto mb-3 max-w-3xl rounded-xl border border-border bg-card/60 p-4">
 				<p className="text-sm font-medium">You've used your {data.limit} free messages.</p>
-				<p className="mt-1 text-sm text-muted-foreground">
-					Sign in to keep chatting — it's free, with a higher limit.
-				</p>
+				<p className="mt-1 text-sm text-muted-foreground">Sign in to keep chatting — it's free, with a higher limit.</p>
 				<div className="mt-3">
 					<Button size="sm" onClick={goSignIn}>
 						Sign in

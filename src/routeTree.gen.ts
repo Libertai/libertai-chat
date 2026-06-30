@@ -14,10 +14,12 @@ import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TopUpRouteImport } from './routes/top-up'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RewardsRouteImport } from './routes/rewards'
+import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as PlansRouteImport } from './routes/plans'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImagesRouteImport } from './routes/images'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProjectProjectIdRouteImport } from './routes/project/$projectId'
 import { Route as PaymentCallbackRouteImport } from './routes/payment.callback'
 import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 import { Route as AuthVerifyRouteImport } from './routes/auth.verify'
@@ -48,6 +50,11 @@ const RewardsRoute = RewardsRouteImport.update({
   path: '/rewards',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlansRoute = PlansRouteImport.update({
   id: '/plans',
   path: '/plans',
@@ -66,6 +73,11 @@ const ImagesRoute = ImagesRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectProjectIdRoute = ProjectProjectIdRouteImport.update({
+  id: '/project/$projectId',
+  path: '/project/$projectId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentCallbackRoute = PaymentCallbackRouteImport.update({
@@ -94,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/plans': typeof PlansRoute
+  '/projects': typeof ProjectsRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
@@ -103,12 +116,14 @@ export interface FileRoutesByFullPath {
   '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
   '/payment/callback': typeof PaymentCallbackRoute
+  '/project/$projectId': typeof ProjectProjectIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/plans': typeof PlansRoute
+  '/projects': typeof ProjectsRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
@@ -118,6 +133,7 @@ export interface FileRoutesByTo {
   '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
   '/payment/callback': typeof PaymentCallbackRoute
+  '/project/$projectId': typeof ProjectProjectIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +141,7 @@ export interface FileRoutesById {
   '/images': typeof ImagesRoute
   '/login': typeof LoginRoute
   '/plans': typeof PlansRoute
+  '/projects': typeof ProjectsRoute
   '/rewards': typeof RewardsRoute
   '/settings': typeof SettingsRoute
   '/top-up': typeof TopUpRoute
@@ -134,6 +151,7 @@ export interface FileRoutesById {
   '/auth/verify': typeof AuthVerifyRoute
   '/chat/$chatId': typeof ChatChatIdRoute
   '/payment/callback': typeof PaymentCallbackRoute
+  '/project/$projectId': typeof ProjectProjectIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,6 +160,7 @@ export interface FileRouteTypes {
     | '/images'
     | '/login'
     | '/plans'
+    | '/projects'
     | '/rewards'
     | '/settings'
     | '/top-up'
@@ -151,12 +170,14 @@ export interface FileRouteTypes {
     | '/auth/verify'
     | '/chat/$chatId'
     | '/payment/callback'
+    | '/project/$projectId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/images'
     | '/login'
     | '/plans'
+    | '/projects'
     | '/rewards'
     | '/settings'
     | '/top-up'
@@ -166,12 +187,14 @@ export interface FileRouteTypes {
     | '/auth/verify'
     | '/chat/$chatId'
     | '/payment/callback'
+    | '/project/$projectId'
   id:
     | '__root__'
     | '/'
     | '/images'
     | '/login'
     | '/plans'
+    | '/projects'
     | '/rewards'
     | '/settings'
     | '/top-up'
@@ -181,6 +204,7 @@ export interface FileRouteTypes {
     | '/auth/verify'
     | '/chat/$chatId'
     | '/payment/callback'
+    | '/project/$projectId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -188,6 +212,7 @@ export interface RootRouteChildren {
   ImagesRoute: typeof ImagesRoute
   LoginRoute: typeof LoginRoute
   PlansRoute: typeof PlansRoute
+  ProjectsRoute: typeof ProjectsRoute
   RewardsRoute: typeof RewardsRoute
   SettingsRoute: typeof SettingsRoute
   TopUpRoute: typeof TopUpRoute
@@ -197,6 +222,7 @@ export interface RootRouteChildren {
   AuthVerifyRoute: typeof AuthVerifyRoute
   ChatChatIdRoute: typeof ChatChatIdRoute
   PaymentCallbackRoute: typeof PaymentCallbackRoute
+  ProjectProjectIdRoute: typeof ProjectProjectIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -236,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RewardsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/plans': {
       id: '/plans'
       path: '/plans'
@@ -262,6 +295,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project/$projectId': {
+      id: '/project/$projectId'
+      path: '/project/$projectId'
+      fullPath: '/project/$projectId'
+      preLoaderRoute: typeof ProjectProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payment/callback': {
@@ -300,6 +340,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImagesRoute: ImagesRoute,
   LoginRoute: LoginRoute,
   PlansRoute: PlansRoute,
+  ProjectsRoute: ProjectsRoute,
   RewardsRoute: RewardsRoute,
   SettingsRoute: SettingsRoute,
   TopUpRoute: TopUpRoute,
@@ -309,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthVerifyRoute: AuthVerifyRoute,
   ChatChatIdRoute: ChatChatIdRoute,
   PaymentCallbackRoute: PaymentCallbackRoute,
+  ProjectProjectIdRoute: ProjectProjectIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -32,3 +32,11 @@ dist-ssr
 
 # Generated content from capacitor-assets
 icons/
+
+# e2e / playwright
+test-results/
+playwright-report/
+
+# Local agent/brainstorming artifacts — never commit (kept on disk only)
+docs/superpowers/
+.superpowers/

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildRequestMessages } from "@/utils/build-request-messages";
-import type { Message } from "@/types/chats";
+import { buildRequestMessages, attachmentsBlock } from "@/utils/build-request-messages";
+import type { Message, FileAttachment } from "@/types/chats";
 import type { Model } from "@/hooks/data/use-models";
 
 const img = (n: string) => ({ data: `data:image/png;base64,${n}`, mimeType: "image/png", filename: `${n}.png` });
@@ -54,5 +54,55 @@ describe("buildRequestMessages", () => {
 	it("omits images entirely for non-vision models", () => {
 		const out = buildRequestMessages([msg({ role: "user", content: "hi", images: [img("a")] })], "m", noVisionModels);
 		expect(out[0].content).toBe("hi");
+	});
+
+	it("folds file attachments into the user message as a labelled text block (non-vision model)", () => {
+		const attachments: FileAttachment[] = [
+			{ filename: "data.csv", kind: "csv", mimeType: "text/csv", content: "a\tb\n1\t2", truncated: false },
+		];
+		const out = buildRequestMessages(
+			[msg({ role: "user", content: "summarize this", attachments })],
+			"m",
+			noVisionModels,
+		);
+		const content = out[0].content as string;
+		expect(content).toContain("summarize this");
+		expect(content).toContain("Attached file: data.csv (csv)");
+		expect(content).toContain("a\tb\n1\t2");
+		expect(content).toContain("End of file");
+	});
+
+	it("folds attachments into the text block alongside images on vision models", () => {
+		const attachments: FileAttachment[] = [
+			{ filename: "report.pdf", kind: "pdf", mimeType: "application/pdf", content: "PDF body", truncated: true },
+		];
+		const out = buildRequestMessages(
+			[msg({ role: "user", content: "see file", images: [img("a")], attachments })],
+			"m",
+			visionModels,
+		);
+		const content = out[0].content as Array<{ type: string; text?: string }>;
+		const textPart = content.find((c) => c.type === "text")!;
+		expect(textPart.text).toContain("see file");
+		expect(textPart.text).toContain("Attached file: report.pdf (pdf (truncated))");
+		expect(content.some((c) => c.type === "image_url")).toBe(true);
+	});
+});
+
+describe("attachmentsBlock", () => {
+	it("returns empty string when there are no attachments", () => {
+		expect(attachmentsBlock(undefined)).toBe("");
+		expect(attachmentsBlock([])).toBe("");
+	});
+
+	it("labels each attached file with its name and kind", () => {
+		const block = attachmentsBlock([
+			{ filename: "a.txt", kind: "text", mimeType: "text/plain", content: "hello", truncated: false },
+			{ filename: "b.csv", kind: "csv", mimeType: "text/csv", content: "x\ty", truncated: true },
+		]);
+		expect(block).toContain("Attached file: a.txt (text)");
+		expect(block).toContain("hello");
+		expect(block).toContain("Attached file: b.csv (csv (truncated))");
+		expect(block).toContain("x\ty");
 	});
 });

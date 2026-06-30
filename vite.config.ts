@@ -7,6 +7,12 @@ import tailwindcss from "@tailwindcss/vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 // https://vite.dev/config/
+// Inference API origin proxied under /api in dev so the cookie-based session
+// (withCredentials) is same-site — browsers otherwise block/sanitize the
+// third-party session cookie from *.libertai.io when the app runs on localhost,
+// leaving checkSession() unauthenticated. Set VITE_LTAI_INFERENCE_API_URL=/api.
+const inferenceOrigin = "https://inference.api.libertai.io";
+
 export default defineConfig({
 	plugins: [
 		tanstackRouter({ target: "react", autoCodeSplitting: true }),
@@ -18,6 +24,20 @@ export default defineConfig({
 			},
 		}),
 	],
+	server: {
+		proxy: {
+			"/api": {
+				target: inferenceOrigin,
+				changeOrigin: true,
+				rewrite: (p) => p.replace(/^\/api/, ""),
+				// Rewrite Set-Cookie Domain=.libertai.io → localhost so the browser
+				// stores the session cookie for the dev origin.
+				cookieDomainRewrite: "localhost",
+				secure: false,
+				ws: true,
+			},
+		},
+	},
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "./src"),
