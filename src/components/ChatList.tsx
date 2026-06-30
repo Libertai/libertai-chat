@@ -105,40 +105,31 @@ export function ChatList() {
 						Rename
 					</DropdownMenuItem>
 
-					<DropdownMenuSub>
-						<DropdownMenuSubTrigger data-testid={`chat-move-${chat.id}`}>
-							<Folder className="h-3 w-3 mr-2" />
-							{inProject ? "Change project" : "Add to project"}
-						</DropdownMenuSubTrigger>
-						<DropdownMenuSubContent>
-							{projects.map((project) => (
-								<DropdownMenuItem
-									key={project.id}
-									disabled={chat.projectId === project.id}
-									onClick={(e) => {
-										e.preventDefault();
-										setChatProject(chat.id, project.id);
-										setDropdownOpenChatId(null);
-									}}
-									data-testid={`chat-move-to-${project.id}-${chat.id}`}
-								>
-									<span className="truncate">{project.name}</span>
-									{chat.projectId === project.id && <Check className="ml-auto h-3 w-3" />}
-								</DropdownMenuItem>
-							))}
-							{projects.length > 0 && <DropdownMenuSeparator />}
-							<DropdownMenuItem
-								onClick={(e) => {
-									e.preventDefault();
-									setDropdownOpenChatId(null);
-									openCreate();
-								}}
-							>
-								<FolderPlus className="h-3 w-3 mr-2" />
-								New project
-							</DropdownMenuItem>
-						</DropdownMenuSubContent>
-					</DropdownMenuSub>
+					{projects.length > 0 && (
+						<DropdownMenuSub>
+							<DropdownMenuSubTrigger data-testid={`chat-move-${chat.id}`}>
+								<Folder className="h-3 w-3 mr-2" />
+								{inProject ? "Change project" : "Add to project"}
+							</DropdownMenuSubTrigger>
+							<DropdownMenuSubContent>
+								{projects.map((project) => (
+									<DropdownMenuItem
+										key={project.id}
+										disabled={chat.projectId === project.id}
+										onClick={(e) => {
+											e.preventDefault();
+											setChatProject(chat.id, project.id);
+											setDropdownOpenChatId(null);
+										}}
+										data-testid={`chat-move-to-${project.id}-${chat.id}`}
+									>
+										<span className="truncate">{project.name}</span>
+										{chat.projectId === project.id && <Check className="ml-auto h-3 w-3" />}
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuSubContent>
+						</DropdownMenuSub>
+					)}
 
 					{inProject && (
 						<DropdownMenuItem
