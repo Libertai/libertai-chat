@@ -181,7 +181,9 @@ test.describe("client-side code interpreter", () => {
 		await expect(run).toBeVisible({ timeout: 20_000 });
 		await expect(run).toHaveAttribute("data-language", "python");
 
-		// The executed source is rendered (via the shared CodeBlock) and the captured stdout shows.
+		// The source is collapsed by default; expand it, then the executed code renders (via the
+		// shared CodeBlock). The captured stdout shows regardless.
+		await run.getByRole("button", { name: /show code/i }).click();
 		await expect(run).toContainText("pd.DataFrame");
 		await expect(run.getByText("6", { exact: false }).first()).toBeVisible();
 
