@@ -1,11 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 
-// Verifies the flat-sidebar projects redesign: from the sidebar a user creates a project (flat row
-// linking to /project/:id), moves a seeded chat into it, confirms both chats remain visible in the
-// flat Chats list, and confirms the assignment PERSISTS across a full reload (localStorage keys
-// 'libertai-chats' for the chat->project link and 'libertai-projects' for the project record).
-// Then sets per-project instructions via the shared ProjectDialogs and confirms those persist too.
+// Verifies the projects redesign: projects are created/listed on the dedicated /projects page (the
+// sidebar only carries the Projects nav link + a flat Chats list, ChatGPT/Claude-style). A seeded
+// chat is moved into a project via its chat menu; both chats stay visible in the flat Chats list and
+// the assignment PERSISTS across a reload (localStorage 'libertai-chats' for the chat->project link
+// and 'libertai-projects' for the project record). Per-project instructions are set from the project
+// detail page (shared ProjectDialogs) and confirmed to persist.
 //
 // The app has a guest/logged-out mode, so the whole flow runs WITHOUT a wallet. We seed two chats
 // directly into localStorage so the sidebar ChatList renders deterministically with real data.
@@ -71,7 +72,7 @@ async function openSidebar(page: Page) {
 			.getAttribute("data-state")
 			.catch(() => null);
 		const inViewport = await page
-			.getByTestId("create-project")
+			.getByTestId("nav-projects")
 			.first()
 			.evaluate((el) => {
 				const r = el.getBoundingClientRect();
@@ -95,28 +96,24 @@ async function openSidebar(page: Page) {
 
 test("create a project, move a chat into it, persist across reload, and set instructions", async ({ page }) => {
 	await seedChats(page);
-	await page.goto("/", { waitUntil: "domcontentloaded", timeout: 30_000 });
-	await openSidebar(page);
 
-	// Both seeded chats are visible in the flat Chats list at start.
-	await expect(page.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
-	await expect(page.getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
-
-	// Create a project from the sidebar header button (flat Projects section).
-	await page.getByTestId("create-project").first().click();
+	// Create a project from the dedicated Projects page (no longer from the sidebar).
+	await page.goto("/projects", { waitUntil: "domcontentloaded", timeout: 30_000 });
+	await expect(page.getByTestId("projects-page")).toBeVisible();
+	await page.getByTestId("projects-new").click();
 	await page.getByTestId("project-name-input").fill("Work");
 	await page.getByTestId("project-create-submit").click();
 
-	// A flat project row appears in the Projects section.
-	const projectGroup = page.locator('[data-testid^="project-row-"]');
-	await expect(projectGroup).toHaveCount(1);
-	await expect(page.getByText("Work")).toBeVisible();
+	// Resolve the new project id from its row on the index page.
+	const row = page.locator('[data-testid^="projects-row-"]');
+	await expect(row).toHaveCount(1);
+	const projectId = (await row.getAttribute("data-testid"))!.replace("projects-row-", "");
 
-	// Resolve the new project id from the rendered group testid.
-	const groupTestId = await projectGroup.getAttribute("data-testid");
-	const projectId = groupTestId!.replace("project-row-", "");
-
-	// Move chat A into the project via its actions menu -> "Move to project" submenu.
+	// Move chat A into the project from the sidebar chat menu ("Add to project").
+	await page.goto("/", { waitUntil: "domcontentloaded", timeout: 30_000 });
+	await openSidebar(page);
+	await expect(page.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
+	await expect(page.getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
 	await page.getByTestId(`chat-row-${CHAT_A}`).hover();
 	await page.getByTestId(`chat-actions-${CHAT_A}`).click();
 	await page.getByTestId(`chat-move-${CHAT_A}`).click();
@@ -133,19 +130,10 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	expect(projectsStored).toContain("Work");
 	expect(projectsStored).toContain(projectId);
 
-	// Screenshot the flat sidebar.
-	await page.screenshot({ path: "test-results/screenshots/projects-sidebar.png", fullPage: true });
-
-	// Flat layout persists across a full reload.
-	await page.reload({ waitUntil: "domcontentloaded" });
-	await openSidebar(page);
-	await expect(page.getByTestId(`project-row-${projectId}`)).toBeVisible();
-	await expect(page.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
-	await expect(page.getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
-
-	// Set per-project instructions via the project settings dialog (shared ProjectDialogs).
-	await page.getByTestId(`project-actions-${projectId}`).click();
-	await page.getByTestId(`project-settings-${projectId}`).click();
+	// Set per-project instructions from the project detail page (shared ProjectDialogs).
+	await page.goto(`/project/${projectId}`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+	await page.getByTestId("project-detail-actions").click();
+	await page.getByTestId("project-detail-settings").click();
 	await page.getByTestId("project-settings-instructions").fill("Always answer in formal British English.");
 	await page.getByTestId("project-settings-save").click();
 
@@ -153,29 +141,25 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	const projectsAfter = await page.evaluate((k) => window.localStorage.getItem(k), PROJECTS_KEY);
 	expect(projectsAfter).toContain("Always answer in formal British English.");
 
-	// And they survive a reload.
+	// And they survive a reload of the detail page.
 	await page.reload({ waitUntil: "domcontentloaded" });
-	await openSidebar(page);
-	await page.getByTestId(`project-actions-${projectId}`).click();
-	await page.getByTestId(`project-settings-${projectId}`).click();
+	await page.getByTestId("project-detail-actions").click();
+	await page.getByTestId("project-detail-settings").click();
 	await expect(page.getByTestId("project-settings-instructions")).toHaveValue(
 		"Always answer in formal British English.",
 	);
 });
 
 test("projects index lists projects and filters by search", async ({ page }) => {
-	await seedChats(page);
-	await page.goto("/", { waitUntil: "domcontentloaded", timeout: 30_000 });
-	await openSidebar(page);
-	// Create two projects via the sidebar create dialog.
+	await page.goto("/projects", { waitUntil: "domcontentloaded", timeout: 30_000 });
+	const projectsPage = page.getByTestId("projects-page");
+	await expect(projectsPage).toBeVisible();
+	// Create two projects via the page's New button.
 	for (const name of ["Travel", "Work"]) {
-		await page.getByTestId("create-project").first().click();
+		await page.getByTestId("projects-new").click();
 		await page.getByTestId("project-name-input").fill(name);
 		await page.getByTestId("project-create-submit").click();
 	}
-	await page.getByTestId("nav-projects").click();
-	const projectsPage = page.getByTestId("projects-page");
-	await expect(projectsPage).toBeVisible();
 	await expect(projectsPage.getByText("Travel")).toBeVisible();
 	await expect(projectsPage.getByText("Work")).toBeVisible();
 	await page.getByTestId("projects-search").fill("Trav");

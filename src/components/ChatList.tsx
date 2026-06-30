@@ -3,7 +3,7 @@ import { useChatStore } from "@/stores/chat";
 import { useProjectStore } from "@/stores/project";
 import { type Chat } from "@/types/chats";
 import { getChatTitle, truncateText } from "@/utils/chat-title";
-import { Check, Folder, FolderMinus, FolderPlus, MoreHorizontal, Pencil, Settings, Trash2 } from "lucide-react";
+import { Check, Folder, FolderMinus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
 	DropdownMenu,
@@ -19,17 +19,15 @@ import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
-import { useProjectDialogStore } from "@/stores/project-dialogs";
 
 export function ChatList() {
 	const { getAllChats, deleteChat, renameChat, setChatProject } = useChatStore();
-	const { getAllProjects, deleteProject } = useProjectStore();
+	const { getAllProjects } = useProjectStore();
 	const navigate = useNavigate();
 	const currentPath = location.pathname;
 	const chats = getAllChats();
 	const projects = getAllProjects();
 	const { isMobile, setOpenMobile } = useSidebar();
-	const { openCreate, openSettings } = useProjectDialogStore();
 
 	const [activeChat, setActiveChat] = useState<string | null>(null);
 	const [dropdownOpenChatId, setDropdownOpenChatId] = useState<string | null>(null);
@@ -66,10 +64,6 @@ export function ChatList() {
 		setRenameValue("");
 		setActiveChat(null);
 		setDropdownOpenChatId(null);
-	};
-
-	const handleDeleteProject = (projectId: string) => {
-		deleteProject(projectId);
 	};
 
 	// Per-chat action menu, reused for each chat row.
@@ -191,111 +185,16 @@ export function ChatList() {
 		</div>
 	);
 
-	// Hide the whole section until the user has at least one conversation or one project.
-	if (chats.length === 0 && projects.length === 0) {
+	// Hide the Chats section until the user has at least one conversation. (Projects live on the
+	// /projects page, reached from the sidebar's Projects nav link.)
+	if (chats.length === 0) {
 		return null;
 	}
 
 	return (
 		<div className="p-3" data-testid="chat-list">
-			{/* Projects */}
-			{projects.length > 0 && (
-				<div className="mb-4" data-testid="sidebar-projects">
-					<div className="flex items-center justify-between mb-2">
-						<h3 className="text-sm font-medium text-muted-foreground">Projects</h3>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-6 w-6 text-muted-foreground"
-							onClick={() => openCreate()}
-							title="New project"
-							aria-label="New project"
-							data-testid="create-project"
-						>
-							<FolderPlus className="h-4 w-4" />
-						</Button>
-					</div>
-					<div className="space-y-0.5">
-						{projects.map((project) => (
-							<div
-								key={project.id}
-								className="flex items-center group rounded-md hover:bg-muted/50"
-								data-testid={`project-row-${project.id}`}
-							>
-								<Link
-									to="/project/$projectId"
-									params={{ projectId: project.id }}
-									className="flex flex-1 items-center gap-2 px-2 py-1.5 min-w-0"
-									onClick={() => {
-										if (isMobile) setOpenMobile(false);
-									}}
-								>
-									<Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
-									<span
-										className="text-sm font-medium text-foreground truncate"
-										data-testid={`project-name-${project.id}`}
-									>
-										{project.name}
-									</span>
-								</Link>
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-6 w-6 mr-1 opacity-0 group-hover:opacity-100 transition-opacity"
-											data-testid={`project-actions-${project.id}`}
-										>
-											<MoreHorizontal className="h-3 w-3" />
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end">
-										<DropdownMenuItem
-											onClick={(e) => {
-												e.preventDefault();
-												openSettings(project);
-											}}
-											data-testid={`project-settings-${project.id}`}
-										>
-											<Settings className="h-3 w-3 mr-2" />
-											Settings
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											className="text-destructive focus:text-destructive"
-											onClick={(e) => {
-												e.preventDefault();
-												handleDeleteProject(project.id);
-											}}
-											data-testid={`project-delete-${project.id}`}
-										>
-											<Trash2 className="h-3 w-3 mr-2" />
-											Delete project
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</div>
-						))}
-					</div>
-				</div>
-			)}
-
-			{/* Chats — flat recency list of ALL chats (project + ungrouped). */}
-			<div className="flex items-center justify-between mb-2">
-				<h3 className="text-sm font-medium text-muted-foreground">Chats</h3>
-				{projects.length === 0 && (
-					<Button
-						variant="ghost"
-						size="icon"
-						className="h-6 w-6 text-muted-foreground"
-						onClick={() => openCreate()}
-						title="New project"
-						aria-label="New project"
-						data-testid="create-project"
-					>
-						<FolderPlus className="h-4 w-4" />
-					</Button>
-				)}
-			</div>
+			{/* Chats — flat recency list of ALL chats. Projects live on the /projects page. */}
+			<h3 className="text-sm font-medium text-muted-foreground mb-2">Chats</h3>
 			<div className="space-y-1" data-testid="chats-section">
 				{chats.map((chat) => (
 					<ChatRow key={chat.id} chat={chat} />
