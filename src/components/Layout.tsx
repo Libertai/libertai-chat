@@ -196,9 +196,12 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 
 					{/* Main content */}
 					<main
-						className="flex-1 overflow-auto w-full"
+						className="overflow-auto w-full"
 						style={{
 							marginTop: "calc(4rem + env(safe-area-inset-top))",
+							// Bound the scroll area to the space below the fixed header so it (not the whole
+							// document) scrolls. Lets routes use h-full to pin elements like the chat input.
+							height: "calc(100svh - 4rem - env(safe-area-inset-top))",
 							paddingBottom: "env(safe-area-inset-bottom)",
 						}}
 					>
