@@ -183,7 +183,7 @@ test("inline numbered citations render and link to the matching source", async (
 	await page.screenshot({ path: "test-results/screenshots/web-search-citations.png", fullPage: true });
 });
 
-test("forcing a web search shows a search-type toggle whose state updates", async ({ page }) => {
+test("forcing a web search shows the chip; the search-type selector is hidden for now", async ({ page }) => {
 	await pinRegistry(page);
 	await mockConnected(page);
 	await seedSearchChat(page);
@@ -200,27 +200,12 @@ test("forcing a web search shows a search-type toggle whose state updates", asyn
 	await expect(webSearchItem).toBeVisible();
 	await webSearchItem.click();
 
-	// The forced-tool chip and the search-type segmented control both appear.
-	const toggle = page.getByRole("radiogroup", { name: /search type/i });
-	await expect(toggle).toBeVisible();
+	// The forced-tool chip appears (search defaults to plain "web" under the hood).
+	await expect(page.getByTestId("forced-tool-chip")).toContainText("Web search");
 
-	const webOption = toggle.locator('[data-search-type="web"]');
-	const newsOption = toggle.locator('[data-search-type="news"]');
-	const academicOption = toggle.locator('[data-search-type="academic"]');
-	const imagesOption = toggle.locator('[data-search-type="images"]');
-
-	// All four backend-supported modes render; "web" is selected by default.
-	await expect(webOption).toBeVisible();
-	await expect(newsOption).toBeVisible();
-	await expect(academicOption).toBeVisible();
-	await expect(imagesOption).toBeVisible();
-	await expect(webOption).toHaveAttribute("aria-checked", "true");
-	await expect(newsOption).toHaveAttribute("aria-checked", "false");
-
-	// Picking "News" updates the control's state (radio selection moves).
-	await newsOption.click();
-	await expect(newsOption).toHaveAttribute("aria-checked", "true");
-	await expect(webOption).toHaveAttribute("aria-checked", "false");
+	// The search-type segmented control (Web / News / Academic / Images) is intentionally hidden
+	// for now — its non-web modes don't return useful results yet. The code stays behind a flag.
+	await expect(page.getByRole("radiogroup", { name: /search type/i })).toHaveCount(0);
 
 	await page.screenshot({ path: "test-results/screenshots/web-search-toggle.png", fullPage: true });
 });

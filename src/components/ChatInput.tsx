@@ -39,6 +39,12 @@ const SEARCH_TYPE_LABELS: Record<SearchType, string> = {
 	images: "Images",
 };
 
+// The web-search sub-type selector (Web / News / Academic / Images) is hidden for now: the
+// news/images/academic modes don't return useful results yet. Search falls back to
+// DEFAULT_SEARCH_TYPE ("web") while hidden. Flip to true to restore the selector — the code below
+// is intentionally kept intact.
+const SHOW_SEARCH_TYPES = false;
+
 interface ChatInputProps {
 	onSubmit: (
 		value: string,
@@ -335,7 +341,9 @@ export function ChatInput({
 					id="chat-input"
 					ref={textareaRef}
 					placeholder={placeholder}
-					className="px-4 pb-15 pt-[14px] resize-none min-h-[48px] max-h-[240px] overflow-hidden border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+					className={`px-4 pt-[14px] resize-none min-h-[48px] max-h-[240px] overflow-hidden border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent ${
+						forcedTool ? "pb-24 sm:pb-15" : "pb-15"
+					}`}
 					value={value}
 					onChange={(e) => setValue(e.target.value)}
 					onFocus={onFocus}
@@ -347,8 +355,8 @@ export function ChatInput({
 					onInput={handleInput}
 				/>
 			</div>
-			<div className="absolute bottom-4 left-0 right-0 flex items-center justify-between px-3">
-				<div className="flex items-center space-x-3">
+			<div className="absolute bottom-4 left-0 right-0 flex items-end justify-between gap-2 px-3">
+				<div className="flex flex-1 min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
 					{/* File extraction (PDF/CSV/text) works for every model, so the picker always renders.
 					    Vision-only image types are added to `accept` only when the model supports images. */}
 					<input
@@ -401,11 +409,14 @@ export function ChatInput({
 						</span>
 					)}
 					{forcedTool && (
-						<span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground border border-card dark:border-hover rounded-full pl-3 pr-1.5 py-1">
+						<span
+							data-testid="forced-tool-chip"
+							className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-foreground border border-card dark:border-hover rounded-full pl-3 pr-1.5 py-1"
+						>
 							{forcedTool === "web_search" ? (
-								<Globe className="h-3.5 w-3.5 text-primary" />
+								<Globe className="h-3.5 w-3.5 shrink-0 text-primary" />
 							) : (
-								<Sparkles className="h-3.5 w-3.5 text-primary" />
+								<Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
 							)}
 							{forcedTool === "web_search" ? "Web search" : "Create image"}
 							<button
@@ -417,7 +428,7 @@ export function ChatInput({
 							</button>
 						</span>
 					)}
-					{forcedTool === "web_search" && (
+					{SHOW_SEARCH_TYPES && forcedTool === "web_search" && (
 						<div
 							role="radiogroup"
 							aria-label="Search type"
@@ -450,7 +461,7 @@ export function ChatInput({
 						variant="ghost"
 						size="icon"
 						onClick={onStop}
-						className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
+						className="h-8 w-8 shrink-0 rounded-full text-white bg-primary hover:bg-primary/80"
 					>
 						<Square className="h-4 w-4" />
 					</Button>
@@ -460,7 +471,7 @@ export function ChatInput({
 						size="icon"
 						disabled={!hasContent || disabled || isSubmitting || extracting > 0}
 						onClick={handleSubmit}
-						className="h-8 w-8 rounded-full text-white bg-primary hover:bg-primary/80"
+						className="h-8 w-8 shrink-0 rounded-full text-white bg-primary hover:bg-primary/80"
 					>
 						<ArrowUp className="h-4 w-4" />
 					</Button>
