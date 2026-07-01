@@ -31,3 +31,8 @@ test("signed-out sidebar shows plans link that navigates to /plans", async ({ pa
 	await plans.click();
 	await expect(page).toHaveURL(/\/plans$/);
 });
+
+test("header Upgrade button is absent when logged out", async ({ page }) => {
+	await page.goto("/");
+	await expect(page.getByTestId("header-upgrade")).toHaveCount(0);
+});

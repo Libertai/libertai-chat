@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
+import UpgradeButton from "@/components/UpgradeButton";
 import { FolderOpen, ImageIcon, Plus, Sparkles, SquareTerminal } from "lucide-react";
 import { useAccountStore } from "@libertai/auth";
 import { ClawIcon } from "@/components/ClawIcon";
@@ -171,6 +172,7 @@ function DesktopHeader() {
 		>
 			<SidebarTrigger />
 			<div className="flex items-center gap-4">
+				<UpgradeButton />
 				<ConnectButton />
 			</div>
 		</header>
@@ -193,6 +195,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 						<LibertaiLogo className="h-4 w-auto text-foreground" />
 					</Link>
 					<div className="flex items-center gap-2">
+						<UpgradeButton />
 						<ConnectButton />
 					</div>
 				</header>
