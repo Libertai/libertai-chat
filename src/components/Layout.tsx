@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import ConnectButton from "@/components/ConnectButton";
-import { FolderOpen, ImageIcon, Plus, SquareTerminal } from "lucide-react";
+import { FolderOpen, ImageIcon, Plus, Sparkles, SquareTerminal } from "lucide-react";
+import { useAccountStore } from "@libertai/auth";
 import { ClawIcon } from "@/components/ClawIcon";
 import { ConnectedAccountFooter } from "@/components/ConnectedAccountFooter";
 import { ChatList } from "@/components/ChatList";
@@ -128,6 +129,31 @@ function SidebarProducts() {
 	);
 }
 
+// "See plans and pricing" — shown only to signed-out visitors (ChatGPT-style). Signed-in users
+// reach plans/upgrade via the account menu and the header Upgrade button.
+function SidebarPlansLink() {
+	const isAuthenticated = useAccountStore((state) => state.isAuthenticated);
+	const { isMobile, setOpenMobile } = useSidebar();
+
+	if (isAuthenticated) return null;
+
+	return (
+		<div className="px-2 py-1">
+			<Link
+				to="/plans"
+				onClick={() => {
+					if (isMobile) setOpenMobile(false);
+				}}
+				className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg hover:bg-muted transition-colors"
+				data-testid="nav-plans"
+			>
+				<Sparkles className="h-4 w-4" />
+				See plans and pricing
+			</Link>
+		</div>
+	);
+}
+
 // Desktop header that adapts its width when the sidebar is open
 function DesktopHeader() {
 	const { open } = useSidebar();
@@ -186,6 +212,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 					</SidebarContent>
 
 					<SidebarFooter>
+						<SidebarPlansLink />
 						<ConnectedAccountFooter />
 					</SidebarFooter>
 				</Sidebar>
