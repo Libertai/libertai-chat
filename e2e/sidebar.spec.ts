@@ -23,3 +23,11 @@ test("collapsed state persists across reload", async ({ page }) => {
 	await page.reload();
 	await expect(page.locator('[data-slot="sidebar"]')).toHaveAttribute("data-state", "collapsed");
 });
+
+test("signed-out sidebar shows plans link that navigates to /plans", async ({ page }) => {
+	await page.goto("/");
+	const plans = page.getByTestId("nav-plans");
+	await expect(plans).toBeVisible();
+	await plans.click();
+	await expect(page).toHaveURL(/\/plans$/);
+});
