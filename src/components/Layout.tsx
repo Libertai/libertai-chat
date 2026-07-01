@@ -195,7 +195,7 @@ export function Layout({ children }: Readonly<{ children: ReactNode }>) {
 						<LibertaiLogo className="h-4 w-auto text-foreground" />
 					</Link>
 					<div className="flex items-center gap-2">
-						<UpgradeButton />
+						{/* Upgrade lives in the desktop header only — the mobile header is space-constrained. */}
 						<ConnectButton />
 					</div>
 				</header>
