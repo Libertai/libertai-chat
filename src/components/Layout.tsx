@@ -28,7 +28,7 @@ function getSidebarStateFromCookie(): boolean {
 			return value === "true";
 		}
 	}
-	return false; // Default to closed if no cookie found
+	return true; // Default to OPEN on desktop when no cookie yet (mobile uses openMobile, stays closed)
 }
 
 // Component for sidebar logo that can close sidebar on mobile
