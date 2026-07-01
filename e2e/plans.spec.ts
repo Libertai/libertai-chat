@@ -45,6 +45,8 @@ test("signed-out /plans renders publicly without credits/transactions", async ({
 	await expect(page.getByRole("heading", { name: "Plans" })).toBeVisible();
 	// Credits + transactions are gated to signed-in users.
 	await expect(page.getByText(/transaction history/i)).toHaveCount(0);
+	// The "Plan: <tier>" header is meaningless when logged out, so it's hidden.
+	await expect(page.getByRole("heading", { name: /^Plan:/i })).toHaveCount(0);
 });
 
 test("signed-out Subscribe routes to login with redirect back to /plans", async ({ page }) => {
