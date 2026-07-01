@@ -19,7 +19,8 @@ function Plans() {
 						Free includes a generous daily allowance. Upgrade for more usage and larger models.
 					</p>
 				</div>
-				<PlansSection />
+				{/* Signed-out visitors can browse plans; any billing action bounces to login, returning here. */}
+				<PlansSection onRequireAuth={() => navigate({ to: "/login", search: { redirect: "/plans" } })} />
 				{/* Balance + transactions only make sense for a signed-in user; plans stay visible to all. */}
 				{isAuthenticated && (
 					<>
