@@ -201,6 +201,7 @@ function Chat() {
 		// freezing, so hold one for the duration of the generation ("shared" so concurrent tabs
 		// don't queue behind each other). No-op where the API is unavailable.
 		let releaseFreezeLock: (() => void) | undefined;
+		let generationSettled = false;
 		try {
 			void navigator.locks
 				?.request(
@@ -208,6 +209,12 @@ function Chat() {
 					{ mode: "shared" },
 					() =>
 						new Promise<void>((resolve) => {
+							// If the generation already settled before the lock was granted, release
+							// immediately — otherwise the lock would be held until the page closes.
+							if (generationSettled) {
+								resolve();
+								return;
+							}
 							releaseFreezeLock = resolve;
 						}),
 				)
@@ -540,6 +547,7 @@ function Chat() {
 			setToolStatus(null);
 			setToolSteps([]);
 			abortRef.current = null;
+			generationSettled = true;
 			releaseFreezeLock?.();
 			// If the user tabbed away while this generated, flag the finished answer in the title.
 			notifyResponseReady();
