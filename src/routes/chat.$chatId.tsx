@@ -30,6 +30,7 @@ import { consumePendingForcedTool } from "@/utils/pending-forced-tool";
 import env from "@/config/env";
 import OpenAI from "openai";
 import { useStableHandler } from "@/hooks/use-stable-handler";
+import { notifyResponseReady } from "@/utils/background-notify";
 import { toast } from "sonner";
 import type { ParsedMessage } from "@/utils/thinking-parser";
 import type { ImageData, FileAttachment } from "@/types/chats";
@@ -194,6 +195,27 @@ function Chat() {
 		const controller = new AbortController();
 		abortRef.current = controller;
 
+		// Chrome freezes fully-hidden tabs under memory/battery pressure, which suspends the SSE
+		// read loop mid-response — tab away during a long thinking phase and the stream stalls,
+		// then dumps everything at once on return. Pages holding a Web Lock are exempt from
+		// freezing, so hold one for the duration of the generation ("shared" so concurrent tabs
+		// don't queue behind each other). No-op where the API is unavailable.
+		let releaseFreezeLock: (() => void) | undefined;
+		try {
+			void navigator.locks
+				?.request(
+					"libertai-active-generation",
+					{ mode: "shared" },
+					() =>
+						new Promise<void>((resolve) => {
+							releaseFreezeLock = resolve;
+						}),
+				)
+				.catch(() => {});
+		} catch {
+			// Older browsers without navigator.locks: freezing protection is best-effort.
+		}
+
 		const assistant = getAssistantOrDefault(chat?.assistantId);
 		const assistantMessage = addMessage(chatId, "assistant", "");
 
@@ -245,7 +267,10 @@ function Chat() {
 			for (let iteration = 0; iteration < MAX_TOOL_TURNS; iteration++) {
 				const toolAcc = new ToolCallAccumulator();
 				accumulated.content = "";
-				accumulated.thinking = "";
+				// Keep the reasoning trace across tool turns — resetting it here made each turn's
+				// thinking overwrite the previous one, so the visible trace vanished every time a
+				// tool ran. The separator lands lazily, only if this turn actually reasons.
+				let needsThinkingSeparator = accumulated.thinking.length > 0;
 
 				const stream = await openai.chat.completions.create(
 					{
@@ -270,7 +295,13 @@ function Chat() {
 					const reasoningContent = (deltaRecord.reasoning ?? deltaRecord.reasoning_content) as string | undefined;
 					const content = delta.content;
 
-					if (reasoningContent) accumulated.thinking += reasoningContent;
+					if (reasoningContent) {
+						if (needsThinkingSeparator) {
+							accumulated.thinking += "\n\n";
+							needsThinkingSeparator = false;
+						}
+						accumulated.thinking += reasoningContent;
+					}
 					if (content) accumulated.content += content;
 					toolAcc.add(delta.tool_calls as never);
 
@@ -333,7 +364,10 @@ function Chat() {
 					// and vanishing between tools. Only the friendly label is shown — never the tool
 					// name, arguments, or results.
 					setToolSteps((prev) => (toolStatus ? [...prev, toolStatus] : prev));
-					setToolStatus(TOOL_LABELS[call.name] ?? "Working…");
+					// Number the later round-trips so a multi-turn tool loop reads as deliberate
+					// steps instead of the response mysteriously restarting.
+					const toolLabel = TOOL_LABELS[call.name] ?? "Working…";
+					setToolStatus(iteration > 0 ? `${toolLabel} · step ${iteration + 1}` : toolLabel);
 					const opts = {
 						connectedApiUrl: env.LTAI_CONNECTED_API_URL,
 						chatApiKey: chatApiKey ?? "",
@@ -506,6 +540,9 @@ function Chat() {
 			setToolStatus(null);
 			setToolSteps([]);
 			abortRef.current = null;
+			releaseFreezeLock?.();
+			// If the user tabbed away while this generated, flag the finished answer in the title.
+			notifyResponseReady();
 		}
 	};
 

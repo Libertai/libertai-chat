@@ -168,7 +168,9 @@ export const Message = memo(function Message({
 	return (
 		<div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
 			<div className={`group ${message.role === "user" ? "max-w-full" : "w-full"}`}>
-				{/* Thinking section for assistant messages */}
+				{/* Thinking section for assistant messages. While the model is still reasoning (streaming,
+				    no answer text yet) a live tail of the thinking is previewed even when collapsed —
+				    otherwise a long thinking phase shows nothing for minutes and looks frozen. */}
 				{message.role === "assistant" && message.thinking && (
 					<div className="mb-3">
 						<button
@@ -184,10 +186,25 @@ export const Message = memo(function Message({
 							)}
 						</button>
 
-						{isThinkingExpanded && (
+						{isThinkingExpanded ? (
 							<div className="mt-2 px-4 py-3 bg-muted/30 rounded-lg border-l-2 border-primary/30">
 								<div className="text-sm text-muted-foreground italic whitespace-pre-wrap">{message.thinking}</div>
 							</div>
+						) : (
+							isLastMessage &&
+							isStreaming &&
+							!message.content && (
+								<div
+									className="mt-2 px-4 py-3 bg-muted/30 rounded-lg border-l-2 border-primary/30"
+									data-testid="thinking-live-preview"
+								>
+									<div className="text-sm text-muted-foreground italic whitespace-pre-wrap">
+										{/* Tail only: slicing keeps the per-flush render cost flat however long the
+										    reasoning grows. */}
+										{message.thinking.length > 500 ? `…${message.thinking.slice(-500)}` : message.thinking}
+									</div>
+								</div>
+							)
 						)}
 					</div>
 				)}
@@ -219,6 +236,7 @@ export const Message = memo(function Message({
 					(isStreaming || isLoading) &&
 					!toolStatus &&
 					(!toolSteps || toolSteps.length === 0) &&
+					!message.thinking &&
 					!(message.interpreter && message.interpreter.length > 0) && (
 						<div className="mb-3 flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
 							<Loader2 className="w-3.5 h-3.5 text-primary shrink-0 animate-spin" />
