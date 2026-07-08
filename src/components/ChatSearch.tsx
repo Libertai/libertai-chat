@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { MessageCircle, Search } from "lucide-react";
 import { Button } from "./ui/button";
@@ -19,8 +19,19 @@ export function ChatSearch() {
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const navigate = useNavigate();
-	const { getAllChats } = useChatStore();
-	const allChats = getAllChats();
+	// While the dialog is closed this component only needs to know whether any chats exist
+	// (sidebar button + ⌘K gate), so it subscribes to a boolean and stays inert during the
+	// ~20/s store writes of a streaming response. The full record is only subscribed while
+	// the dialog is open, which also keeps search results live.
+	const hasChats = useChatStore((s) => Object.keys(s.chats).length > 0);
+	const openChats = useChatStore((s) => (searchOpen ? s.chats : null));
+	const allChats = useMemo(
+		() =>
+			openChats
+				? Object.values(openChats).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+				: [],
+		[openChats],
+	);
 
 	// Detect if user is on Mac
 	const isMac = typeof navigator !== "undefined" ? navigator.platform.toUpperCase().indexOf("MAC") >= 0 : false;
@@ -95,7 +106,7 @@ export function ChatSearch() {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
 				e.preventDefault();
-				if (allChats.length > 0) {
+				if (hasChats) {
 					setSearchOpen(true);
 				}
 			}
@@ -103,10 +114,10 @@ export function ChatSearch() {
 
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, [allChats.length]);
+	}, [hasChats]);
 
 	// Nothing to search until there's at least one conversation.
-	if (allChats.length === 0) {
+	if (!hasChats) {
 		return null;
 	}
 
