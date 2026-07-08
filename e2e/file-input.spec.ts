@@ -104,6 +104,10 @@ test("attaches a CSV and a text file, shows them in the composer, and persists t
 
 	// The extracted content is persisted (client-side) onto the user message, so it will be sent to
 	// the model as a labelled text block. Read it straight out of localStorage to assert on it.
+	// Persistence is write-behind (~1s debounce), so poll until the write lands.
+	await expect
+		.poll(() => page.evaluate(() => window.localStorage.getItem("libertai-chats")), { timeout: 5_000 })
+		.toContain("inventory.csv");
 	const persisted = await page.evaluate(() => window.localStorage.getItem("libertai-chats"));
 	expect(persisted).toBeTruthy();
 	const parsed = JSON.parse(persisted!);

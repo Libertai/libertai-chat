@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createDebouncedPersistStorage } from "@/utils/debounced-persist-storage";
 import { runMigrations } from "@/types/chats/migrations";
 import { Chat, Message, ImageData, CanvasArtifact, FileAttachment } from "@/types/chats";
 import { useAssistantStore } from "./assistant";
@@ -400,6 +401,9 @@ export const useChatStore = create<ChatStore>()(
 			name: "libertai-chats",
 			version: CHAT_VERSION,
 			migrate: runMigrations,
+			// Write-behind storage: streaming updates the store ~20×/s, and the default storage
+			// synchronously serialized the ENTIRE chat history on every one of those writes.
+			storage: createDebouncedPersistStorage(1000),
 		},
 	),
 );
