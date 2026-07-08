@@ -82,7 +82,7 @@ test("reasoning deltas persist as expandable thinking and the answer renders", a
 	await page.route(ALEPH_GLOB, (route) =>
 		route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(REGISTRY) }),
 	);
-	await page.route("**/v1/chat/completions", (route) =>
+	await page.route("**/chat/completions", (route) =>
 		route.fulfill({
 			status: 200,
 			contentType: "text/event-stream; charset=utf-8",
