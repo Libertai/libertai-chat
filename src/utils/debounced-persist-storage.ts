@@ -41,6 +41,8 @@ export function createDebouncedPersistStorage<S>(delayMs: number): PersistStorag
 	if (typeof window !== "undefined") {
 		// pagehide fires on reload/close/navigation; the synchronous localStorage write completes
 		// before the document is torn down. visibilitychange covers mobile tab backgrounding.
+		// These listeners are never removed: this factory is called exactly once, at store
+		// definition (module scope), and the adapter lives for the page's lifetime.
 		window.addEventListener("pagehide", flush);
 		document.addEventListener("visibilitychange", () => {
 			if (document.visibilityState === "hidden") flush();
