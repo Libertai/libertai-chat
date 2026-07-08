@@ -29,6 +29,7 @@ import type { GenerateImageArgs, SearchType, InterpreterArtifact } from "@/utils
 import { consumePendingForcedTool } from "@/utils/pending-forced-tool";
 import env from "@/config/env";
 import OpenAI from "openai";
+import { useStableHandler } from "@/hooks/use-stable-handler";
 import { toast } from "sonner";
 import type { ParsedMessage } from "@/utils/thinking-parser";
 import type { ImageData, FileAttachment } from "@/types/chats";
@@ -39,17 +40,18 @@ export const Route = createFileRoute("/chat/$chatId")({
 
 function Chat() {
 	const { chatId } = Route.useParams();
-	const {
-		getChat,
-		addMessage,
-		updateMessage,
-		attachMessageMeta,
-		syncMessageArtifacts,
-		deleteMessage,
-		truncateMessagesAfter,
-		setChatModel,
-	} = useChatStore();
-	const { getAssistantOrDefault } = useAssistantStore();
+	// Individual selectors, never the bare store: a selector-less useChatStore() re-renders this
+	// route on EVERY store write — including the ~20/s streaming flushes of *other* fields — and
+	// each of those re-renders used to re-run the whole message list. Actions are referentially
+	// stable, so selecting them never re-renders; only the `chat` selector below is reactive.
+	const addMessage = useChatStore((s) => s.addMessage);
+	const updateMessage = useChatStore((s) => s.updateMessage);
+	const attachMessageMeta = useChatStore((s) => s.attachMessageMeta);
+	const syncMessageArtifacts = useChatStore((s) => s.syncMessageArtifacts);
+	const deleteMessage = useChatStore((s) => s.deleteMessage);
+	const truncateMessagesAfter = useChatStore((s) => s.truncateMessagesAfter);
+	const setChatModel = useChatStore((s) => s.setChatModel);
+	const getAssistantOrDefault = useAssistantStore((s) => s.getAssistantOrDefault);
 	const getProject = useProjectStore((s) => s.getProject);
 	// Subscribe to the memory store so the injected-context indicator re-renders when the user adds,
 	// edits, toggles or deletes a memory while this chat is open. The actual injection at send-time
@@ -81,7 +83,7 @@ function Chat() {
 	const abortRef = useRef<AbortController | null>(null);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
-	const chat = getChat(chatId);
+	const chat = useChatStore((s) => s.chats[chatId]);
 	const messages = chat?.messages || [];
 
 	// Effective model = explicit per-chat override (set via the ModelPicker) overriding the persona's
@@ -215,16 +217,20 @@ function Chat() {
 		const collectedImages: ImageData[] = [];
 		const collectedInterpreter: InterpreterArtifact[] = [];
 
-		// Coalesce streaming writes. The route subscribes to the whole chat store, so every
-		// updateMessage re-renders it. Thinking models (e.g. Mega Mind) emit thousands of tiny
+		// Coalesce streaming writes. Thinking models (e.g. Mega Mind) emit thousands of tiny
 		// reasoning deltas that can arrive in a burst — writing per-delta floods React and trips its
 		// max-update-depth guard (#185), which surfaced as a generic "error processing your request".
-		// Flush at most once per frame and force a final flush per turn so nothing is dropped.
+		// Flush at most once per interval and force a final flush per turn so nothing is dropped.
+		// The interval widens as the message grows: each flush re-parses the streaming message's
+		// markdown (O(length)), so a fixed 50ms tick would progressively starve the main thread —
+		// and with it this very read loop — on long thinking responses.
 		const FLUSH_INTERVAL_MS = 50;
 		let lastFlush = 0;
 		const flushStreamedMessage = (force = false) => {
 			const now = Date.now();
-			if (!force && now - lastFlush < FLUSH_INTERVAL_MS) return;
+			const size = accumulated.content.length + accumulated.thinking.length;
+			const interval = Math.min(250, FLUSH_INTERVAL_MS + Math.floor(size / 10_000) * 50);
+			if (!force && now - lastFlush < interval) return;
 			lastFlush = now;
 			updateMessage(chatId, assistantMessage.id, accumulated.content, accumulated.thinking);
 		};
@@ -517,18 +523,22 @@ function Chat() {
 		addMessage(chatId, "user", value.trim(), undefined, images, attachments);
 	};
 
+	// The four handlers below are passed to the memoized <Message/> rows; useStableHandler keeps
+	// their identity constant across renders (they always call the latest closure) so React.memo
+	// can actually skip unchanged messages during streaming.
+
 	// One click to resume a turn that hit the tool-loop cap without a final answer. We keep the
 	// gathered assistant turn (sources/images/interpreter stay attached to it) and append a fresh
 	// user "Continue." so generateAIResponse takes one more round-trip to summarise. Without this the
 	// user had to type "continue" themselves after a long silent run.
-	const handleContinue = async () => {
+	const handleContinue = useStableHandler(async () => {
 		if (isLoading || isStreaming) return;
 		setContinueFromMessageId(null);
 		addMessage(chatId, "user", "Continue");
 		await generateAIResponse();
-	};
+	});
 
-	const handleRegenerateMessage = async () => {
+	const handleRegenerateMessage = useStableHandler(async () => {
 		if (isLoading || isStreaming || messages.length === 0) return;
 
 		// Find the last assistant message and regenerate it
@@ -540,18 +550,18 @@ function Chat() {
 		// Clear the last assistant message content and regenerate
 		deleteMessage(chatId, lastMessage.id);
 		await generateAIResponse();
-	};
+	});
 
-	const handleEditMessage = (messageId: string, newContent: string) => {
+	const handleEditMessage = useStableHandler((messageId: string, newContent: string) => {
 		updateMessage(chatId, messageId, newContent);
-	};
+	});
 
-	const handleRegenerateFromMessage = async (messageId: string) => {
+	const handleRegenerateFromMessage = useStableHandler(async (messageId: string) => {
 		if (isLoading || isStreaming) return;
 
 		truncateMessagesAfter(chatId, messageId);
 		await generateAIResponse();
-	};
+	});
 
 	// Show 404 if chat doesn't exist
 	if (!chat) {
@@ -574,7 +584,9 @@ function Chat() {
 								isLoading={isLoading}
 								isStreaming={isStreaming}
 								toolStatus={index === messages.length - 1 ? toolStatus : null}
-								toolSteps={index === messages.length - 1 ? toolSteps : []}
+								// undefined (not a fresh []) for non-last rows — a new array identity
+								// per render would defeat Message's memo on every streaming flush.
+								toolSteps={index === messages.length - 1 ? toolSteps : undefined}
 								needsContinue={continueFromMessageId === message.id}
 								onContinue={handleContinue}
 								onRegenerate={handleRegenerateMessage}

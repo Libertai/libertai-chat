@@ -133,8 +133,10 @@ test("model picker lists real models, shows a TEE badge, and persists the select
 	await expect(trigger).toContainText("Hermes 3 8B (TEE)");
 
 	// The choice persisted to the chat store (localStorage) and survives a reload.
-	const stored = await page.evaluate(() => window.localStorage.getItem("libertai-chats"));
-	expect(stored).toContain("hermes-3-8b-tee");
+	// Persistence is write-behind (~1s debounce), so poll until the write lands.
+	await expect
+		.poll(() => page.evaluate(() => window.localStorage.getItem("libertai-chats")), { timeout: 5_000 })
+		.toContain("hermes-3-8b-tee");
 
 	await page.reload({ waitUntil: "domcontentloaded" });
 	const triggerAfterReload = page.getByTestId("model-picker-trigger");

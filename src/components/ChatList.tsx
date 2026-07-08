@@ -15,18 +15,37 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 export function ChatList() {
-	const { getAllChats, deleteChat, renameChat, setChatProject } = useChatStore();
-	const { getAllProjects } = useProjectStore();
+	const deleteChat = useChatStore((s) => s.deleteChat);
+	const renameChat = useChatStore((s) => s.renameChat);
+	const setChatProject = useChatStore((s) => s.setChatProject);
+	// Subscribe to a cheap ordered signature of what the rows actually display (id / title /
+	// project link) instead of the whole store: during streaming the chat store updates many
+	// times per second, but none of those flushes change this string, so the sidebar no longer
+	// re-renders (and re-sorts every chat) on every token batch.
+	const rowsSignature = useChatStore((s) =>
+		Object.values(s.chats)
+			.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+			.map((c) => `${c.id}|${truncateText(getChatTitle(c))}|${c.projectId ?? ""}`)
+			.join("\n"),
+	);
+	// eslint-disable-next-line react-hooks/exhaustive-deps -- rowsSignature is the real dependency
+	const chats = useMemo(() => useChatStore.getState().getAllChats(), [rowsSignature]);
+	const projectsById = useProjectStore((s) => s.projects);
+	// Same ordering as getAllProjects(); computed from the subscribed record so this only
+	// recomputes on actual project changes, not on unrelated store writes.
+	const projects = useMemo(
+		() =>
+			Object.values(projectsById).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+		[projectsById],
+	);
 	const navigate = useNavigate();
 	const currentPath = location.pathname;
-	const chats = getAllChats();
-	const projects = getAllProjects();
 	const { isMobile, setOpenMobile } = useSidebar();
 
 	const [activeChat, setActiveChat] = useState<string | null>(null);

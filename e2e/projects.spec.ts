@@ -123,9 +123,11 @@ test("create a project, move a chat into it, persist across reload, and set inst
 	await expect(page.getByTestId(`chat-row-${CHAT_A}`)).toBeVisible();
 	await expect(page.getByTestId(`chat-row-${CHAT_B}`)).toBeVisible();
 
-	// Persisted: the chat carries the projectId and the project record exists.
-	const chatsStored = await page.evaluate((k) => window.localStorage.getItem(k), CHATS_KEY);
-	expect(chatsStored).toContain(projectId);
+	// Persisted: the chat carries the projectId and the project record exists. The chat store's
+	// persistence is write-behind (~1s debounce), so poll until the write lands.
+	await expect
+		.poll(() => page.evaluate((k) => window.localStorage.getItem(k), CHATS_KEY), { timeout: 5_000 })
+		.toContain(projectId);
 	const projectsStored = await page.evaluate((k) => window.localStorage.getItem(k), PROJECTS_KEY);
 	expect(projectsStored).toContain("Work");
 	expect(projectsStored).toContain(projectId);

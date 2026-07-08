@@ -1,4 +1,4 @@
-import { Children, cloneElement, isValidElement, useState, type ReactElement, type ReactNode } from "react";
+import { Children, cloneElement, isValidElement, memo, useState, type ReactElement, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -55,7 +55,12 @@ interface MessageProps {
 	onRegenerateFromMessage?: (id: string) => void;
 }
 
-export function Message({
+// Memoized: during streaming the chat route re-renders on every flushed token batch, and without
+// memo EVERY message re-ran the full ReactMarkdown (remark-gfm + remark-math + KaTeX) pipeline each
+// time — O(whole conversation) per flush, the main cause of slow/lumpy streaming in long chats.
+// With memo only the message whose props changed (the streaming one) re-renders. Relies on the
+// route passing referentially-stable callbacks (useStableHandler) and stable toolStatus/toolSteps.
+export const Message = memo(function Message({
 	message,
 	chatId,
 	isLastMessage,
@@ -536,4 +541,4 @@ export function Message({
 			</div>
 		</div>
 	);
-}
+});
