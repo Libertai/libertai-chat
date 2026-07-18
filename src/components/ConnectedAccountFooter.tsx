@@ -2,7 +2,7 @@ import { ChartColumn, Settings } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { AccountMenu, useAccountStore } from "@libertai/auth";
 import { useENS } from "@/hooks/useENS";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@libertai/ui/sidebar";
 
 /**
  * Chat's sidebar-footer account menu. Thin adapter over the shared <AccountMenu> — wires in the

@@ -3,8 +3,8 @@ import { useMemo, useState } from "react";
 import { Folder, Search } from "lucide-react";
 import { useProjectStore } from "@/stores/project";
 import { useProjectDialogStore } from "@/stores/project-dialogs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@libertai/ui/button";
+import { Input } from "@libertai/ui/input";
 
 export const Route = createFileRoute("/projects")({
 	component: ProjectsPage,

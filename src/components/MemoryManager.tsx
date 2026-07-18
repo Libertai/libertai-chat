@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Brain, Check, Pencil, Plus, Trash2, X } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@libertai/ui/dialog";
+import { Button } from "@libertai/ui/button";
+import { Input } from "@libertai/ui/input";
+import { Switch } from "@libertai/ui/switch";
 import { useMemoryStore } from "@/stores/memory";
 
 interface MemoryManagerProps {

@@ -1,6 +1,6 @@
 import { GeneratedImage } from "@/stores/image";
 import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 
 interface ImageCardProps {
 	image: GeneratedImage;

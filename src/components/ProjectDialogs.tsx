@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useProjectStore } from "@/stores/project";
 import { useProjectDialogStore } from "@/stores/project-dialogs";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Button } from "@libertai/ui/button";
+import { Input } from "@libertai/ui/input";
+import { Textarea } from "@libertai/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@libertai/ui/dialog";
 
 export function ProjectDialogs() {
 	const { createProject, renameProject, setProjectInstructions } = useProjectStore();

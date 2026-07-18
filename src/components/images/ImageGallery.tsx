@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAccountStore, useSubscription } from "@libertai/auth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 import { useImageStore, GeneratedImage } from "@/stores/image";
 import { ImageCard } from "./ImageCard";
 import { ImageGenerationForm } from "./ImageGenerationForm";
 import { ImagePreviewDialog } from "./ImagePreviewDialog";
-import { Input } from "@/components/ui/input";
+import { Input } from "@libertai/ui/input";
 import { Search, ImageIcon, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { isChatBlocked } from "@/utils/paywall";

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 import { Edit, MessageCircleX } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 

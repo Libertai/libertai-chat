@@ -1,7 +1,7 @@
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@libertai/ui/button";
+import { Textarea } from "@libertai/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface MessageEditInputProps {

@@ -18,7 +18,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 	useSidebar,
-} from "@/components/ui/sidebar";
+} from "@libertai/ui/sidebar";
 import { LibertaiLogo } from "@libertai/branding";
 
 // Helper function to read sidebar state from cookie

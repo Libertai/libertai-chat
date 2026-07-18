@@ -1,8 +1,8 @@
 import { useState, KeyboardEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@libertai/ui/button";
+import { Textarea } from "@libertai/ui/textarea";
+import { Input } from "@libertai/ui/input";
+import { Switch } from "@libertai/ui/switch";
 import { useImageGeneration, ImageGenerationParams } from "@/hooks/data/use-image-generation";
 import { useImageStore, MAX_IMAGES, GeneratedImage } from "@/stores/image";
 import { AlertTriangle, ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react";

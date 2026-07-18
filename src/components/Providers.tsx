@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { ThemeProvider } from "./ThemeProvider";
-import { Toaster } from "./ui/sonner";
+import { Toaster } from "@libertai/ui/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import { LibertaiProviders } from "@libertai/auth";

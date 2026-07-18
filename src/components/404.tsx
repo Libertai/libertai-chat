@@ -1,5 +1,5 @@
 // 404 Page Component
-import { Button } from "@/components/ui/button.tsx";
+import { Button } from "@libertai/ui/button";
 
 export const NotFoundPage = () => {
 	return (

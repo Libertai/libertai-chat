@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useAccountStore } from "@libertai/auth";
 

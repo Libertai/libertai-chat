@@ -11,16 +11,16 @@ import {
 	useState,
 } from "react";
 import { ArrowUp, FileText, Globe, Loader2, Paperclip, Plus, Sparkles, Square, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@libertai/ui/button";
+import { Textarea } from "@libertai/ui/textarea";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+} from "@libertai/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@libertai/ui/tooltip";
 import { ImageData, FileAttachment } from "@/types/chats";
 import { DEFAULT_SEARCH_TYPE, SEARCH_TYPES, type SearchType } from "@/utils/chat-tools";
 import { supportsImages, supportsTools, resolveChatModel } from "@/config/model-capabilities";
