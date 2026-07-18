@@ -3,8 +3,8 @@ import { useEffect } from "react";
 import { useRewards } from "@/hooks/data/use-rewards";
 import { useAccountStore } from "@libertai/auth";
 import { formatAddress } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@libertai/ui/button";
+import { Skeleton } from "@libertai/ui/skeleton";
 import { ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/rewards")({

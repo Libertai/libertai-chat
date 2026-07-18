@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useAccountStore } from "@libertai/auth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 import { usePostLoginRedirect } from "@/hooks/use-post-login-redirect";
 
 export const Route = createFileRoute("/auth/verify")({

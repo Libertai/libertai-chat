@@ -8,7 +8,7 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@libertai/ui/dropdown-menu";
 import { exportFormatsFor, FORMAT_META, type ExportFormat } from "@/lib/export/formats";
 import { exportArtifact } from "@/lib/export/download";
 import type { ArtifactKind } from "@/types/chats";

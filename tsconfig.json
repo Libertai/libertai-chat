@@ -31,6 +31,12 @@
       ],
       "@libertai/inference-sdk/*": [
         "src/shared/inference-sdk/*"
+      ],
+      "@libertai/ui": [
+        "src/shared/ui"
+      ],
+      "@libertai/ui/*": [
+        "src/shared/ui/*"
       ]
     }
   }

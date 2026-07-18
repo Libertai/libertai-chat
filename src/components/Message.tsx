@@ -20,7 +20,7 @@ import {
 	LayoutPanelLeft,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 import { MessageEditInput } from "@/components/MessageEditInput";
 import { CodeBlock } from "@/components/CodeBlock";
 import { InterpreterOutput } from "@/components/InterpreterOutput";

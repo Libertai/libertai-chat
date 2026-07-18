@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { MessageCircle, Search } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "@libertai/ui/button";
 import {
 	Command,
 	CommandDialog,
@@ -11,7 +11,7 @@ import {
 	CommandItem,
 	CommandList,
 	CommandShortcut,
-} from "./ui/command";
+} from "@libertai/ui/command";
 import { useChatStore } from "@/stores/chat";
 import { type Chat, type Message } from "@/types/chats";
 

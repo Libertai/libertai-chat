@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useSubscription } from "@libertai/auth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 
 function resetsLabel(resetsAt?: string | null): string {
 	if (!resetsAt) return "soon";

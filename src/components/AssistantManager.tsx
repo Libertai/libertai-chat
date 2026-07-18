@@ -7,10 +7,10 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from "@libertai/ui/dialog";
+import { Button } from "@libertai/ui/button";
+import { Input } from "@libertai/ui/input";
+import { Textarea } from "@libertai/ui/textarea";
 import { ModelPicker } from "@/components/ModelPicker";
 import { type Assistant, type AssistantInput, DEFAULT_CUSTOM_MODEL, useAssistantStore } from "@/stores/assistant";
 

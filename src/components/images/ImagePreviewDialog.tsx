@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@libertai/ui/dialog";
+import { Button } from "@libertai/ui/button";
 import { GeneratedImage, useImageStore } from "@/stores/image";
 import { useImageGeneration } from "@/hooks/data/use-image-generation";
 import { Copy, Download, Loader2, RefreshCw, Trash2 } from "lucide-react";

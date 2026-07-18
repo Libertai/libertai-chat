@@ -4,7 +4,7 @@ import { useProjectStore } from "@/stores/project";
 import { type Chat } from "@/types/chats";
 import { getChatTitle, truncateText } from "@/utils/chat-title";
 import { Check, Folder, FolderMinus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "@libertai/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -14,11 +14,11 @@ import {
 	DropdownMenuSubContent,
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "@libertai/ui/dropdown-menu";
 import { useMemo, useState } from "react";
-import { useSidebar } from "@/components/ui/sidebar";
-import { Input } from "./ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { useSidebar } from "@libertai/ui/sidebar";
+import { Input } from "@libertai/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@libertai/ui/dialog";
 
 export function ChatList() {
 	const deleteChat = useChatStore((s) => s.deleteChat);

@@ -1,7 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAccountStore, useCanUpgrade } from "@libertai/auth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 
 /**
  * Header "Upgrade" affordance (ChatGPT-style, top-right). Shown ONLY to an authenticated user

@@ -5,13 +5,13 @@ import { useProjectStore } from "@/stores/project";
 import { useChatStore } from "@/stores/chat";
 import { useProjectDialogStore } from "@/stores/project-dialogs";
 import { getChatTitle, truncateText } from "@/utils/chat-title";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@libertai/ui/dropdown-menu";
 
 export const Route = createFileRoute("/project/$projectId")({
 	component: ProjectDetailPage,

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { AllowanceBar, useSubscription } from "@libertai/auth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 
 // Warn once a window crosses this share of its allowance — early enough to act before the
 // hard ChatPaywall (100%) kicks in. Windows are small, so a single message can overshoot;

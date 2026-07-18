@@ -1,5 +1,5 @@
 import { useNavigate, useRouter } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
+import { Button } from "@libertai/ui/button";
 import { useAnonUsage } from "@/hooks/data/use-anon-usage";
 
 const WARN_REMAINING = 3;

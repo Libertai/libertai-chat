@@ -8,7 +8,7 @@ import {
 	DropdownMenuRadioItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@libertai/ui/dropdown-menu";
 import { useModels, type Model } from "@/hooks/data/use-models";
 import { chatModels, isTeeAttested } from "@/config/model-capabilities";
 import { cn } from "@/lib/utils";
