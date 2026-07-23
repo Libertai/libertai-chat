@@ -8,7 +8,7 @@ const WARN_REMAINING = 3;
  * For logged-out users: a free-message meter above the composer. Shows nothing until the IP's
  * anonymous allowance is running low, a soft "N left — sign in" warning near the limit, and a
  * sign-in wall once it's used up. The CTA is always Sign in (not Upgrade) — these users have no
- * account yet, and signing in is free with a higher limit.
+ * account yet.
  */
 export function AnonChatNotice() {
 	const navigate = useNavigate();
@@ -26,7 +26,9 @@ export function AnonChatNotice() {
 		return (
 			<div className="mx-auto mb-3 max-w-3xl rounded-xl border border-border bg-card/60 p-4">
 				<p className="text-sm font-medium">You've used your {data.limit} free messages.</p>
-				<p className="mt-1 text-sm text-muted-foreground">Sign in to keep chatting — it's free, with a higher limit.</p>
+				<p className="mt-1 text-sm text-muted-foreground">
+					Sign in to unlock image generation, text-to-speech and higher limits, it's free.
+				</p>
 				<div className="mt-3">
 					<Button size="sm" onClick={goSignIn}>
 						Sign in
