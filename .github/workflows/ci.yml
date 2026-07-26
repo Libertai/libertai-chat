@@ -48,13 +48,15 @@ jobs:
         run: pnpm install
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
+      # Fallbacks matter: secrets resolve to empty on dependabot/fork runs, and empty fails the
+      # zod parse in src/config/env.ts, which blanks the app. The e2e specs mock the network.
       - name: Run Playwright tests
         run: pnpm run e2e
         env:
-          VITE_THIRDWEB_CLIENT_ID: ${{ secrets.THIRDWEB_CLIENT_ID }}
-          VITE_LTAI_INFERENCE_API_URL: ${{ secrets.LTAI_INFERENCE_API_URL }}
-          VITE_SOLANA_RPC: ${{ secrets.SOLANA_RPC }}
-          VITE_LTAI_CONNECTED_API_URL: ${{ secrets.LTAI_CONNECTED_API_URL }}
+          VITE_THIRDWEB_CLIENT_ID: ${{ secrets.THIRDWEB_CLIENT_ID || 'e2e' }}
+          VITE_LTAI_INFERENCE_API_URL: ${{ secrets.LTAI_INFERENCE_API_URL || 'https://inference.api.libertai.io' }}
+          VITE_SOLANA_RPC: ${{ secrets.SOLANA_RPC || 'https://api.mainnet-beta.solana.com' }}
+          VITE_LTAI_CONNECTED_API_URL: ${{ secrets.LTAI_CONNECTED_API_URL || 'https://api.libertai.io' }}
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
