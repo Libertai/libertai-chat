@@ -48,7 +48,7 @@
     "jspdf": "^4.2.1",
     "katex": "^0.17.0",
     "lucide-react": "^0.544.0",
-    "mermaid": "^11.15.0",
+    "mermaid": "^11.16.1",
     "next-themes": "^0.4.6",
     "nuqs": "^2.8.6",
     "openai": "^6.16.0",
