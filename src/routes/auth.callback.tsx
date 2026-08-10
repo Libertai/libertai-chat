@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useAccountStore } from "@libertai/auth";
+import { ACCOUNT_SUSPENDED, useAccountStore } from "@libertai/auth";
 import { Button } from "@libertai/ui/button";
 import { usePostLoginRedirect } from "@/hooks/use-post-login-redirect";
 
@@ -14,9 +14,17 @@ function AuthCallback() {
 	const navigate = useNavigate();
 	const redirectAfterLogin = usePostLoginRedirect();
 	const [failed, setFailed] = useState(false);
+	const [suspended, setSuspended] = useState(false);
 
 	useEffect(() => {
-		const code = new URLSearchParams(window.location.search).get("code");
+		const params = new URLSearchParams(window.location.search);
+		// A suspended account never gets a code — the backend redirects here with this marker instead.
+		if (params.get("error") === ACCOUNT_SUSPENDED) {
+			setSuspended(true);
+			setFailed(true);
+			return;
+		}
+		const code = params.get("code");
 		if (!code) {
 			setFailed(true);
 			return;
@@ -34,8 +42,12 @@ function AuthCallback() {
 		<div className="container mx-auto flex flex-col items-center justify-center px-4 py-24 text-center">
 			{failed ? (
 				<div className="space-y-4">
-					<p className="text-lg font-medium">Sign-in failed</p>
-					<p className="text-muted-foreground">This sign-in link is invalid or has expired.</p>
+					<p className="text-lg font-medium">{suspended ? "Account suspended" : "Sign-in failed"}</p>
+					<p className="text-muted-foreground">
+						{suspended
+							? "This account has been suspended. Contact support if you believe this is a mistake."
+							: "This sign-in link is invalid or has expired."}
+					</p>
 					<Button onClick={() => navigate({ to: "/login" })}>Back to sign in</Button>
 				</div>
 			) : (
