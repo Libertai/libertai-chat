@@ -22,25 +22,21 @@ export function ChatUsageWarning() {
 
 	if (!sub) return null;
 
-	// Only windows with a real cap can bind; pick the one closest to its limit.
-	const windows = [
+	// Whichever window is closest to its cap binds first.
+	const binding = [
 		{
 			name: "session limit",
-			used: sub.window_5h_used ?? 0,
-			limit: sub.window_5h_limit ?? 0,
+			percent: sub.window_5h_used_percent ?? 0,
 			resetsAt: sub.window_5h_resets_at,
 		},
 		{
 			name: "weekly allowance",
-			used: sub.weekly_used ?? 0,
-			limit: sub.weekly_limit ?? 0,
+			percent: sub.weekly_used_percent ?? 0,
 			resetsAt: sub.weekly_resets_at,
 		},
-	].filter((w) => w.limit > 0);
-	const binding = windows.sort((a, b) => b.used / b.limit - a.used / a.limit)[0];
-	if (!binding) return null;
+	].sort((a, b) => b.percent - a.percent)[0];
 
-	const ratio = binding.used / binding.limit;
+	const ratio = binding.percent / 100;
 	if (ratio < WARN_THRESHOLD || ratio >= 1) return null;
 
 	// Re-show when a fresh window starts (its reset time changes); stay hidden once dismissed for this one.
@@ -63,8 +59,7 @@ export function ChatUsageWarning() {
 			<div className="mt-3">
 				<AllowanceBar
 					label={binding.name.charAt(0).toUpperCase() + binding.name.slice(1)}
-					used={binding.used}
-					limit={binding.limit}
+					percent={binding.percent}
 					resetsAt={binding.resetsAt}
 					now={Date.now()}
 				/>

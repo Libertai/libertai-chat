@@ -27,10 +27,9 @@ function resetsAtLabel(resetsAt: string | null | undefined): string {
 function UsageRow({
 	label,
 	sublabel,
-	used,
-	limit,
-}: Readonly<{ label: string; sublabel?: string; used: number; limit: number }>) {
-	const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+	percent,
+}: Readonly<{ label: string; sublabel?: string; percent: number }>) {
+	const pct = Math.min(100, Math.round(percent));
 	const barColor = pct >= 90 ? "bg-red-500" : pct >= 75 ? "bg-amber-500" : "bg-primary";
 	return (
 		<div className="flex items-center gap-4 py-3">
@@ -75,14 +74,12 @@ function Usage() {
 					<UsageRow
 						label="Current session"
 						sublabel={resetsInLabel(subscription?.window_5h_resets_at, now)}
-						used={subscription?.window_5h_used ?? 0}
-						limit={subscription?.window_5h_limit ?? 0}
+						percent={subscription?.window_5h_used_percent ?? 0}
 					/>
 					<UsageRow
 						label="Weekly limit"
 						sublabel={resetsAtLabel(subscription?.weekly_resets_at)}
-						used={subscription?.weekly_used ?? 0}
-						limit={subscription?.weekly_limit ?? 0}
+						percent={subscription?.weekly_used_percent ?? 0}
 					/>
 				</section>
 

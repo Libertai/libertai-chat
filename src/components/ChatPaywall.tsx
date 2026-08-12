@@ -20,8 +20,7 @@ export function ChatPaywall() {
 	// Surface the limit that actually caused the block. A block needs only ONE window exhausted, so
 	// "weekly resets…" is wrong when it's the 5-hour window that's full. If the weekly window is the
 	// exhausted (binding) one, show that; otherwise the shorter session window is what to wait on.
-	const weeklyExhausted =
-		(subscription?.weekly_limit ?? 0) > 0 && (subscription?.weekly_used ?? 0) >= (subscription?.weekly_limit ?? 0);
+	const weeklyExhausted = (subscription?.weekly_used_percent ?? 0) >= 100;
 	// The window to wait on is the weekly one when it's exhausted, or when there's no active 5h
 	// window to report against (fall back to weekly rather than show a bogus session countdown).
 	const bindingWindowIsWeekly = weeklyExhausted || !subscription?.window_5h_resets_at;
