@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRequireAuth } from "@/hooks/use-auth";
-import { TransactionHistory } from "@libertai/auth";
+import { BillingDetailsForm, InvoiceHistory, TransactionHistory, useIsWalletAccount } from "@libertai/auth";
 
 export const Route = createFileRoute("/transactions")({
 	component: Transactions,
@@ -8,6 +8,7 @@ export const Route = createFileRoute("/transactions")({
 
 function Transactions() {
 	const { isAuthenticated } = useRequireAuth();
+	const isWalletAccount = useIsWalletAccount();
 	if (!isAuthenticated) return null;
 
 	return (
@@ -18,6 +19,13 @@ function Transactions() {
 					<p className="text-muted-foreground mt-1">View your credit transaction history and details</p>
 				</div>
 				<TransactionHistory />
+				{/* Invoices are issued for card payments only — wallet accounts never have any. */}
+				{!isWalletAccount && (
+					<>
+						<InvoiceHistory />
+						<BillingDetailsForm />
+					</>
+				)}
 			</div>
 		</div>
 	);
