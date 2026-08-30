@@ -24,11 +24,7 @@ function resetsAtLabel(resetsAt: string | null | undefined): string {
 	return `Resets ${d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })}`;
 }
 
-function UsageRow({
-	label,
-	sublabel,
-	percent,
-}: Readonly<{ label: string; sublabel?: string; percent: number }>) {
+function UsageRow({ label, sublabel, percent }: Readonly<{ label: string; sublabel?: string; percent: number }>) {
 	const pct = Math.min(100, Math.round(percent));
 	const barColor = pct >= 90 ? "bg-red-500" : pct >= 75 ? "bg-amber-500" : "bg-primary";
 	return (

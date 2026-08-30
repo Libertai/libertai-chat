@@ -1,10 +1,5 @@
 import { Button } from "@libertai/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@libertai/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@libertai/ui/dropdown-menu";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 

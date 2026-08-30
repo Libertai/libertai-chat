@@ -18,7 +18,10 @@ test("collapsed state persists across reload", async ({ page }) => {
 	await page.goto("/");
 	await expect(page.locator('[data-slot="sidebar"]')).toHaveAttribute("data-state", "expanded");
 	// Toggle closed via the header trigger, then reload; cookie should keep it closed.
-	await page.getByRole("button", { name: /toggle sidebar/i }).first().click();
+	await page
+		.getByRole("button", { name: /toggle sidebar/i })
+		.first()
+		.click();
 	await expect(page.locator('[data-slot="sidebar"]')).toHaveAttribute("data-state", "collapsed");
 	await page.reload();
 	await expect(page.locator('[data-slot="sidebar"]')).toHaveAttribute("data-state", "collapsed");

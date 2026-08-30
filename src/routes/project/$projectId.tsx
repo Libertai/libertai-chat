@@ -6,12 +6,7 @@ import { useChatStore } from "@/stores/chat";
 import { useProjectDialogStore } from "@/stores/project-dialogs";
 import { getChatTitle, truncateText } from "@/utils/chat-title";
 import { Button } from "@libertai/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@libertai/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@libertai/ui/dropdown-menu";
 
 export const Route = createFileRoute("/project/$projectId")({
 	component: ProjectDetailPage,

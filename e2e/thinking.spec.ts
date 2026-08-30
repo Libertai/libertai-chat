@@ -35,8 +35,7 @@ const THINKING_TEXT = "Let me reason about prime gaps carefully before answering
 const ANSWER_TEXT = "The answer is that prime gaps grow, but slowly.";
 
 function sseBody(): string {
-	const chunk = (delta: Record<string, string>) =>
-		`data: ${JSON.stringify({ choices: [{ delta }] })}\n\n`;
+	const chunk = (delta: Record<string, string>) => `data: ${JSON.stringify({ choices: [{ delta }] })}\n\n`;
 	const parts: string[] = [];
 	for (const word of THINKING_TEXT.split(" ")) parts.push(chunk({ reasoning_content: `${word} ` }));
 	for (const word of ANSWER_TEXT.split(" ")) parts.push(chunk({ content: `${word} ` }));

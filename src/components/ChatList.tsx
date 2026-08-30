@@ -40,8 +40,7 @@ export function ChatList() {
 	// Same ordering as getAllProjects(); computed from the subscribed record so this only
 	// recomputes on actual project changes, not on unrelated store writes.
 	const projects = useMemo(
-		() =>
-			Object.values(projectsById).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+		() => Object.values(projectsById).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
 		[projectsById],
 	);
 	const navigate = useNavigate();
