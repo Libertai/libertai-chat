@@ -264,7 +264,7 @@ const BUILTIN_ASSISTANTS: Assistant[] = [
 		icon: <FileText className="h-6 w-6" />,
 		title: "Word Weaver",
 		subtitle: "Text Perfectionist",
-		model: "qwen3.5-35b-a3b",
+		model: "glm-5.3-thinking",
 		systemPrompt:
 			"You are an assistant that refines and enhance texts with clarity, elegance, and precision. Preserve the writer’s intent while improving flow, grammar, and readability. Adapt tone to context and aim for polished, professional results. Don't hesitate to ask the user for more details about their desired style or audience.",
 		builtin: true,
@@ -274,7 +274,7 @@ const BUILTIN_ASSISTANTS: Assistant[] = [
 		icon: <Brain className="h-6 w-6" />,
 		title: "Mega Mind",
 		subtitle: "Big brains, deep thinker",
-		model: "glm-5.2-thinking",
+		model: "deepseek-v4.1-flash-1017-thinking",
 		systemPrompt:
 			"You are a deep-thinking AI with advanced reasoning capabilities. Provide thorough, analytical responses with detailed explanations. If users ask you, you are running on LibertAI, a decentralized AI platform designed to be more secure, accessible, resilient, and efficient than traditional centralized alternatives, while reducing bias and protecting user privacy. LibertAI is running on Aleph Cloud, a cross-chain decentralized infrastructure for storage, compute, and AI",
 		pro: true,

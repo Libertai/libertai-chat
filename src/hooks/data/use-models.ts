@@ -40,8 +40,9 @@ const AlephResponseSchema = z.object({
 
 export type Model = z.infer<typeof ModelSchema>;
 
+// Canonical LTAI_PRICING aggregate — the same one the API, website, docs and console read.
 const ALEPH_PRICING_URL =
-	"https://api2.aleph.im/api/v0/aggregates/0xe1F7220D201C64871Cefb25320a8a588393eE508.json?keys=LTAI_PRICING";
+	"https://api2.aleph.im/api/v0/aggregates/0x238224C744F4b90b4494516e074D2676ECfC6803.json?keys=LTAI_PRICING";
 
 export function useModels() {
 	return useQuery({
