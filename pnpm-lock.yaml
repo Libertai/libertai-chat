@@ -107,8 +107,8 @@ importers:
         specifier: ^4.2.1
         version: 4.2.1
       katex:
-        specifier: ^0.17.0
-        version: 0.17.0
+        specifier: ^0.18.2
+        version: 0.18.2
       lucide-react:
         specifier: ^0.544.0
         version: 0.544.0(react@19.3.1)
@@ -6564,8 +6564,8 @@ packages:
     resolution: {integrity: sha512-Eeo8Ys1doU1z+x8AZsPpQu+p/QcZBI5PeOo7QGQdy2x2m0MU/hYagBbGOmXwr5KVbEfVuWv9LpnQWeehogurjg==}
     hasBin: true
 
-  katex@0.17.0:
-    resolution: {integrity: sha512-Vdw0ATsQ9V+LuegM/BTwQqV/6cTl5lbGcIrU+BCgLxyf6bo38ybOr372tuSIxir3CN720flu1meYR6XzNMwQnw==}
+  katex@0.18.2:
+    resolution: {integrity: sha512-3snve4y0SXTMequLim1FMiPvLGElySam0blN5xQZBqEY3lOJz1TnuaaiugnBZBqHzlSAGmFTYL7MCQkORuLKCA==}
     hasBin: true
 
   keccak@3.0.4:
@@ -10705,7 +10705,7 @@ snapshots:
       '@noble/hashes': 1.7.2
       '@scure/base': 1.2.6
       '@types/debug': 4.1.13
-      debug: 4.3.4
+      debug: 4.4.3
       pony-cause: 2.1.11
       semver: 7.8.5
       uuid: 9.0.1
@@ -17651,7 +17651,7 @@ snapshots:
     dependencies:
       commander: 8.3.0
 
-  katex@0.17.0:
+  katex@0.18.2:
     dependencies:
       commander: 8.3.0
 
