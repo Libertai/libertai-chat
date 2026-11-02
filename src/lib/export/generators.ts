@@ -195,7 +195,13 @@ export function markdownToPdfBlob(markdown: string, title?: string): Blob {
 		y += PDF_LINE * 0.5;
 	}
 
+	// Per-level counters for ordered lists. Numbering restarts when a non-list block interrupts the
+	// list, when nesting returns outward, and when a bullet appears at the same or a deeper level.
+	const orderedCounters: number[] = [];
+	let sawListItem = false;
+
 	for (const block of parseMarkdownBlocks(markdown)) {
+		if (block.type !== "listItem") sawListItem = false;
 		switch (block.type) {
 			case "heading":
 				y += PDF_LINE * 0.4;
@@ -206,9 +212,22 @@ export function markdownToPdfBlob(markdown: string, title?: string): Blob {
 				writeLines(block.text, { size: 11 });
 				y += 6;
 				break;
-			case "listItem":
-				writeLines(`${block.ordered ? "•" : "•"} ${block.text}`, { size: 11, indent: 14 + block.level * 14 });
+			case "listItem": {
+				if (block.ordered) {
+					if (!sawListItem) orderedCounters.length = 0;
+					orderedCounters.length = block.level + 1;
+					orderedCounters[block.level] = (orderedCounters[block.level] ?? 0) + 1;
+					writeLines(`${orderedCounters[block.level]}. ${block.text}`, {
+						size: 11,
+						indent: 14 + block.level * 14,
+					});
+				} else {
+					orderedCounters.length = block.level;
+					writeLines(`• ${block.text}`, { size: 11, indent: 14 + block.level * 14 });
+				}
+				sawListItem = true;
 				break;
+			}
 			case "code":
 				for (const line of block.text.split("\n")) {
 					writeLines(line, { size: 9.5, font: "courier", indent: 8 });
