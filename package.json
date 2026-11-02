@@ -70,7 +70,7 @@
     "tailwindcss-animate": "^1.0.7",
     "thirdweb": "5.120.0",
     "viem": "^2.57.13",
-    "xlsx": "^0.18.5",
+    "xlsx": "npm:@e965/xlsx@^0.20.3",
     "zod": "^4.6.7",
     "zustand": "^5.0.16"
   },
