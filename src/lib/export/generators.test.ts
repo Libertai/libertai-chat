@@ -124,6 +124,27 @@ describe("markdownToPdfBlob", () => {
 		expect(blob.type).toBe("application/pdf");
 		expect(blob.size).toBeGreaterThan(500);
 	});
+
+	it("numbers ordered list items (1. 2. 3.) while bullets stay bulleted", async () => {
+		const blob = markdownToPdfBlob("- bullet item\n\n1. first\n2. second\n3. third");
+		const text = new TextDecoder("latin1").decode(new Uint8Array(await blob.arrayBuffer()));
+		expect(text).toContain("• bullet item");
+		expect(text).toContain("1. first");
+		expect(text).toContain("2. second");
+		expect(text).toContain("3. third");
+		expect(text).not.toContain("• first");
+	});
+
+	it("restarts ordered numbering after an interrupting block and on nested levels", async () => {
+		const md = ["1. one", "2. two", "", "Paragraph.", "", "1. three", "  1. nested", "2. four"].join("\n");
+		const blob = markdownToPdfBlob(md);
+		const text = new TextDecoder("latin1").decode(new Uint8Array(await blob.arrayBuffer()));
+		expect(text).toContain("1. one");
+		expect(text).toContain("2. two");
+		expect(text).toContain("1. three");
+		expect(text).toContain("1. nested");
+		expect(text).toContain("2. four");
+	});
 });
 
 describe("textToBlob", () => {

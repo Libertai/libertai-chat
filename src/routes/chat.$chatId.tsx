@@ -270,6 +270,10 @@ function Chat() {
 		// breathe; the Continue button below is the safety net if it's still not enough.
 		const MAX_TOOL_TURNS = 10;
 		let ranOutOfTurns = false;
+		// Current tool step label, mirrored outside React state: `toolStatus` state is always the
+		// pre-call value when read inside this closure, so the completed-step promotions below must
+		// read this local instead.
+		let currentToolLabel: string | null = null;
 		try {
 			for (let iteration = 0; iteration < MAX_TOOL_TURNS; iteration++) {
 				const toolAcc = new ToolCallAccumulator();
@@ -317,6 +321,7 @@ function Chat() {
 							setIsStreaming(true);
 							setIsLoading(false);
 						}
+						currentToolLabel = null;
 						setToolStatus(null);
 						flushStreamedMessage();
 					}
@@ -370,11 +375,12 @@ function Chat() {
 					// progress log accumulates across the whole multi-turn response instead of flashing
 					// and vanishing between tools. Only the friendly label is shown — never the tool
 					// name, arguments, or results.
-					setToolSteps((prev) => (toolStatus ? [...prev, toolStatus] : prev));
-					// Number the later round-trips so a multi-turn tool loop reads as deliberate
-					// steps instead of the response mysteriously restarting.
-					const toolLabel = TOOL_LABELS[call.name] ?? "Working…";
-					setToolStatus(iteration > 0 ? `${toolLabel} · step ${iteration + 1}` : toolLabel);
+				setToolSteps((prev) => (currentToolLabel ? [...prev, currentToolLabel] : prev));
+				// Number the later round-trips so a multi-turn tool loop reads as deliberate
+				// steps instead of the response mysteriously restarting.
+				const toolLabel = TOOL_LABELS[call.name] ?? "Working…";
+				currentToolLabel = iteration > 0 ? `${toolLabel} · step ${iteration + 1}` : toolLabel;
+				setToolStatus(currentToolLabel);
 					const opts = {
 						connectedApiUrl: env.LTAI_CONNECTED_API_URL,
 						chatApiKey: chatApiKey ?? "",
@@ -460,7 +466,8 @@ function Chat() {
 				}
 				// Promote the last running step to completed before the next streaming turn, so the
 				// indicator never lingers as "in progress" while text streams.
-				setToolSteps((prev) => (toolStatus ? [...prev, toolStatus] : prev));
+				setToolSteps((prev) => (currentToolLabel ? [...prev, currentToolLabel] : prev));
+				currentToolLabel = null;
 				setToolStatus(null);
 
 				// An explicit "Create image" request is satisfied by the image alone — don't loop back for
