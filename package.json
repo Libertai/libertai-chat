@@ -46,7 +46,7 @@
     "ethers": "^6.17.0",
     "idb-keyval": "^6.3.0",
     "jspdf": "^4.2.1",
-    "katex": "^0.17.0",
+    "katex": "^0.18.2",
     "lucide-react": "^0.544.0",
     "mermaid": "^11.17.2",
     "next-themes": "^0.4.6",
