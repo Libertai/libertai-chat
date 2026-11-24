@@ -12,6 +12,17 @@ export const SEARCH_TYPES: SearchType[] = ["web", "news", "academic", "images"];
 
 export const DEFAULT_SEARCH_TYPE: SearchType = "web";
 
+/** Results requested per web_search call (the search service already dedupes across engines). */
+export const SEARCH_MAX_RESULTS = 8;
+
+/**
+ * Normalize a query so callers can tell a repeat from a new angle: models often re-run the same
+ * web_search almost verbatim on the next turn, which burns a turn without new information.
+ */
+export function searchQueryKey(query: string): string {
+	return query.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 export interface ToolExecOptions {
 	/** Connected API base WITHOUT trailing /v1, e.g. https://api.libertai.io */
 	connectedApiUrl: string;
@@ -110,7 +121,7 @@ export async function executeWebSearch(
 			body: JSON.stringify({
 				query,
 				engines: ["google", "bing", "duckduckgo"],
-				max_results: 5,
+				max_results: SEARCH_MAX_RESULTS,
 				search_type: opts.searchType ?? DEFAULT_SEARCH_TYPE,
 			}),
 			signal: opts.signal,
@@ -121,7 +132,7 @@ export async function executeWebSearch(
 		}
 
 		const data = (await response.json()) as { results?: RawSearchResult[] };
-		return formatSearchResults((data.results ?? []).slice(0, 5));
+		return formatSearchResults((data.results ?? []).slice(0, SEARCH_MAX_RESULTS));
 	} catch (error) {
 		return { sources: [], toolText: `Search failed: ${error instanceof Error ? error.message : "unknown error"}.` };
 	}

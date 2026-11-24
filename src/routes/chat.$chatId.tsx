@@ -10,7 +10,7 @@ import { useChatStore } from "@/stores/chat";
 import { useAssistantStore } from "@/stores/assistant";
 import { useProjectStore } from "@/stores/project";
 import { useMemoryStore } from "@/stores/memory";
-import { buildSystemPrompt } from "@/utils/build-system-prompt";
+import { buildSystemPrompt, withCurrentDate } from "@/utils/build-system-prompt";
 import { injectMemories } from "@/utils/memory-injection";
 import { useAccountStore, useSubscription } from "@libertai/auth";
 import { isChatBlocked, isPaywallError, isAnonLimitError } from "@/utils/paywall";
@@ -24,7 +24,13 @@ import { useModels } from "@/hooks/data/use-models";
 import { supportsTools, resolveChatModel } from "@/config/model-capabilities";
 import { buildRequestMessages } from "@/utils/build-request-messages";
 import { ToolCallAccumulator } from "@/utils/tool-call-accumulator";
-import { TOOL_DEFINITIONS, executeWebSearch, executeGenerateImage, executeRunCode } from "@/utils/chat-tools";
+import {
+	TOOL_DEFINITIONS,
+	executeWebSearch,
+	executeGenerateImage,
+	executeRunCode,
+	searchQueryKey,
+} from "@/utils/chat-tools";
 import type { GenerateImageArgs, SearchType, InterpreterArtifact } from "@/utils/chat-tools";
 import { consumePendingForcedTool } from "@/utils/pending-forced-tool";
 import env from "@/config/env";
@@ -234,7 +240,10 @@ function Chat() {
 		// user. Memories stay device-local until this request; we read them fresh at send-time.
 		const project = getProject(chat?.projectId);
 		const baseSystemPrompt = buildSystemPrompt(assistant.systemPrompt, project?.instructions);
-		const systemPrompt = injectMemories(baseSystemPrompt, useMemoryStore.getState().getEnabledMemories());
+		const systemPrompt = injectMemories(
+			withCurrentDate(baseSystemPrompt),
+			useMemoryStore.getState().getEnabledMemories(),
+		);
 
 		const requestMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
 			{ role: "system", content: systemPrompt },
@@ -243,6 +252,9 @@ function Chat() {
 
 		const accumulated: ParsedMessage = { thinking: "", content: "" };
 		const collectedSources: { title: string; url: string; snippet: string }[] = [];
+		// Query key -> the tool text it already produced, so a model that re-runs the same search on
+		// the next turn is answered from here instead of spending another network call and turn.
+		const searchedQueries = new Map<string, string>();
 		const collectedImages: ImageData[] = [];
 		const collectedInterpreter: InterpreterArtifact[] = [];
 
@@ -266,10 +278,14 @@ function Chat() {
 
 		// Cap on sequential tool turns (each is a model round-trip + tool execution). 5 was too tight
 		// — a research task that does several web_search calls (each its own turn) ran out before the
-		// model could write a summary, leaving a blank message. 10 gives multi-step tool use room to
-		// breathe; the Continue button below is the safety net if it's still not enough.
-		const MAX_TOOL_TURNS = 10;
-		let ranOutOfTurns = false;
+		// model could write a summary, leaving a blank message; 10 still cut deep research short. 16
+		// lets a deep-dive probe a dozen angles (and each turn can still issue several parallel calls)
+		// without running the whole request twice. The last turn is a tool-less wrap-up (see `wrapUp`
+		// below), and the Continue button is the safety net if even that produces no answer.
+		const MAX_TOOL_TURNS = 16;
+		// True while a tool turn ran and the model still owes a text answer. If it's still true after
+		// the loop with no answer text, we show the ran-out-of-turns note + Continue.
+		let awaitingAnswer = false;
 		// Current tool step label, mirrored outside React state: `toolStatus` state is always the
 		// pre-call value when read inside this closure, so the completed-step promotions below must
 		// read this local instead.
@@ -283,15 +299,33 @@ function Chat() {
 				// tool ran. The separator lands lazily, only if this turn actually reasons.
 				let needsThinkingSeparator = accumulated.thinking.length > 0;
 
+				// Last allowed turn: models often keep calling web_search on every turn and never
+				// write the answer, which left the user with a dead-end reply. Withhold the tools and
+				// tell the model to answer from what it has. Both are needed: without tools alone some
+				// models return nothing and others print raw <tool_call> markup as text. The nudge is
+				// request-only (never persisted); it's a user turn because some chat templates (Qwen)
+				// reject a system message after the first one. Only reachable after tool turns, since
+				// the loop exits as soon as a turn makes no tool calls.
+				const wrapUp = toolsEnabled && iteration === MAX_TOOL_TURNS - 1;
+				if (wrapUp) {
+					requestMessages.push({
+						role: "user",
+						content:
+							"(Tool limit reached: no more searches or tool calls are available for this reply. " +
+							"Write your final answer now from the results above, and say what you couldn't verify.)",
+					});
+				}
+				const offerTools = toolsEnabled && !wrapUp;
+
 				const stream = await openai.chat.completions.create(
 					{
 						model: effectiveModel,
 						messages: requestMessages,
 						stream: true,
-						...(toolsEnabled ? { tools: TOOL_DEFINITIONS } : {}),
-						...(toolsEnabled && iteration === 0 && forcedTool
+						...(offerTools ? { tools: TOOL_DEFINITIONS } : {}),
+						...(offerTools && iteration === 0 && forcedTool
 							? { tool_choice: { type: "function", function: { name: forcedTool } } }
-							: toolsEnabled
+							: offerTools
 								? { tool_choice: "auto" }
 								: {}),
 					},
@@ -337,13 +371,10 @@ function Chat() {
 				// break or reset `accumulated` for the next tool iteration.
 				flushStreamedMessage(true);
 
-				if (!toolAcc.hasCalls()) break;
+				// On the wrap-up turn any tool call is ignored: there's no turn left to send its result.
+				if (!toolAcc.hasCalls() || wrapUp) break;
 
-				// We're about to spend another turn executing tools. If this turns out to be the last
-				// iteration (cap reached), we never come back here to clear the flag — so mark it now:
-				// it's only reset to false on a clean final-answer break above. After the loop, this
-				// tells us the response stopped because of the turn cap, not because the model finished.
-				ranOutOfTurns = true;
+				awaitingAnswer = true;
 
 				// Stay in the streaming (working) state across tool turns. Previously this dropped
 				// isStreaming and raised isLoading, which flickered the whole chat between "streaming"
@@ -390,16 +421,30 @@ function Chat() {
 
 					if (call.name === "web_search") {
 						const query = String(call.arguments.query ?? "");
-						const { sources, toolText } = await executeWebSearch(query, opts);
-						// Dedup by URL across the whole multi-turn response — the search service can
-						// return the same URL twice, and the model often re-runs web_search between
-						// turns, re-adding the same sources. Without dedup the Sources list renders
-						// duplicate keys (React warning) and the count is inflated.
-						for (const s of sources) {
-							if (!collectedSources.some((c) => c.url === s.url)) collectedSources.push(s);
+						const key = searchQueryKey(query);
+						const earlier = searchedQueries.get(key);
+						if (earlier !== undefined) {
+							// Repeating a query verbatim is a loop, not research: replay what it already
+							// returned and tell the model to move on, so the turn budget isn't spent twice.
+							requestMessages.push({
+								role: "tool",
+								tool_call_id: call.id,
+								content: `${earlier}\n\n(Already searched earlier in this reply — same results. Use them, search a different angle, or answer.)`,
+							});
+						} else {
+							const { sources, toolText } = await executeWebSearch(query, opts);
+							// A failed search is not cached: a second attempt may well succeed.
+							if (!toolText.startsWith("Search failed")) searchedQueries.set(key, toolText);
+							// Dedup by URL across the whole multi-turn response — the search service can
+							// return the same URL twice, and the model often re-runs web_search between
+							// turns, re-adding the same sources. Without dedup the Sources list renders
+							// duplicate keys (React warning) and the count is inflated.
+							for (const s of sources) {
+								if (!collectedSources.some((c) => c.url === s.url)) collectedSources.push(s);
+							}
+							attachMessageMeta(chatId, assistantMessage.id, { sources: [...collectedSources] });
+							requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 						}
-						attachMessageMeta(chatId, assistantMessage.id, { sources: [...collectedSources] });
-						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else if (call.name === "generate_image") {
 						const { image, toolText } = await executeGenerateImage(
 							call.arguments as unknown as GenerateImageArgs,
@@ -474,6 +519,7 @@ function Chat() {
 				// a trailing text answer the user didn't ask for. (Only when it actually produced an image;
 				// on failure we keep looping so the model can explain what went wrong.)
 				if (forcedTool === "generate_image" && iteration === 0 && collectedImages.length > 0) {
+					awaitingAnswer = false; // the image is the answer
 					break;
 				}
 			}
@@ -486,11 +532,12 @@ function Chat() {
 				collectedSources.length > 0 || collectedImages.length > 0 || collectedInterpreter.length > 0;
 			if (!accumulated.content && !accumulated.thinking && !gatheredSomething) {
 				updateMessage(chatId, assistantMessage.id, "Sorry, I could not process your request.");
-			} else if (!accumulated.content && !accumulated.thinking && ranOutOfTurns) {
-				// The model spent every turn calling tools (often several web_search rounds) and never
-				// wrote a final summary — the tool loop hit its turn cap. Don't leave a blank message:
-				// surface a short line explaining what's gathered and offer a Continue button (set just
-				// below) so the user can prompt one more turn with a click instead of typing "continue".
+			} else if (!accumulated.content && awaitingAnswer) {
+				// Tools ran but no answer text came back, even after the wrap-up turn. Don't leave a
+				// blank message: surface a short line explaining what's gathered and offer a Continue
+				// button (set just below) so the user can prompt one more turn with a click. This must
+				// not also require an empty thinking trace: thinking models always have one (it's kept
+				// across tool turns), so they used to end on a silent, answerless reply.
 				const parts: string[] = [];
 				if (collectedSources.length > 0)
 					parts.push(`${collectedSources.length} source${collectedSources.length > 1 ? "s" : ""}`);
@@ -503,6 +550,7 @@ function Chat() {
 					assistantMessage.id,
 					`I gathered ${what} but ran out of turns to write it up. ` +
 						"Continue below and I'll summarise what I found.",
+					accumulated.thinking || undefined,
 				);
 				setContinueFromMessageId(assistantMessage.id);
 			}

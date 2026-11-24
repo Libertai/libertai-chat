@@ -24,11 +24,34 @@ export function attachmentsBlock(attachments: FileAttachment[] | undefined): str
 	return ["", "Attached files:", ...blocks].join("\n\n");
 }
 
+/** Caps for re-sending a reply's search results: a long research turn can gather 100+ sources. */
+export const CARRIED_SOURCES_MAX = 40;
+const CARRIED_SNIPPET_MAX = 300;
+
+/**
+ * Render the web-search results an assistant reply gathered as the text the model reads on the
+ * next request. Tool calls and their results only live inside a single generation, so without
+ * this the next turn ("Continue", "dig deeper on X") saw nothing but the reply text and re-ran
+ * every search from scratch. Returns "" when there is nothing to carry.
+ */
+export function carriedSourcesBlock(sources: Message["sources"]): string {
+	if (!sources || sources.length === 0) return "";
+	const lines = sources.slice(0, CARRIED_SOURCES_MAX).map((s, i) => {
+		const snippet = s.snippet.length > CARRIED_SNIPPET_MAX ? `${s.snippet.slice(0, CARRIED_SNIPPET_MAX)}…` : s.snippet;
+		return `${i + 1}. ${s.title} — ${s.url}\n${snippet}`;
+	});
+	return [
+		"(Web search results you gathered for your previous reply, kept as context for this conversation — not written by the user:)",
+		...lines,
+	].join("\n\n");
+}
+
 /**
  * Map persisted chat history into OpenAI request messages (caller prepends the system message).
  * Keeps only the 4 most recent images across the whole history; user images attach inline,
  * assistant-generated images are re-emitted as a synthetic user message (the API rejects
- * image_url on assistant turns). Non-vision models receive no images.
+ * image_url on assistant turns). Non-vision models receive no images. The most recent assistant
+ * reply's search results are re-emitted the same way (see `carriedSourcesBlock`).
  */
 export function buildRequestMessages(history: Message[], model: string, models: Model[]): Param[] {
 	const vision = supportsImages(model, models);
@@ -40,6 +63,11 @@ export function buildRequestMessages(history: Message[], model: string, models: 
 		for (const m of history) for (const im of m.images ?? []) all.push(im);
 		for (const im of all.slice(-4)) keep.add(im);
 	}
+
+	// Only the latest reply's sources are carried: that's the turn a follow-up builds on, and it
+	// keeps the token cost bounded however long the conversation gets.
+	let lastAssistant: Message | undefined;
+	for (const m of history) if (m.role === "assistant") lastAssistant = m;
 
 	const out: Param[] = [];
 	for (const m of history) {
@@ -68,6 +96,8 @@ export function buildRequestMessages(history: Message[], model: string, models: 
 					],
 				});
 			}
+			const carried = m === lastAssistant ? carriedSourcesBlock(m.sources) : "";
+			if (carried) out.push({ role: "user", content: carried });
 		}
 	}
 	return out;

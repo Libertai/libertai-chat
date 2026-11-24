@@ -14,3 +14,13 @@ export function buildSystemPrompt(assistantPrompt: string, projectInstructions?:
 	if (!persona) return project;
 	return `${project}\n\n${persona}`;
 }
+
+// Appends the user's local calendar date. Without it models assume their training-cutoff year,
+// distrust current search results ("it is not 2026 yet") and keep re-searching to "verify" them.
+export function withCurrentDate(prompt: string, now: Date = new Date()): string {
+	const y = now.getFullYear();
+	const m = String(now.getMonth() + 1).padStart(2, "0");
+	const d = String(now.getDate()).padStart(2, "0");
+	const line = `Current date: ${y}-${m}-${d}.`;
+	return prompt ? `${prompt}\n\n${line}` : line;
+}
