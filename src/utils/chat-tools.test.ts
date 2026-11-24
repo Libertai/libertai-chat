@@ -8,7 +8,9 @@ import {
 	formatInterpreterResult,
 	TOOL_DEFINITIONS,
 	SEARCH_TYPES,
+	SEARCH_MAX_RESULTS,
 	DEFAULT_SEARCH_TYPE,
+	searchQueryKey,
 } from "@/utils/chat-tools";
 import type { SearchType } from "@/utils/chat-tools";
 
@@ -103,7 +105,7 @@ describe("executeWebSearch", () => {
 			}),
 		);
 		const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
-		expect(body).toMatchObject({ query: "rust", max_results: 5, search_type: "web" });
+		expect(body).toMatchObject({ query: "rust", max_results: SEARCH_MAX_RESULTS, search_type: "web" });
 		expect(body.engines).toEqual(["google", "bing", "duckduckgo"]);
 		expect(out.sources[0].title).toBe("A");
 	});
@@ -135,6 +137,30 @@ describe("executeWebSearch", () => {
 		const out = await executeWebSearch("rust", OPTS);
 		expect(out.sources).toEqual([]);
 		expect(out.toolText.toLowerCase()).toContain("search failed");
+	});
+
+	it(`requests and keeps at most SEARCH_MAX_RESULTS (${SEARCH_MAX_RESULTS}) results`, async () => {
+		const results = Array.from({ length: SEARCH_MAX_RESULTS + 4 }, (_, i) => ({
+			title: `T${i}`,
+			url: `https://e.com/${i}`,
+			snippet: `s${i}`,
+		}));
+		vi.spyOn(global, "fetch").mockResolvedValue(new Response(JSON.stringify({ results }), { status: 200 }));
+
+		const out = await executeWebSearch("rust", OPTS);
+
+		expect(out.sources).toHaveLength(SEARCH_MAX_RESULTS);
+	});
+});
+
+describe("searchQueryKey", () => {
+	it("normalizes case and whitespace so a repeated query is recognized", () => {
+		expect(searchQueryKey("  Rust   async\t")).toBe("rust async");
+		expect(searchQueryKey("RUST\nasync")).toBe(searchQueryKey("rust async"));
+	});
+
+	it("keeps different queries apart", () => {
+		expect(searchQueryKey("rust async")).not.toBe(searchQueryKey("rust sync"));
 	});
 });
 

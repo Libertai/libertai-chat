@@ -24,7 +24,13 @@ import { useModels } from "@/hooks/data/use-models";
 import { supportsTools, resolveChatModel } from "@/config/model-capabilities";
 import { buildRequestMessages } from "@/utils/build-request-messages";
 import { ToolCallAccumulator } from "@/utils/tool-call-accumulator";
-import { TOOL_DEFINITIONS, executeWebSearch, executeGenerateImage, executeRunCode } from "@/utils/chat-tools";
+import {
+	TOOL_DEFINITIONS,
+	executeWebSearch,
+	executeGenerateImage,
+	executeRunCode,
+	searchQueryKey,
+} from "@/utils/chat-tools";
 import type { GenerateImageArgs, SearchType, InterpreterArtifact } from "@/utils/chat-tools";
 import { consumePendingForcedTool } from "@/utils/pending-forced-tool";
 import env from "@/config/env";
@@ -246,6 +252,9 @@ function Chat() {
 
 		const accumulated: ParsedMessage = { thinking: "", content: "" };
 		const collectedSources: { title: string; url: string; snippet: string }[] = [];
+		// Query key -> the tool text it already produced, so a model that re-runs the same search on
+		// the next turn is answered from here instead of spending another network call and turn.
+		const searchedQueries = new Map<string, string>();
 		const collectedImages: ImageData[] = [];
 		const collectedInterpreter: InterpreterArtifact[] = [];
 
@@ -269,10 +278,11 @@ function Chat() {
 
 		// Cap on sequential tool turns (each is a model round-trip + tool execution). 5 was too tight
 		// — a research task that does several web_search calls (each its own turn) ran out before the
-		// model could write a summary, leaving a blank message. 10 gives multi-step tool use room to
-		// breathe. The last turn is a tool-less wrap-up (see `wrapUp` below), and the Continue button
-		// is the safety net if even that produces no answer.
-		const MAX_TOOL_TURNS = 10;
+		// model could write a summary, leaving a blank message; 10 still cut deep research short. 16
+		// lets a deep-dive probe a dozen angles (and each turn can still issue several parallel calls)
+		// without running the whole request twice. The last turn is a tool-less wrap-up (see `wrapUp`
+		// below), and the Continue button is the safety net if even that produces no answer.
+		const MAX_TOOL_TURNS = 16;
 		// True while a tool turn ran and the model still owes a text answer. If it's still true after
 		// the loop with no answer text, we show the ran-out-of-turns note + Continue.
 		let awaitingAnswer = false;
@@ -411,16 +421,30 @@ function Chat() {
 
 					if (call.name === "web_search") {
 						const query = String(call.arguments.query ?? "");
-						const { sources, toolText } = await executeWebSearch(query, opts);
-						// Dedup by URL across the whole multi-turn response — the search service can
-						// return the same URL twice, and the model often re-runs web_search between
-						// turns, re-adding the same sources. Without dedup the Sources list renders
-						// duplicate keys (React warning) and the count is inflated.
-						for (const s of sources) {
-							if (!collectedSources.some((c) => c.url === s.url)) collectedSources.push(s);
+						const key = searchQueryKey(query);
+						const earlier = searchedQueries.get(key);
+						if (earlier !== undefined) {
+							// Repeating a query verbatim is a loop, not research: replay what it already
+							// returned and tell the model to move on, so the turn budget isn't spent twice.
+							requestMessages.push({
+								role: "tool",
+								tool_call_id: call.id,
+								content: `${earlier}\n\n(Already searched earlier in this reply — same results. Use them, search a different angle, or answer.)`,
+							});
+						} else {
+							const { sources, toolText } = await executeWebSearch(query, opts);
+							// A failed search is not cached: a second attempt may well succeed.
+							if (!toolText.startsWith("Search failed")) searchedQueries.set(key, toolText);
+							// Dedup by URL across the whole multi-turn response — the search service can
+							// return the same URL twice, and the model often re-runs web_search between
+							// turns, re-adding the same sources. Without dedup the Sources list renders
+							// duplicate keys (React warning) and the count is inflated.
+							for (const s of sources) {
+								if (!collectedSources.some((c) => c.url === s.url)) collectedSources.push(s);
+							}
+							attachMessageMeta(chatId, assistantMessage.id, { sources: [...collectedSources] });
+							requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 						}
-						attachMessageMeta(chatId, assistantMessage.id, { sources: [...collectedSources] });
-						requestMessages.push({ role: "tool", tool_call_id: call.id, content: toolText });
 					} else if (call.name === "generate_image") {
 						const { image, toolText } = await executeGenerateImage(
 							call.arguments as unknown as GenerateImageArgs,
