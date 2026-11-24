@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSystemPrompt } from "@/utils/build-system-prompt";
+import { buildSystemPrompt, withCurrentDate } from "@/utils/build-system-prompt";
 
 const PERSONA = "You are a quick and nimble AI advisor.";
 const PROJECT = "Always answer in formal British English and cite sources.";
@@ -35,5 +35,16 @@ describe("buildSystemPrompt", () => {
 	it("returns an empty string when both are empty", () => {
 		expect(buildSystemPrompt("", "")).toBe("");
 		expect(buildSystemPrompt("   ", "   ")).toBe("");
+	});
+});
+
+describe("withCurrentDate", () => {
+	it("appends the local calendar date after the prompt", () => {
+		const now = new Date(2026, 10, 3, 23, 30); // local time, 3 Nov 2026
+		expect(withCurrentDate(PERSONA, now)).toBe(`${PERSONA}\n\nCurrent date: 2026-11-03.`);
+	});
+
+	it("returns just the date line for an empty prompt", () => {
+		expect(withCurrentDate("", new Date(2026, 0, 9))).toBe("Current date: 2026-01-09.");
 	});
 });

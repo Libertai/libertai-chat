@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildRequestMessages, attachmentsBlock } from "@/utils/build-request-messages";
+import {
+	buildRequestMessages,
+	attachmentsBlock,
+	carriedSourcesBlock,
+	CARRIED_SOURCES_MAX,
+} from "@/utils/build-request-messages";
 import type { Message, FileAttachment } from "@/types/chats";
 import type { Model } from "@/hooks/data/use-models";
 
@@ -104,5 +109,69 @@ describe("attachmentsBlock", () => {
 		expect(block).toContain("hello");
 		expect(block).toContain("Attached file: b.csv (csv (truncated))");
 		expect(block).toContain("x\ty");
+	});
+});
+
+describe("carried search sources", () => {
+	const src = (n: number, snippet = `snippet ${n}`) => ({ title: `T${n}`, url: `https://e.com/${n}`, snippet });
+
+	it("re-sends the latest reply's sources after it, so a follow-up doesn't re-search from scratch", () => {
+		const out = buildRequestMessages(
+			[
+				msg({ role: "user", content: "research X" }),
+				msg({ role: "assistant", content: "I gathered 2 sources but ran out of turns", sources: [src(1), src(2)] }),
+				msg({ role: "user", content: "Continue" }),
+			],
+			"m",
+			noVisionModels,
+		);
+		expect(out.map((m) => m.role)).toEqual(["user", "assistant", "user", "user"]);
+		const carried = out[2].content as string;
+		expect(carried).toContain("T1 — https://e.com/1\nsnippet 1");
+		expect(carried).toContain("https://e.com/2");
+		expect(out[3].content).toBe("Continue");
+	});
+
+	it("only carries the most recent assistant reply's sources", () => {
+		const out = buildRequestMessages(
+			[
+				msg({ role: "user", content: "a" }),
+				msg({ role: "assistant", content: "old answer", sources: [src(1)] }),
+				msg({ role: "user", content: "b" }),
+				msg({ role: "assistant", content: "new answer", sources: [src(2)] }),
+				msg({ role: "user", content: "c" }),
+			],
+			"m",
+			noVisionModels,
+		);
+		const text = out.map((m) => (typeof m.content === "string" ? m.content : "")).join("\n");
+		expect(text).not.toContain("https://e.com/1");
+		expect(text).toContain("https://e.com/2");
+		expect(out).toHaveLength(6);
+	});
+
+	it("adds nothing when the latest reply has no sources", () => {
+		const out = buildRequestMessages(
+			[
+				msg({ role: "user", content: "a" }),
+				msg({ role: "assistant", content: "searched", sources: [src(1)] }),
+				msg({ role: "user", content: "thanks" }),
+				msg({ role: "assistant", content: "you're welcome" }),
+				msg({ role: "user", content: "c" }),
+			],
+			"m",
+			noVisionModels,
+		);
+		expect(out).toHaveLength(5);
+	});
+
+	it("caps the source count and truncates long snippets", () => {
+		const many = Array.from({ length: CARRIED_SOURCES_MAX + 10 }, (_, i) => src(i, "x".repeat(1000)));
+		const block = carriedSourcesBlock(many);
+		expect(block).toContain(`https://e.com/${CARRIED_SOURCES_MAX - 1}\n`);
+		expect(block).not.toContain(`https://e.com/${CARRIED_SOURCES_MAX}\n`);
+		expect(block).not.toContain("x".repeat(301));
+		expect(carriedSourcesBlock([])).toBe("");
+		expect(carriedSourcesBlock(undefined)).toBe("");
 	});
 });
